@@ -229,6 +229,42 @@ for (const did of ['pirate_cove', 'deku_temple', 'sprite_world', 'undead_lair', 
   assert(hasBoss, `Dungeon ${did} must spawn its Sanctum Guardian Boss`);
 }
 
+// Test Auto-Opening & Auto-Closing World-Space Loot Chest Popup (#world-loot-popup)
+game.warpToMap('nexus');
+const testChestProp = { type: 'chest', x: 18, y: 18, opened: false, loot: ['wep_sword_t2', 'pot_spd'] };
+game.currentMap.props.push(testChestProp);
+// Walk near the treasure chest (within 2.15 tiles)
+game.player.x = 18.8;
+game.player.y = 18.0;
+game.updateDropsAndBags(0.016);
+hud.updateFrameHud();
+
+assert.strictEqual(testChestProp.opened, true, 'Walking near a Treasure Chest must auto-open it');
+const worldPopup = getMockEl('world-loot-popup');
+assert.strictEqual(worldPopup.style.display, 'block', 'Walking near a Loot Chest must auto-open #world-loot-popup next to it');
+assert(
+  getMockEl('world-loot-grid').innerHTML.includes('wep_sword_t2'),
+  '#world-loot-grid must display the chest contents'
+);
+
+// Walk away from the chest (> 2.25 tiles) -> popup must auto-close!
+game.player.x = 24.0;
+game.player.y = 24.0;
+hud.updateFrameHud();
+assert.strictEqual(worldPopup.style.display, 'none', 'Walking away from the Loot Chest must auto-close #world-loot-popup');
+
+// Walk back near the chest & Loot All -> popup must auto-close when emptied!
+game.player.x = 18.5;
+game.player.y = 18.0;
+hud.updateFrameHud();
+assert.strictEqual(worldPopup.style.display, 'block', 'Walking back near the Loot Chest must re-open #world-loot-popup');
+const activeBag = game.getNearestBag();
+assert(activeBag, 'Nearest bag should be found when standing next to chest');
+game.lootAllFromBag(activeBag);
+hud.updateFrameHud();
+assert.strictEqual(worldPopup.style.display, 'none', 'Emptying the Loot Chest must auto-close #world-loot-popup');
+console.log('✓ 9. Auto-opening & auto-closing floating Loot Chest popup (#world-loot-popup) verified');
+
 game.player.shielding = false;
 game.player.invulnTimer = 0;
 game.player.dashTimer = 0;
@@ -241,6 +277,6 @@ game.player.invulnTimer = 0;
 game.damagePlayer(9999, null, 'Malakor, the Evil Bane');
 assert.strictEqual(game.player.dead, true, 'Fatal hit without Lumina Wisp must trigger Permadeath');
 assert(game.gravestones.length === 1, 'Permadeath must leave a physical Gravestone on the map');
-console.log('✓ 9. Dungeons, Stat Potions, Lumina Wisp Revival & Permadeath verified');
+console.log('✓ 10. Dungeons, Stat Potions, Lumina Wisp Revival & Permadeath verified');
 
-console.log('\nALL 9 REALM OF THE SHATTERED CREST TEST SUITES PASSED!');
+console.log('\nALL 10 REALM OF THE SHATTERED CREST TEST SUITES PASSED!');

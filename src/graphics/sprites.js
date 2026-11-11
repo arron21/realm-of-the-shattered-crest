@@ -404,13 +404,28 @@ export function drawProp(ctx, prop, screenX, screenY, time) {
     case 'chest':
     case 'vault_chest': {
       const isVault = prop.type === 'vault_chest';
-      ctx.fillStyle = isVault ? '#1e3a8a' : (prop.opened ? '#451a03' : '#92400e');
-      ctx.fillRect(-14, -10, 28, 20);
-      ctx.strokeStyle = '#facc15';
-      ctx.lineWidth = 2.5;
-      ctx.strokeRect(-14, -10, 28, 20);
-      ctx.fillStyle = '#fde047';
-      ctx.fillRect(-3, -2, 6, 6);
+      if (!isVault && prop.opened) {
+        // Open Treasure Chest (raised lid + glowing interior)
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(-14, -14, 28, 8);
+        ctx.strokeStyle = '#facc15';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-14, -14, 28, 8);
+
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(-14, -5, 28, 15);
+        ctx.fillStyle = 'rgba(250, 204, 21, 0.35)';
+        ctx.fillRect(-11, -5, 22, 6);
+        ctx.strokeRect(-14, -5, 28, 15);
+      } else {
+        ctx.fillStyle = isVault ? '#1e3a8a' : '#92400e';
+        ctx.fillRect(-14, -10, 28, 20);
+        ctx.strokeStyle = '#facc15';
+        ctx.lineWidth = 2.5;
+        ctx.strokeRect(-14, -10, 28, 20);
+        ctx.fillStyle = '#fde047';
+        ctx.fillRect(-3, -2, 6, 6);
+      }
       if (isVault) {
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 10px monospace';
@@ -439,22 +454,32 @@ export function drawProp(ctx, prop, screenX, screenY, time) {
 }
 
 // ============================================================================
-// RENDER LOOT BAGS (Including White Bag with Cyan Ribbon!)
+// RENDER LOOT CHESTS & BAGS (Auto-Opens When Player Moves Near!)
 // ============================================================================
-export function drawLootBag(ctx, bag, screenX, screenY, time) {
+export function drawLootBag(ctx, bag, screenX, screenY, time, isOpen = false) {
   const meta = BAG_TYPES[bag.bagType] || BAG_TYPES[0];
-  const bob = Math.sin(time * 5 + bag.x) * 2.5;
+  const bob = isOpen ? 0 : Math.sin(time * 5 + bag.x) * 2.2;
 
   ctx.save();
   ctx.translate(screenX, screenY + bob);
 
-  if (bag.bagType >= 4) {
-    const grad = ctx.createRadialGradient(0, 0, 2, 0, 0, bag.bagType === 6 ? 32 : 22);
+  if (isOpen) {
+    // Pulsing proximity ring indicating auto-opened chest popup
+    ctx.strokeStyle = bag.bagType === 6 ? '#22d3ee' : meta.ribbon;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 2, 18 + Math.sin(time * 8) * 2, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  if (bag.bagType >= 4 || isOpen) {
+    const rad = bag.bagType === 6 ? 34 : 24;
+    const grad = ctx.createRadialGradient(0, 0, 2, 0, 0, rad);
     grad.addColorStop(0, meta.glow);
     grad.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = grad;
     ctx.beginPath();
-    ctx.arc(0, 0, bag.bagType === 6 ? 32 : 22, 0, Math.PI * 2);
+    ctx.arc(0, 0, rad, 0, Math.PI * 2);
     ctx.fill();
 
     if (bag.bagType === 6) {
@@ -463,37 +488,62 @@ export function drawLootBag(ctx, bag, screenX, screenY, time) {
     }
   }
 
+  // Chest / Bag Base Body
   ctx.fillStyle = meta.color;
   ctx.strokeStyle = '#0f172a';
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.arc(0, 3, 11, 0, Math.PI * 2);
+  ctx.roundRect(-12, -3, 24, 15, 4);
   ctx.fill();
   ctx.stroke();
 
-  ctx.fillStyle = meta.color;
-  ctx.beginPath();
-  ctx.moveTo(-6, -10);
-  ctx.lineTo(6, -10);
-  ctx.lineTo(4, -3);
-  ctx.lineTo(-4, -3);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
+  if (isOpen) {
+    // Open Chest Lid (tilted up) + glowing loot interior
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(-10, -3, 20, 5);
+    ctx.fillStyle = bag.bagType === 6 ? '#22d3ee' : '#fde047';
+    ctx.beginPath();
+    ctx.arc(-4, -1, 3, 0, Math.PI * 2);
+    ctx.arc(4, -1, 3, 0, Math.PI * 2);
+    ctx.fill();
 
-  ctx.fillStyle = meta.ribbon;
-  ctx.fillRect(-6, -5, 12, 3.5);
+    ctx.fillStyle = meta.color;
+    ctx.beginPath();
+    ctx.roundRect(-12, -13, 24, 7, [4, 4, 1, 1]);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = meta.ribbon;
+    ctx.fillRect(-12, -9, 24, 2.5);
+  } else {
+    // Closed Chest Lid + Ribbon Band + Clasp
+    ctx.fillStyle = meta.color;
+    ctx.beginPath();
+    ctx.roundRect(-12, -9, 24, 7, [4, 4, 1, 1]);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = meta.ribbon;
+    ctx.fillRect(-12, -3, 24, 3);
+    ctx.fillRect(-3, -9, 6, 18);
+
+    ctx.fillStyle = '#fde047';
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = 1.2;
+    ctx.fillRect(-3, -4, 6, 6);
+    ctx.strokeRect(-3, -4, 6, 6);
+  }
 
   if (bag.bagType === 6) {
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 10px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('★ WHITE BAG ★', 0, -16);
+    ctx.fillText('★ WHITE CHEST ★', 0, -18);
   } else if (bag.bagType === 4) {
     ctx.fillStyle = '#93c5fd';
     ctx.font = 'bold 9px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('POTION', 0, -14);
+    ctx.fillText('POTION', 0, -16);
   }
 
   ctx.restore();

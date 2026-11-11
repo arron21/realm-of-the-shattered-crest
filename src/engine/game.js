@@ -975,7 +975,7 @@ export class GameEngine {
     this.player.secretsFound++;
     this.account.sunshards += 50;
     this.saveAccount();
-    this.spawnLootBag(prop.x, prop.y + 0.6, prop.loot || ['pot_def', 'pot_spd']);
+    this.spawnLootBag(prop.x, prop.y, prop.loot || ['pot_def', 'pot_spd'], { isChest: true });
     this.spawnFloatingText(prop.x, prop.y - 0.8, 'TREASURE CHEST OPENED! (+50 Sunshards)', '#facc15', 14);
   }
 
@@ -1119,7 +1119,7 @@ export class GameEngine {
     }
   }
 
-  spawnLootBag(x, y, itemIds) {
+  spawnLootBag(x, y, itemIds, options = {}) {
     if (!itemIds || itemIds.length === 0) return;
     let highestBagType = 0;
     for (const id of itemIds) {
@@ -1134,6 +1134,7 @@ export class GameEngine {
       x,
       y,
       bagType: highestBagType,
+      isChest: Boolean(options.isChest),
       items: [...itemIds],
       timer: 90
     });
@@ -1171,6 +1172,21 @@ export class GameEngine {
         const cls = CLASSES[p.classId];
         const st = item.stat;
         if (p.baseStats[st] >= cls.maxStats[st]) {
+          // If looting from a ground chest/bag and stat is already maxed, store in backpack if space permits!
+          if (sourceType === 'bag' && bagObj) {
+            const emptyIdx = p.inventory.findIndex(x => !x);
+            if (emptyIdx !== -1) {
+              p.inventory[emptyIdx] = itemId;
+              bagObj.items.splice(slotIndex, 1);
+              if (bagObj.items.length === 0) {
+                const bIdx = this.lootBags.indexOf(bagObj);
+                if (bIdx !== -1) this.lootBags.splice(bIdx, 1);
+              }
+              sound.playSfx('rupee');
+              if (this.ui && this.ui.onStatsChanged) this.ui.onStatsChanged();
+              return true;
+            }
+          }
           this.spawnFloatingText(p.x, p.y - 0.8, `${st.toUpperCase()} ALREADY MAXED!`, '#fde047', 13);
           this.addChatMessage('SYSTEM', `Your ${st.toUpperCase()} is already maxed! Store extra potions in your Sanctuary Vault.`, '#fde047');
           return false;
@@ -1258,6 +1274,46 @@ export class GameEngine {
     this.recalcPlayerStats(false);
     sound.playSfx('rupee');
     return true;
+  }
+
+  lootAllFromBag(bagObj) {
+    const p = this.player;
+    if (!p || p.dead || !bagObj || !bagObj.items) return 0;
+    let looted = 0;
+    for (let i = bagObj.items.length - 1; i >= 0; i--) {
+      const itemId = bagObj.items[i];
+      const item = ITEMS[itemId];
+      if (!item) continue;
+      if (item.slot === 'consumable') {
+        if (this.useOrEquipItem('bag', i, bagObj)) {
+          looted++;
+        }
+      } else {
+        // Put equipment into backpack first if space is available, otherwise equip if compatible
+        const emptyIdx = p.inventory.findIndex(x => !x);
+        if (emptyIdx !== -1) {
+          p.inventory[emptyIdx] = itemId;
+          bagObj.items.splice(i, 1);
+          looted++;
+        } else if (canClassEquip(p.classId, item) && !p.equipment[item.slot]) {
+          p.equipment[item.slot] = itemId;
+          bagObj.items.splice(i, 1);
+          this.recalcPlayerStats(false);
+          looted++;
+        }
+      }
+    }
+    if (bagObj.items.length === 0) {
+      const bIdx = this.lootBags.indexOf(bagObj);
+      if (bIdx !== -1) this.lootBags.splice(bIdx, 1);
+    }
+    if (looted > 0) {
+      sound.playSfx('rupee');
+      if (this.ui && this.ui.onStatsChanged) this.ui.onStatsChanged();
+    } else if (bagObj.items.length > 0) {
+      this.spawnFloatingText(p.x, p.y - 0.7, 'BACKPACK FULL!', '#ef4444', 12);
+    }
+    return looted;
   }
 
   // ==========================================================================
@@ -1982,6 +2038,15 @@ export class GameEngine {
       }
     }
 
+    // Auto-open nearby world Treasure Chests as the player moves near them!
+    if (p && !p.dead && this.currentMap && this.currentMap.props) {
+      for (const prop of this.currentMap.props) {
+        if (prop.type === 'chest' && !prop.opened && Math.hypot(prop.x - p.x, prop.y - p.y) <= 2.15) {
+          this.openTreasureChest(prop);
+        }
+      }
+    }
+
     for (let i = this.lootBags.length - 1; i >= 0; i--) {
       const bag = this.lootBags[i];
       bag.timer -= dt;
@@ -2042,7 +2107,7 @@ export class GameEngine {
   getNearestBag() {
     if (!this.player) return null;
     let best = null;
-    let bestD = 1.65;
+    let bestD = 2.25;
     for (const bag of this.lootBags) {
       const d = Math.hypot(bag.x - this.player.x, bag.y - this.player.y);
       if (d < bestD) {
@@ -2237,11 +2302,12 @@ export class GameEngine {
       ctx.restore();
     }
 
-    // 6. Draw RotMG Loot Bags
+    // 6. Draw Loot Chests & Bags (Visually open when player is near!)
+    const nearestBag = this.getNearestBag();
     for (const bag of this.lootBags) {
       const sx = bag.x * TILE_SIZE - camX;
       const sy = bag.y * TILE_SIZE - camY;
-      drawLootBag(ctx, bag, sx, sy, this.time);
+      drawLootBag(ctx, bag, sx, sy, this.time, bag === nearestBag);
     }
 
     // 7. Draw AI MMO Players & Remote WebSocket Players

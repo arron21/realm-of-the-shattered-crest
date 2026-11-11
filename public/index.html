@@ -411,7 +411,7 @@ html, body {
   text-transform: uppercase;
 }
 
-/* Ground Loot Bag Panel */
+/* Ground Loot Bag Panel & Floating World-Space Loot Chest Popup */
 #loot-bag-section {
   border-color: var(--gold-bright);
   background: rgba(23, 37, 64, 0.92);
@@ -421,6 +421,104 @@ html, body {
 #loot-bag-section.white-bag-active {
   border-color: #22d3ee;
   box-shadow: 0 0 18px rgba(34, 211, 238, 0.45);
+}
+
+#world-loot-popup {
+  position: absolute;
+  z-index: 26;
+  width: 224px;
+  background: rgba(11, 18, 31, 0.96);
+  border: 2px solid var(--gold-bright);
+  border-radius: 8px;
+  padding: 7px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.85), 0 0 16px rgba(250, 204, 21, 0.28);
+  pointer-events: auto;
+  display: none;
+  backdrop-filter: blur(4px);
+  animation: lootPopupIn 0.12s ease-out;
+}
+
+@keyframes lootPopupIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateX(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateX(0);
+  }
+}
+
+#world-loot-popup.white-bag-active {
+  border-color: #22d3ee;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.9), 0 0 22px rgba(34, 211, 238, 0.55);
+}
+
+#world-loot-popup::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 42px;
+  width: 12px;
+  height: 12px;
+  background: rgba(11, 18, 31, 0.96);
+  border-left: 2px solid inherit;
+  border-bottom: 2px solid inherit;
+  transform: rotate(45deg);
+}
+
+#world-loot-popup.flip-left::before {
+  left: auto;
+  right: -8px;
+  border-left: none;
+  border-bottom: none;
+  border-right: 2px solid inherit;
+  border-top: 2px solid inherit;
+}
+
+.world-loot-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+#world-loot-title {
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--gold-bright);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#world-loot-take-all {
+  background: rgba(234, 179, 8, 0.18);
+  border: 1px solid rgba(250, 204, 21, 0.55);
+  color: #fde047;
+  font-size: 9.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+#world-loot-take-all:hover {
+  background: rgba(234, 179, 8, 0.35);
+  border-color: #fde047;
+}
+
+.world-loot-hint {
+  margin-top: 5px;
+  font-size: 9px;
+  color: #94a3b8;
+  text-align: center;
+  font-weight: 600;
 }
 
 /* Nearby MMO Players / Teleport List */
@@ -566,6 +664,16 @@ html, body {
 
       <!-- INTERACT PROMPT BANNER -->
       <div id="interact-banner">Speak with High Elder Vaelen [E]</div>
+
+      <!-- AUTO-OPENING / AUTO-CLOSING FLOATING LOOT CHEST POPUP NEXT TO CHEST -->
+      <div id="world-loot-popup" aria-live="polite">
+        <div class="world-loot-header">
+          <span id="world-loot-title">Loot Chest</span>
+          <button id="world-loot-take-all" type="button" title="Loot or Drink All Items">Loot All</button>
+        </div>
+        <div id="world-loot-grid" class="item-grid-4"></div>
+        <div class="world-loot-hint">Click item to loot/drink • Auto-closes when moving away</div>
+      </div>
 
       <!-- BOTTOM-LEFT MMO CHAT & CALLOUTS -->
       <aside id="bottom-left-chat" aria-label="MMO Realm Chat">
@@ -2962,13 +3070,28 @@ function drawProp(ctx, prop, screenX, screenY, time) {
     case 'chest':
     case 'vault_chest': {
       const isVault = prop.type === 'vault_chest';
-      ctx.fillStyle = isVault ? '#1e3a8a' : (prop.opened ? '#451a03' : '#92400e');
-      ctx.fillRect(-14, -10, 28, 20);
-      ctx.strokeStyle = '#facc15';
-      ctx.lineWidth = 2.5;
-      ctx.strokeRect(-14, -10, 28, 20);
-      ctx.fillStyle = '#fde047';
-      ctx.fillRect(-3, -2, 6, 6);
+      if (!isVault && prop.opened) {
+        // Open Treasure Chest (raised lid + glowing interior)
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(-14, -14, 28, 8);
+        ctx.strokeStyle = '#facc15';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-14, -14, 28, 8);
+
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(-14, -5, 28, 15);
+        ctx.fillStyle = 'rgba(250, 204, 21, 0.35)';
+        ctx.fillRect(-11, -5, 22, 6);
+        ctx.strokeRect(-14, -5, 28, 15);
+      } else {
+        ctx.fillStyle = isVault ? '#1e3a8a' : '#92400e';
+        ctx.fillRect(-14, -10, 28, 20);
+        ctx.strokeStyle = '#facc15';
+        ctx.lineWidth = 2.5;
+        ctx.strokeRect(-14, -10, 28, 20);
+        ctx.fillStyle = '#fde047';
+        ctx.fillRect(-3, -2, 6, 6);
+      }
       if (isVault) {
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 10px monospace';
@@ -2997,22 +3120,32 @@ function drawProp(ctx, prop, screenX, screenY, time) {
 }
 
 // ============================================================================
-// RENDER LOOT BAGS (Including White Bag with Cyan Ribbon!)
+// RENDER LOOT CHESTS & BAGS (Auto-Opens When Player Moves Near!)
 // ============================================================================
-function drawLootBag(ctx, bag, screenX, screenY, time) {
+function drawLootBag(ctx, bag, screenX, screenY, time, isOpen = false) {
   const meta = BAG_TYPES[bag.bagType] || BAG_TYPES[0];
-  const bob = Math.sin(time * 5 + bag.x) * 2.5;
+  const bob = isOpen ? 0 : Math.sin(time * 5 + bag.x) * 2.2;
 
   ctx.save();
   ctx.translate(screenX, screenY + bob);
 
-  if (bag.bagType >= 4) {
-    const grad = ctx.createRadialGradient(0, 0, 2, 0, 0, bag.bagType === 6 ? 32 : 22);
+  if (isOpen) {
+    // Pulsing proximity ring indicating auto-opened chest popup
+    ctx.strokeStyle = bag.bagType === 6 ? '#22d3ee' : meta.ribbon;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 2, 18 + Math.sin(time * 8) * 2, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  if (bag.bagType >= 4 || isOpen) {
+    const rad = bag.bagType === 6 ? 34 : 24;
+    const grad = ctx.createRadialGradient(0, 0, 2, 0, 0, rad);
     grad.addColorStop(0, meta.glow);
     grad.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = grad;
     ctx.beginPath();
-    ctx.arc(0, 0, bag.bagType === 6 ? 32 : 22, 0, Math.PI * 2);
+    ctx.arc(0, 0, rad, 0, Math.PI * 2);
     ctx.fill();
 
     if (bag.bagType === 6) {
@@ -3021,37 +3154,62 @@ function drawLootBag(ctx, bag, screenX, screenY, time) {
     }
   }
 
+  // Chest / Bag Base Body
   ctx.fillStyle = meta.color;
   ctx.strokeStyle = '#0f172a';
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.arc(0, 3, 11, 0, Math.PI * 2);
+  ctx.roundRect(-12, -3, 24, 15, 4);
   ctx.fill();
   ctx.stroke();
 
-  ctx.fillStyle = meta.color;
-  ctx.beginPath();
-  ctx.moveTo(-6, -10);
-  ctx.lineTo(6, -10);
-  ctx.lineTo(4, -3);
-  ctx.lineTo(-4, -3);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
+  if (isOpen) {
+    // Open Chest Lid (tilted up) + glowing loot interior
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(-10, -3, 20, 5);
+    ctx.fillStyle = bag.bagType === 6 ? '#22d3ee' : '#fde047';
+    ctx.beginPath();
+    ctx.arc(-4, -1, 3, 0, Math.PI * 2);
+    ctx.arc(4, -1, 3, 0, Math.PI * 2);
+    ctx.fill();
 
-  ctx.fillStyle = meta.ribbon;
-  ctx.fillRect(-6, -5, 12, 3.5);
+    ctx.fillStyle = meta.color;
+    ctx.beginPath();
+    ctx.roundRect(-12, -13, 24, 7, [4, 4, 1, 1]);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = meta.ribbon;
+    ctx.fillRect(-12, -9, 24, 2.5);
+  } else {
+    // Closed Chest Lid + Ribbon Band + Clasp
+    ctx.fillStyle = meta.color;
+    ctx.beginPath();
+    ctx.roundRect(-12, -9, 24, 7, [4, 4, 1, 1]);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = meta.ribbon;
+    ctx.fillRect(-12, -3, 24, 3);
+    ctx.fillRect(-3, -9, 6, 18);
+
+    ctx.fillStyle = '#fde047';
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = 1.2;
+    ctx.fillRect(-3, -4, 6, 6);
+    ctx.strokeRect(-3, -4, 6, 6);
+  }
 
   if (bag.bagType === 6) {
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 10px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('★ WHITE BAG ★', 0, -16);
+    ctx.fillText('★ WHITE CHEST ★', 0, -18);
   } else if (bag.bagType === 4) {
     ctx.fillStyle = '#93c5fd';
     ctx.font = 'bold 9px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('POTION', 0, -14);
+    ctx.fillText('POTION', 0, -16);
   }
 
   ctx.restore();
@@ -4457,7 +4615,7 @@ class GameEngine {
     this.player.secretsFound++;
     this.account.sunshards += 50;
     this.saveAccount();
-    this.spawnLootBag(prop.x, prop.y + 0.6, prop.loot || ['pot_def', 'pot_spd']);
+    this.spawnLootBag(prop.x, prop.y, prop.loot || ['pot_def', 'pot_spd'], { isChest: true });
     this.spawnFloatingText(prop.x, prop.y - 0.8, 'TREASURE CHEST OPENED! (+50 Sunshards)', '#facc15', 14);
   }
 
@@ -4601,7 +4759,7 @@ class GameEngine {
     }
   }
 
-  spawnLootBag(x, y, itemIds) {
+  spawnLootBag(x, y, itemIds, options = {}) {
     if (!itemIds || itemIds.length === 0) return;
     let highestBagType = 0;
     for (const id of itemIds) {
@@ -4616,6 +4774,7 @@ class GameEngine {
       x,
       y,
       bagType: highestBagType,
+      isChest: Boolean(options.isChest),
       items: [...itemIds],
       timer: 90
     });
@@ -4653,6 +4812,21 @@ class GameEngine {
         const cls = CLASSES[p.classId];
         const st = item.stat;
         if (p.baseStats[st] >= cls.maxStats[st]) {
+          // If looting from a ground chest/bag and stat is already maxed, store in backpack if space permits!
+          if (sourceType === 'bag' && bagObj) {
+            const emptyIdx = p.inventory.findIndex(x => !x);
+            if (emptyIdx !== -1) {
+              p.inventory[emptyIdx] = itemId;
+              bagObj.items.splice(slotIndex, 1);
+              if (bagObj.items.length === 0) {
+                const bIdx = this.lootBags.indexOf(bagObj);
+                if (bIdx !== -1) this.lootBags.splice(bIdx, 1);
+              }
+              sound.playSfx('rupee');
+              if (this.ui && this.ui.onStatsChanged) this.ui.onStatsChanged();
+              return true;
+            }
+          }
           this.spawnFloatingText(p.x, p.y - 0.8, `${st.toUpperCase()} ALREADY MAXED!`, '#fde047', 13);
           this.addChatMessage('SYSTEM', `Your ${st.toUpperCase()} is already maxed! Store extra potions in your Sanctuary Vault.`, '#fde047');
           return false;
@@ -4740,6 +4914,46 @@ class GameEngine {
     this.recalcPlayerStats(false);
     sound.playSfx('rupee');
     return true;
+  }
+
+  lootAllFromBag(bagObj) {
+    const p = this.player;
+    if (!p || p.dead || !bagObj || !bagObj.items) return 0;
+    let looted = 0;
+    for (let i = bagObj.items.length - 1; i >= 0; i--) {
+      const itemId = bagObj.items[i];
+      const item = ITEMS[itemId];
+      if (!item) continue;
+      if (item.slot === 'consumable') {
+        if (this.useOrEquipItem('bag', i, bagObj)) {
+          looted++;
+        }
+      } else {
+        // Put equipment into backpack first if space is available, otherwise equip if compatible
+        const emptyIdx = p.inventory.findIndex(x => !x);
+        if (emptyIdx !== -1) {
+          p.inventory[emptyIdx] = itemId;
+          bagObj.items.splice(i, 1);
+          looted++;
+        } else if (canClassEquip(p.classId, item) && !p.equipment[item.slot]) {
+          p.equipment[item.slot] = itemId;
+          bagObj.items.splice(i, 1);
+          this.recalcPlayerStats(false);
+          looted++;
+        }
+      }
+    }
+    if (bagObj.items.length === 0) {
+      const bIdx = this.lootBags.indexOf(bagObj);
+      if (bIdx !== -1) this.lootBags.splice(bIdx, 1);
+    }
+    if (looted > 0) {
+      sound.playSfx('rupee');
+      if (this.ui && this.ui.onStatsChanged) this.ui.onStatsChanged();
+    } else if (bagObj.items.length > 0) {
+      this.spawnFloatingText(p.x, p.y - 0.7, 'BACKPACK FULL!', '#ef4444', 12);
+    }
+    return looted;
   }
 
   // ==========================================================================
@@ -5464,6 +5678,15 @@ class GameEngine {
       }
     }
 
+    // Auto-open nearby world Treasure Chests as the player moves near them!
+    if (p && !p.dead && this.currentMap && this.currentMap.props) {
+      for (const prop of this.currentMap.props) {
+        if (prop.type === 'chest' && !prop.opened && Math.hypot(prop.x - p.x, prop.y - p.y) <= 2.15) {
+          this.openTreasureChest(prop);
+        }
+      }
+    }
+
     for (let i = this.lootBags.length - 1; i >= 0; i--) {
       const bag = this.lootBags[i];
       bag.timer -= dt;
@@ -5524,7 +5747,7 @@ class GameEngine {
   getNearestBag() {
     if (!this.player) return null;
     let best = null;
-    let bestD = 1.65;
+    let bestD = 2.25;
     for (const bag of this.lootBags) {
       const d = Math.hypot(bag.x - this.player.x, bag.y - this.player.y);
       if (d < bestD) {
@@ -5719,11 +5942,12 @@ class GameEngine {
       ctx.restore();
     }
 
-    // 6. Draw RotMG Loot Bags
+    // 6. Draw Loot Chests & Bags (Visually open when player is near!)
+    const nearestBag = this.getNearestBag();
     for (const bag of this.lootBags) {
       const sx = bag.x * TILE_SIZE - camX;
       const sy = bag.y * TILE_SIZE - camY;
-      drawLootBag(ctx, bag, sx, sy, this.time);
+      drawLootBag(ctx, bag, sx, sy, this.time, bag === nearestBag);
     }
 
     // 7. Draw AI MMO Players & Remote WebSocket Players
@@ -6118,6 +6342,19 @@ class HudController {
         this.game.interactWithNearest();
       });
     }
+
+    const takeAllBtn = document.getElementById('world-loot-take-all');
+    if (takeAllBtn) {
+      takeAllBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const bag = this.game.getNearestBag();
+        if (bag) {
+          this.game.lootAllFromBag(bag);
+          this.lastBagSignature = '';
+          this.updateGroundBagPanel();
+        }
+      });
+    }
   }
 
   bindTopBarButtons() {
@@ -6361,16 +6598,47 @@ class HudController {
     const bagSection = document.getElementById('loot-bag-section');
     const bagGrid = document.getElementById('loot-bag-grid');
     const bagTitle = document.getElementById('loot-bag-title');
-    if (!bagSection || !bagGrid) return;
+    const worldPopup = document.getElementById('world-loot-popup');
+    const worldGrid = document.getElementById('world-loot-grid');
+    const worldTitle = document.getElementById('world-loot-title');
 
     const bag = this.game.getNearestBag();
     if (!bag) {
       if (this.activeBagId !== null) {
         this.activeBagId = null;
         this.lastBagSignature = '';
-        bagSection.style.display = 'none';
+        if (bagSection) bagSection.style.display = 'none';
+        if (worldPopup) worldPopup.style.display = 'none';
       }
       return;
+    }
+
+    const meta = BAG_TYPES[bag.bagType] || BAG_TYPES[0];
+    const chestLabel = bag.isChest ? `Treasure Chest (${meta.name})` : meta.name.replace('Bag', 'Chest');
+
+    // Position the floating popup right next to the chest/bag in screen space every frame!
+    if (worldPopup && this.game.player && this.game.canvas) {
+      const p = this.game.player;
+      const cw = this.game.canvas.width || 960;
+      const ch = this.game.canvas.height || 640;
+      const screenX = (bag.x - p.x) * TILE_SIZE + cw / 2;
+      const screenY = (bag.y - p.y) * TILE_SIZE + ch / 2;
+
+      const popupWidth = 224;
+      const popupHeight = bag.items.length > 4 ? 170 : 114;
+      const flipLeft = screenX + 24 + popupWidth > cw - 12;
+      const rawLeft = flipLeft ? screenX - popupWidth - 24 : screenX + 24;
+      const rawTop = screenY - 48;
+
+      const clampedLeft = Math.max(12, Math.min(cw - popupWidth - 12, Math.round(rawLeft)));
+      const clampedTop = Math.max(54, Math.min(ch - popupHeight - 12, Math.round(rawTop)));
+
+      worldPopup.style.display = 'block';
+      worldPopup.style.left = `${clampedLeft}px`;
+      worldPopup.style.top = `${clampedTop}px`;
+      worldPopup.style.borderColor = bag.bagType === 6 ? '#22d3ee' : meta.color;
+      worldPopup.classList.toggle('flip-left', flipLeft);
+      worldPopup.classList.toggle('white-bag-active', bag.bagType === 6);
     }
 
     const sig = `${bag.id}_${bag.items.join(',')}`;
@@ -6378,20 +6646,27 @@ class HudController {
     this.lastBagSignature = sig;
     this.activeBagId = bag.id;
 
-    const meta = BAG_TYPES[bag.bagType] || BAG_TYPES[0];
-    bagSection.style.display = 'block';
-    bagSection.classList.toggle('white-bag-active', bag.bagType === 6);
-    bagTitle.textContent = `${meta.name} (Click to Loot/Drink)`;
-    bagTitle.style.color = bag.bagType === 6 ? '#22d3ee' : meta.color;
-
     const padded = [...bag.items];
     while (padded.length < 4) padded.push(null);
-
-    bagGrid.innerHTML = padded.slice(0, 8).map((itemId, idx) => {
+    const slotsHtml = padded.slice(0, 8).map((itemId, idx) => {
       return this.renderSlotHtml(itemId, '', 'bag', idx);
     }).join('');
 
-    this.bindSlotEvents(bagGrid, 'bag', bag);
+    if (worldTitle && worldGrid) {
+      worldTitle.textContent = chestLabel;
+      worldTitle.style.color = bag.bagType === 6 ? '#22d3ee' : meta.color;
+      worldGrid.innerHTML = slotsHtml;
+      this.bindSlotEvents(worldGrid, 'bag', bag);
+    }
+
+    if (bagSection && bagGrid && bagTitle) {
+      bagSection.style.display = 'block';
+      bagSection.classList.toggle('white-bag-active', bag.bagType === 6);
+      bagTitle.textContent = `${chestLabel} (Click to Loot)`;
+      bagTitle.style.color = bag.bagType === 6 ? '#22d3ee' : meta.color;
+      bagGrid.innerHTML = slotsHtml;
+      this.bindSlotEvents(bagGrid, 'bag', bag);
+    }
   }
 
   // ==========================================================================

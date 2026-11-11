@@ -4,7 +4,7 @@
 
 import { CLASSES, STAT_NAMES, STAT_LABELS, getStarRankColor, CREST_SHARDS, ELDER_LORE_CHAPTERS } from '../data/classes.js';
 import { ITEMS, BAG_TYPES } from '../data/items.js';
-import { TILES } from '../data/worldgen.js';
+import { TILES, TILE_SIZE } from '../data/worldgen.js';
 import { getItemIconDataUrl } from '../graphics/sprites.js';
 import { sound } from '../audio/sound.js';
 
@@ -158,6 +158,19 @@ export class HudController {
     if (interactBanner) {
       interactBanner.addEventListener('click', () => {
         this.game.interactWithNearest();
+      });
+    }
+
+    const takeAllBtn = document.getElementById('world-loot-take-all');
+    if (takeAllBtn) {
+      takeAllBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const bag = this.game.getNearestBag();
+        if (bag) {
+          this.game.lootAllFromBag(bag);
+          this.lastBagSignature = '';
+          this.updateGroundBagPanel();
+        }
       });
     }
   }
@@ -403,16 +416,47 @@ export class HudController {
     const bagSection = document.getElementById('loot-bag-section');
     const bagGrid = document.getElementById('loot-bag-grid');
     const bagTitle = document.getElementById('loot-bag-title');
-    if (!bagSection || !bagGrid) return;
+    const worldPopup = document.getElementById('world-loot-popup');
+    const worldGrid = document.getElementById('world-loot-grid');
+    const worldTitle = document.getElementById('world-loot-title');
 
     const bag = this.game.getNearestBag();
     if (!bag) {
       if (this.activeBagId !== null) {
         this.activeBagId = null;
         this.lastBagSignature = '';
-        bagSection.style.display = 'none';
+        if (bagSection) bagSection.style.display = 'none';
+        if (worldPopup) worldPopup.style.display = 'none';
       }
       return;
+    }
+
+    const meta = BAG_TYPES[bag.bagType] || BAG_TYPES[0];
+    const chestLabel = bag.isChest ? `Treasure Chest (${meta.name})` : meta.name.replace('Bag', 'Chest');
+
+    // Position the floating popup right next to the chest/bag in screen space every frame!
+    if (worldPopup && this.game.player && this.game.canvas) {
+      const p = this.game.player;
+      const cw = this.game.canvas.width || 960;
+      const ch = this.game.canvas.height || 640;
+      const screenX = (bag.x - p.x) * TILE_SIZE + cw / 2;
+      const screenY = (bag.y - p.y) * TILE_SIZE + ch / 2;
+
+      const popupWidth = 224;
+      const popupHeight = bag.items.length > 4 ? 170 : 114;
+      const flipLeft = screenX + 24 + popupWidth > cw - 12;
+      const rawLeft = flipLeft ? screenX - popupWidth - 24 : screenX + 24;
+      const rawTop = screenY - 48;
+
+      const clampedLeft = Math.max(12, Math.min(cw - popupWidth - 12, Math.round(rawLeft)));
+      const clampedTop = Math.max(54, Math.min(ch - popupHeight - 12, Math.round(rawTop)));
+
+      worldPopup.style.display = 'block';
+      worldPopup.style.left = `${clampedLeft}px`;
+      worldPopup.style.top = `${clampedTop}px`;
+      worldPopup.style.borderColor = bag.bagType === 6 ? '#22d3ee' : meta.color;
+      worldPopup.classList.toggle('flip-left', flipLeft);
+      worldPopup.classList.toggle('white-bag-active', bag.bagType === 6);
     }
 
     const sig = `${bag.id}_${bag.items.join(',')}`;
@@ -420,20 +464,27 @@ export class HudController {
     this.lastBagSignature = sig;
     this.activeBagId = bag.id;
 
-    const meta = BAG_TYPES[bag.bagType] || BAG_TYPES[0];
-    bagSection.style.display = 'block';
-    bagSection.classList.toggle('white-bag-active', bag.bagType === 6);
-    bagTitle.textContent = `${meta.name} (Click to Loot/Drink)`;
-    bagTitle.style.color = bag.bagType === 6 ? '#22d3ee' : meta.color;
-
     const padded = [...bag.items];
     while (padded.length < 4) padded.push(null);
-
-    bagGrid.innerHTML = padded.slice(0, 8).map((itemId, idx) => {
+    const slotsHtml = padded.slice(0, 8).map((itemId, idx) => {
       return this.renderSlotHtml(itemId, '', 'bag', idx);
     }).join('');
 
-    this.bindSlotEvents(bagGrid, 'bag', bag);
+    if (worldTitle && worldGrid) {
+      worldTitle.textContent = chestLabel;
+      worldTitle.style.color = bag.bagType === 6 ? '#22d3ee' : meta.color;
+      worldGrid.innerHTML = slotsHtml;
+      this.bindSlotEvents(worldGrid, 'bag', bag);
+    }
+
+    if (bagSection && bagGrid && bagTitle) {
+      bagSection.style.display = 'block';
+      bagSection.classList.toggle('white-bag-active', bag.bagType === 6);
+      bagTitle.textContent = `${chestLabel} (Click to Loot)`;
+      bagTitle.style.color = bag.bagType === 6 ? '#22d3ee' : meta.color;
+      bagGrid.innerHTML = slotsHtml;
+      this.bindSlotEvents(bagGrid, 'bag', bag);
+    }
   }
 
   // ==========================================================================

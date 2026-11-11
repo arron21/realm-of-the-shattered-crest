@@ -7,3 +7,6 @@ node_modules/
 .gitconfig
 .gemini
 arron21/
+
+upload/
+image*.png

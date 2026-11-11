@@ -95,6 +95,16 @@ ${css}
       <!-- INTERACT PROMPT BANNER -->
       <div id="interact-banner">Speak with High Elder Vaelen [E]</div>
 
+      <!-- AUTO-OPENING / AUTO-CLOSING FLOATING LOOT CHEST POPUP NEXT TO CHEST -->
+      <div id="world-loot-popup" aria-live="polite">
+        <div class="world-loot-header">
+          <span id="world-loot-title">Loot Chest</span>
+          <button id="world-loot-take-all" type="button" title="Loot or Drink All Items">Loot All</button>
+        </div>
+        <div id="world-loot-grid" class="item-grid-4"></div>
+        <div class="world-loot-hint">Click item to loot/drink • Auto-closes when moving away</div>
+      </div>
+
       <!-- BOTTOM-LEFT MMO CHAT & CALLOUTS -->
       <aside id="bottom-left-chat" aria-label="MMO Realm Chat">
         <div id="chat-messages"></div>
