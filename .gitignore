@@ -2,3 +2,8 @@ node_modules/
 .vercel/
 .DS_Store
 *.log
+.bash*
+.profile
+.gitconfig
+.gemini
+arron21/
