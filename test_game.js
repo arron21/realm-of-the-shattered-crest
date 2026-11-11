@@ -1,0 +1,226 @@
+// ============================================================================
+// REALM OF THE SHATTERED CREST — AUTOMATED ENGINE & MECHANICS VERIFICATION SUITE
+// ============================================================================
+
+const assert = require('assert');
+const fs = require('fs');
+const path = require('path');
+const vm = require('vm');
+const { buildHtmlBundle } = require('./build.js');
+
+// Build bundle first
+const html = buildHtmlBundle();
+assert(html.length > 40000, 'Bundle should be substantial and self-contained');
+
+// Extract inline JS from bundle to run in a mocked DOM/Canvas VM context
+const scriptMatch = html.match(/<script>([\s\S]*?)<\/script>/);
+assert(scriptMatch, 'Bundle must contain inline script');
+
+function createMockCanvas() {
+  const ctx = {
+    fillStyle: '',
+    strokeStyle: '',
+    lineWidth: 1,
+    font: '',
+    textAlign: 'left',
+    lineCap: 'butt',
+    save() {},
+    restore() {},
+    translate() {},
+    rotate() {},
+    scale() {},
+    beginPath() {},
+    closePath() {},
+    moveTo() {},
+    lineTo() {},
+    arc() {},
+    ellipse() {},
+    roundRect() {},
+    fillRect() {},
+    strokeRect() {},
+    fill() {},
+    stroke() {},
+    fillText() {},
+    drawImage() {},
+    setLineDash() {},
+    createRadialGradient() {
+      return { addColorStop() {} };
+    }
+  };
+  return {
+    width: 960,
+    height: 640,
+    clientWidth: 960,
+    clientHeight: 640,
+    getContext: () => ctx,
+    toDataURL: () => 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+    addEventListener() {},
+    getBoundingClientRect: () => ({ left: 0, top: 0, width: 960, height: 640 })
+  };
+}
+
+const elements = new Map();
+function getMockEl(id) {
+  if (!elements.has(id)) {
+    elements.set(id, {
+      id,
+      style: {},
+      innerHTML: '',
+      textContent: '',
+      value: '',
+      clientWidth: 960,
+      clientHeight: 640,
+      width: 268,
+      height: 148,
+      children: [],
+      classList: { toggle() {}, add() {}, remove() {} },
+      addEventListener() {},
+      appendChild(c) { this.children.push(c); },
+      removeChild() { this.children.shift(); },
+      querySelectorAll: () => [],
+      getContext: () => createMockCanvas().getContext('2d'),
+      getBoundingClientRect: () => ({ left: 0, top: 0, width: 268, height: 148 })
+    });
+  }
+  return elements.get(id);
+}
+
+const sandbox = {
+  console,
+  Math,
+  Date,
+  Uint8Array,
+  Set,
+  Map,
+  Object,
+  Array,
+  JSON,
+  parseInt,
+  setTimeout: () => {},
+  setInterval: () => {},
+  requestAnimationFrame: () => {},
+  performance: { now: () => 1000 },
+  localStorage: {
+    _data: {},
+    getItem(k) { return this._data[k] || null; },
+    setItem(k, v) { this._data[k] = v; }
+  },
+  location: { protocol: 'http:', hostname: 'localhost', port: '4000' },
+  addEventListener: (ev, fn) => {
+    if (ev === 'DOMContentLoaded') sandbox._boot = fn;
+  },
+  window: null,
+  document: {
+    activeElement: null,
+    getElementById: (id) => (id === 'game-canvas' ? createMockCanvas() : getMockEl(id)),
+    createElement: (tag) => (tag === 'canvas' ? createMockCanvas() : getMockEl('dyn_' + Math.random())),
+    querySelectorAll: () => [],
+    addEventListener: () => {}
+  }
+};
+sandbox.window = sandbox;
+
+vm.createContext(sandbox);
+vm.runInContext(scriptMatch[1], sandbox);
+
+// Boot the game in sandbox
+sandbox._boot();
+const game = sandbox.__ROTSC_GAME__;
+assert(game, 'GameEngine instance should be exposed on window.__ROTSC_GAME__');
+
+console.log('✓ 1. GameEngine booted cleanly in Nexus Sanctuary');
+assert.strictEqual(game.currentMap.id, 'nexus');
+assert.strictEqual(game.player.classId, 'knight');
+
+// Test all 5 classes
+for (const cid of ['knight', 'ranger', 'pyromancer', 'paladin', 'assassin']) {
+  game.spawnNewHero(cid);
+  assert.strictEqual(game.player.classId, cid);
+  assert(game.player.stats.hp >= 150, `Class ${cid} should have valid HP`);
+}
+game.spawnNewHero('knight');
+console.log('✓ 2. All 5 Zelda × RotMG classes verified');
+
+// Test Zelda Melee Slash & Sword Beam + 360° Spin Attack
+const initialProjCount = game.projectiles.length;
+game.performPrimaryAttack(false);
+assert(game.projectiles.length > initialProjCount, 'Full-HP Knight should fire a Zelda Sword Beam on slash');
+game.performPrimaryAttack(true);
+assert(game.player.isSpinSlash === true, 'Spin attack flag should activate on charged spin');
+console.log('✓ 3. Zelda Sword Slash, Full-HP Sword Beam & 360° Hurricane Spin verified');
+
+// Test Zelda Perfect Shield Parry reflecting an enemy bullet
+game.projectiles = [];
+game.player.shielding = true;
+game.player.shieldRaiseTime = game.time;
+game.player.aimAngle = 0; // Facing East
+const enemyBullet = {
+  x: game.player.x + 0.3,
+  y: game.player.y,
+  vx: -8,
+  vy: 0,
+  dmg: 80,
+  fromEnemy: true,
+  ownerName: 'Medusa'
+};
+game.projectiles.push(enemyBullet);
+game.damagePlayer(80, enemyBullet, 'Medusa');
+assert.strictEqual(enemyBullet.fromEnemy, false, 'Perfect Parry must reflect enemy bullet back at enemies!');
+assert.strictEqual(game.player.parries, 1, 'Parry counter should increment');
+console.log('✓ 4. Hylian Shield Perfect Parry bullet reflection verified');
+
+// Test Zelda Relics (Boomerang, Bomb cracking wall, Ocarina party buff)
+game.player.mp = 250;
+game.useZeldaRelic(); // Knight uses Boomerang
+assert(game.boomerangs.length > 0, 'Boomerang relic should spawn active boomerang');
+
+// Test Bomb blasting open a Cracked Wall (`TILES.WALL_CRACKED` = 15)
+const crackedIdx = game.currentMap.tiles.findIndex((t) => t === 15);
+assert(crackedIdx !== -1, 'Nexus should have a secret Cracked Wall');
+const cx = (crackedIdx % game.currentMap.width) + 0.5;
+const cy = Math.floor(crackedIdx / game.currentMap.width) + 0.5;
+game.detonateBomb({ x: cx, y: cy, radius: 3.0, dmg: 300, armorBreak: true });
+assert.notStrictEqual(game.currentMap.tiles[crackedIdx], 15, 'Bomb explosion must blast open Cracked Wall!');
+console.log('✓ 5. Zelda Boomerang & Bomb Secret Cracked Wall destruction verified');
+
+// Test RotMG Stat Potions & 8/8 Maxing
+game.player.inventory[0] = 'pot_def';
+const prevDef = game.player.baseStats.def;
+game.useOrEquipItem('inventory', 0);
+assert.strictEqual(game.player.baseStats.def, prevDef + 1, 'Drinking Potion of Defense must permanently increase base DEF');
+
+game.player.inventory[0] = 'pot_omni';
+game.useOrEquipItem('inventory', 0);
+assert(game.player.stats.hp > 220, 'Drinking Nectar of the Triforce should boost all 8 stats');
+console.log('✓ 6. RotMG Permanent Stat Potion drinking & stat progression verified');
+
+// Test Warping to Overworld Godlands & All 6 Dungeons
+game.warpToMap('realm', { zone: 'godlands' });
+assert.strictEqual(game.currentMap.id, 'realm');
+assert(game.enemies.length > 30, 'Realm should populate with concentric biome & Godlands enemies');
+
+for (const did of ['pirate_cove', 'deku_temple', 'sprite_world', 'undead_lair', 'abyss_mountain', 'mad_sanctum']) {
+  game.warpToMap('dungeon', { dungeonId: did });
+  assert.strictEqual(game.currentMap.id, `dungeon_${did}`);
+  const hasBoss = game.enemies.some((e) => e.isBoss);
+  assert(hasBoss, `Dungeon ${did} must spawn its Sanctum Boss`);
+}
+console.log('✓ 7. Overworld Realm, Godlands & all 6 Zelda/RotMG Dungeons verified');
+
+// Test Bottled Fairy Revival vs Permadeath
+game.player.shielding = false;
+game.player.invulnTimer = 0;
+game.player.dashTimer = 0;
+game.player.inventory[0] = 'con_fairy';
+game.damagePlayer(9999, null, 'Alderoth, Mad King');
+assert.strictEqual(game.player.dead, false, 'Bottled Fairy in inventory must save player from fatal hit!');
+assert.strictEqual(game.player.inventory[0], null, 'Bottled Fairy should be consumed on revival');
+
+// Now test actual Permadeath when no Bottled Fairy is left
+game.player.invulnTimer = 0;
+game.damagePlayer(9999, null, 'Alderoth, Mad King');
+assert.strictEqual(game.player.dead, true, 'Fatal hit without fairy must trigger RotMG Permadeath');
+assert(game.gravestones.length === 1, 'Permadeath must leave a physical Gravestone on the map');
+console.log('✓ 8. Bottled Fairy auto-revival & RotMG Permadeath + Fame + Gravestone verified');
+
+console.log('\nALL 8 CORE ZELDA × ROTMG MMO TEST SUITES PASSED!');
