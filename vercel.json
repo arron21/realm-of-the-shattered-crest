@@ -1,9 +1,6 @@
 {
   "version": 2,
+  "framework": null,
   "buildCommand": "npm run build",
-  "outputDirectory": "public",
-  "rewrites": [
-    { "source": "/health", "destination": "/api/health" },
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
+  "outputDirectory": "public"
 }
