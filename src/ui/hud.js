@@ -176,22 +176,6 @@ export class HudController {
   }
 
   bindTopBarButtons() {
-    document.getElementById('btn-warp-nexus').addEventListener('click', () => {
-      sound.playSfx('beam');
-      this.game.warpToMap('nexus');
-    });
-    document.getElementById('btn-warp-realm').addEventListener('click', () => {
-      sound.playSfx('beam');
-      this.game.warpToMap('realm', { zone: 'beach' });
-    });
-    document.getElementById('btn-warp-godlands').addEventListener('click', () => {
-      sound.playSfx('beam');
-      this.game.warpToMap('realm', { zone: 'godlands' });
-    });
-    document.getElementById('btn-warp-sanctum').addEventListener('click', () => {
-      sound.playSfx('secret');
-      this.game.warpToMap('dungeon', { dungeonId: 'mad_sanctum' });
-    });
     const elderBtn = document.getElementById('btn-open-elder');
     if (elderBtn) {
       elderBtn.addEventListener('click', () => {
@@ -204,19 +188,31 @@ export class HudController {
         this.openModal('elder');
       });
     }
-    document.getElementById('btn-open-classes').addEventListener('click', () => {
-      this.openModal('classes');
-    });
-    document.getElementById('btn-open-vault').addEventListener('click', () => {
-      this.openModal('vault');
-    });
-    document.getElementById('btn-open-forge').addEventListener('click', () => {
-      this.openModal('forge');
-    });
-    document.getElementById('btn-toggle-audio').addEventListener('click', (e) => {
-      sound.muted = !sound.muted;
-      e.currentTarget.textContent = sound.muted ? '🔇 Muted' : '🔊 Audio';
-    });
+    const classesBtn = document.getElementById('btn-open-classes');
+    if (classesBtn) {
+      classesBtn.addEventListener('click', () => {
+        this.openModal('classes');
+      });
+    }
+    const vaultBtn = document.getElementById('btn-open-vault');
+    if (vaultBtn) {
+      vaultBtn.addEventListener('click', () => {
+        this.openModal('vault');
+      });
+    }
+    const forgeBtn = document.getElementById('btn-open-forge');
+    if (forgeBtn) {
+      forgeBtn.addEventListener('click', () => {
+        this.openModal('forge');
+      });
+    }
+    const audioBtn = document.getElementById('btn-toggle-audio');
+    if (audioBtn) {
+      audioBtn.addEventListener('click', (e) => {
+        sound.muted = !sound.muted;
+        e.currentTarget.textContent = sound.muted ? '🔇 Muted' : '🔊 Audio';
+      });
+    }
   }
 
   // ==========================================================================
@@ -607,6 +603,10 @@ export class HudController {
   renderPartyList() {
     const listEl = document.getElementById('party-list');
     if (!listEl) return;
+    if (!this.game.aiPlayers || this.game.aiPlayers.length === 0) {
+      listEl.innerHTML = `<div style="font-size:10.5px;color:#94a3b8;padding:4px 2px;line-height:1.35;">Sanctuary Safe Haven — Walk north past High Elder Vaelen to enter a Realm or Sanctum Portal [E].</div>`;
+      return;
+    }
     listEl.innerHTML = this.game.aiPlayers.slice(0, 6).map((bot) => {
       return `<div class="party-row" data-bot-id="${bot.id}" title="Click to Teleport (TP) to ${bot.name}!">
         <span><strong style="color:#4ade80;">★${bot.stars}</strong> ${bot.name} <span style="color:#94a3b8;font-size:10px;">(${bot.maxedCount}/8)</span></span>
@@ -733,7 +733,7 @@ export class HudController {
     if (progressBanner) {
       progressBanner.innerHTML = restoredCount === 5
         ? `<span style="color:#22d3ee;font-weight:900;">★ THE HOLY CREST IS REFORGED (5/5 SHARDS)! All 5 Sacred Blessings Active — Storm the Citadel of Evil Bane! ★</span>`
-        : `<span style="color:#fde047;font-weight:800;">Holy Crest Reconstruction: ${restoredCount} / 5 Shards Restored</span> <span style="color:#94a3b8;font-size:11px;margin-left:8px;">(Defeat each Sanctum Guardian or click "Enter Sanctum" below to reclaim its shard!)</span>`;
+        : `<span style="color:#fde047;font-weight:800;">Holy Crest Reconstruction: ${restoredCount} / 5 Shards Restored</span> <span style="color:#94a3b8;font-size:11px;margin-left:8px;">(Walk north of High Elder Vaelen to enter each Sanctum Portal and reclaim its shard!)</span>`;
     }
 
     shardsGrid.innerHTML = CREST_SHARDS.map((shard) => {
@@ -758,22 +758,10 @@ export class HudController {
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;gap:6px;">
           <span style="font-size:10px;font-weight:800;color:#4ade80;">Blessing: ${shard.blessing}</span>
-          <button class="hud-btn elder-warp-btn" data-dungeon-id="${shard.dungeonId}" style="padding:3px 8px;font-size:10px;">
-            ⚔️ Enter Sanctum
-          </button>
+          <span style="font-size:10px;font-weight:700;color:#38bdf8;">📍 North Sanctuary Portal</span>
         </div>
       </div>`;
     }).join('');
-
-    shardsGrid.querySelectorAll('.elder-warp-btn').forEach((btn) => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const did = btn.getAttribute('data-dungeon-id');
-        this.closeAllModals();
-        sound.playSfx('beam');
-        this.game.warpToMap('dungeon', { dungeonId: did });
-      });
-    });
 
     loreContainer.innerHTML = ELDER_LORE_CHAPTERS.map((ch) => `
       <div style="background:rgba(9,14,23,0.78);border-left:3px solid #facc15;border-radius:6px;padding:10px 14px;margin-bottom:8px;">

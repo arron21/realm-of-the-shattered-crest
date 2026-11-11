@@ -516,7 +516,7 @@ export class GameEngine {
   // AI MMO PLAYERS (Roam, Fight, Buff Party, Call Out Dungeons & White Bags!)
   // ==========================================================================
   initAiPlayers() {
-    this.aiPlayers = BOT_NAMES.map((b, idx) => {
+    this.allAiPlayers = BOT_NAMES.map((b, idx) => {
       const cls = CLASSES[b.classId];
       return {
         id: `bot_${idx}`,
@@ -526,8 +526,8 @@ export class GameEngine {
         palette: { ...cls.palette },
         maxedCount: b.maxed,
         stars: b.stars,
-        x: this.nexusMap.spawnX + Math.cos(idx) * 4,
-        y: this.nexusMap.spawnY + Math.sin(idx) * 4,
+        x: 0,
+        y: 0,
         aimAngle: 0,
         slashTimer: 0,
         slashDuration: 0.18,
@@ -535,19 +535,23 @@ export class GameEngine {
         bladeColor: '#38bdf8',
         fireCooldown: 0.5 + Math.random(),
         chatCooldown: 8 + idx * 4,
-        zone: idx < 3 ? 'nexus' : idx < 8 ? 'godlands' : 'lowlands'
+        zone: idx < 8 ? 'godlands' : 'lowlands'
       };
     });
+    this.repositionAiPlayersForMap();
   }
 
   repositionAiPlayersForMap() {
     const m = this.currentMap;
+    if (!m || m.id === 'nexus') {
+      // No fake characters in the starting Sanctuary Hub!
+      this.aiPlayers = [];
+      return;
+    }
+
+    this.aiPlayers = [...(this.allAiPlayers || [])];
     this.aiPlayers.forEach((bot, idx) => {
-      if (m.id === 'nexus') {
-        const a = (idx / this.aiPlayers.length) * Math.PI * 2;
-        bot.x = 24 + Math.cos(a) * (3.5 + (idx % 3));
-        bot.y = 24 + Math.sin(a) * (3.5 + (idx % 3));
-      } else if (m.id === 'realm') {
+      if (m.id === 'realm') {
         if (idx < 7) {
           // Godlands train party!
           bot.x = m.cx + Math.cos(idx) * 12;

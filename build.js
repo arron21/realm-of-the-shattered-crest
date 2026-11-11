@@ -79,13 +79,9 @@ ${css}
         </div>
       </div>
 
-      <!-- TOP-CENTER ACTION & INSTANT WARP BAR -->
-      <nav id="top-action-bar" aria-label="Realm Navigation and Modals">
-        <button id="btn-warp-nexus" class="hud-btn" title="Instant Warp to Radiant Sanctuary Hub (Hotkey: R)">🏛️ Sanctuary [R]</button>
+      <!-- TOP-CENTER ACTION BAR (MODALS & AUDIO) -->
+      <nav id="top-action-bar" aria-label="Sanctuary Modals and Audio">
         <button id="btn-open-elder" class="hud-btn primary-gold" title="Speak with High Elder Vaelen — Lore & Holy Crest Shards (Hotkey: L)">📜 Elder &amp; Lore</button>
-        <button id="btn-warp-realm" class="hud-btn" title="Enter Sunlit Haven Shore in the Overworld Realm">🏝️ Realm Shore</button>
-        <button id="btn-warp-godlands" class="hud-btn" title="Warp directly to Level 20 Blighted Godlands!">⚔️ Godlands (Lvl 20)</button>
-        <button id="btn-warp-sanctum" class="hud-btn danger-crimson" title="Challenge Malakor, the Evil Bane in his Citadel!">👑 Evil Bane Raid</button>
         <button id="btn-open-classes" class="hud-btn" title="Switch or Inspect 5 Hero Classes">🛡️ Classes (5)</button>
         <button id="btn-open-vault" class="hud-btn" title="Open Persistent Account Vault & Potion Storage">📦 Vault</button>
         <button id="btn-open-forge" class="hud-btn" title="Craft Stat Potions & Legendary UT White Bag Relics">⚒️ Forge</button>

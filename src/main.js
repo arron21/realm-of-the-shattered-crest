@@ -32,7 +32,7 @@ export function bootGame() {
   // Flush initial welcome chat messages & Elder Vaelen lore callout
   game.addChatMessage('SANCTUARY', 'Welcome to Realm of the Shattered Crest! A bullet-hell MMO Action RPG of classic top-down exploration and permadeath.', '#fde047');
   game.addChatMessage('HIGH ELDER VAELEN', '"Hero! Walk up to me in the Sanctuary Hub and press [E] (or click 📜 Elder & Lore) to learn how the Holy Crest that held back Malakor, the Evil Bane was shattered into 5 Shards!"', '#38bdf8');
-  game.addChatMessage('VaelenGuard', 'Blight Gods train active in the Blighted Godlands! Click TP next to my name to join!', '#4ade80', game.aiPlayers[0]);
+  game.addChatMessage('SANCTUARY', 'Walk north past High Elder Vaelen and press [E] at any Portal to enter the Realm or the 5 Sanctum Dungeons.', '#4ade80');
 
   window.__ROTSC_GAME__ = game;
   window.__ROTSC_HUD__ = hud;

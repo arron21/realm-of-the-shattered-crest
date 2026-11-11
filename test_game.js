@@ -135,7 +135,12 @@ assert(hud, 'HudController instance should be exposed on window.__ROTSC_HUD__');
 
 assert.strictEqual(game.currentMap.id, 'nexus');
 assert.strictEqual(game.player.classId, 'knight');
-console.log('✓ 2. GameEngine booted cleanly in The Radiant Sanctuary Hub');
+assert.strictEqual(game.aiPlayers.length, 0, 'Starting area (nexus) must have zero fake AI characters');
+assert(
+  !/btn-warp-nexus|btn-warp-realm|btn-warp-godlands|btn-warp-sanctum|elder-warp-btn/.test(html),
+  'Top action bar and Elder menu must not contain automatic teleport buttons'
+);
+console.log('✓ 2. GameEngine booted cleanly in The Radiant Sanctuary Hub (zero fake characters, no menu auto-teleport)');
 
 // Verify High Elder Vaelen NPC in the Sanctuary Hub & Lore Chapters
 const elderProp = game.currentMap.props.find((p) => p.type === 'elder_npc');
