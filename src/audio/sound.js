@@ -1,5 +1,5 @@
 // ============================================================================
-// REALM OF THE SHATTERED CREST — WEBAUDIO 16-BIT ZELDA & ROTMG SOUND ENGINE
+// REALM OF THE SHATTERED CREST — WEBAUDIO 16-BIT CHIPTUNE SOUND ENGINE
 // ============================================================================
 
 class SoundEngine {
@@ -92,13 +92,13 @@ class SoundEngine {
         this.playTone(75, 'square', 0.32, 0.02, 0.4, 24);
         break;
       case 'ocarina':
-        // Sacred Ocarina Triad (D5 - F#5 - A5 - D6)
+        // Sacred Warhorn Triad (D5 - F#5 - A5 - D6)
         [587.33, 739.99, 880.0, 1174.66].forEach((f, idx) => {
           this.playTone(f, 'sine', 0.22, idx * 0.08, 0.32);
         });
         break;
       case 'secret':
-        // Iconic 8-note Zelda Secret Discovered Jingle!
+        // 8-note Secret Passage Discovered Jingle!
         [783.99, 739.99, 622.25, 440.0, 415.3, 659.25, 830.61, 1046.5].forEach((f, idx) => {
           this.playTone(f, 'triangle', 0.13, idx * 0.10, 0.34);
         });

@@ -1,29 +1,29 @@
 // ============================================================================
-// REALM OF THE SHATTERED CREST — CORE 60FPS ZELDA + ROTMG MMO ENGINE
+// REALM OF THE SHATTERED CREST — CORE 60FPS TOP-DOWN ACTION-ADVENTURE MMO ENGINE
 // ============================================================================
 
-import { CLASSES, STAT_NAMES, STAR_THRESHOLDS, getStarRankColor } from '../data/classes.js';
+import { CLASSES, STAT_NAMES, STAR_THRESHOLDS, getStarRankColor, CREST_SHARDS } from '../data/classes.js';
 import { ITEMS, BAG_TYPES, canClassEquip } from '../data/items.js';
 import { ENEMIES } from '../data/enemies.js';
 import { TILES, DUNGEON_META, generateNexusMap, generateRealmMap, generateDungeonMap } from '../data/worldgen.js';
 import { TILE_SIZE, getTileCanvas, drawProp, drawLootBag, drawHero, drawEnemy } from '../graphics/sprites.js';
 import { sound } from '../audio/sound.js';
 
-const STORAGE_KEY = 'rotsc_account_save_v1';
+const STORAGE_KEY = 'rotsc_account_save_v2';
 
 const BOT_NAMES = [
-  { name: 'LinkOfHyrule', classId: 'knight',     maxed: 8, stars: 25 },
-  { name: 'ZeldaWisdom',  classId: 'paladin',    maxed: 8, stars: 22 },
-  { name: 'WhiteBagPls',  classId: 'ranger',     maxed: 6, stars: 16 },
-  { name: 'PPE_Knight',   classId: 'knight',     maxed: 4, stars: 12 },
-  { name: 'GoronBomber',  classId: 'pyromancer', maxed: 7, stars: 19 },
-  { name: 'SheikShadow',  classId: 'assassin',   maxed: 8, stars: 24 },
-  { name: 'KokiriBow',    classId: 'ranger',     maxed: 3, stars: 8  },
-  { name: 'OryxSlayer',   classId: 'paladin',    maxed: 6, stars: 15 },
-  { name: 'DodongoHunter',classId: 'pyromancer', maxed: 5, stars: 11 },
-  { name: 'BlueStarWiz',  classId: 'pyromancer', maxed: 1, stars: 3  },
-  { name: 'HylianParry',  classId: 'knight',     maxed: 8, stars: 21 },
-  { name: 'MidnaTwilight',classId: 'assassin',   maxed: 6, stars: 17 }
+  { name: 'VaelenGuard',   classId: 'knight',     maxed: 8, stars: 25 },
+  { name: 'SolarTemplar',  classId: 'paladin',    maxed: 8, stars: 22 },
+  { name: 'WhiteBagPls',   classId: 'ranger',     maxed: 6, stars: 16 },
+  { name: 'PPE_Vanguard',  classId: 'knight',     maxed: 4, stars: 12 },
+  { name: 'CinderPyro',    classId: 'pyromancer', maxed: 7, stars: 19 },
+  { name: 'NightStalker',  classId: 'assassin',   maxed: 8, stars: 24 },
+  { name: 'SylvanArrow',   classId: 'ranger',     maxed: 3, stars: 8  },
+  { name: 'BaneSlayer',    classId: 'paladin',    maxed: 6, stars: 15 },
+  { name: 'CalderaHunter', classId: 'pyromancer', maxed: 5, stars: 11 },
+  { name: 'BlueStarWiz',   classId: 'pyromancer', maxed: 1, stars: 3  },
+  { name: 'BulwarkParry',  classId: 'knight',     maxed: 8, stars: 21 },
+  { name: 'DuskShadow',    classId: 'assassin',   maxed: 6, stars: 17 }
 ];
 
 export class GameEngine {
@@ -50,14 +50,14 @@ export class GameEngine {
     this.boomerangs = [];
     this.bombs = [];
     this.lootBags = [];
-    this.groundDrops = []; // Hearts, Magic Jars, Rupees dropped from bushes/pots
+    this.groundDrops = []; // Hearts, Mana Vials, Sunshards dropped from bushes/urns
     this.particles = [];
     this.floatingTexts = [];
     this.gravestones = [];
     this.aiPlayers = [];
     this.remotePlayers = new Map();
 
-    // Realm Event Progress (Defeat 4 Realm Events to close Realm & trigger Mad King Sanctum!)
+    // Realm Event Progress (Defeat 3 Blight Heralds to unseal the Citadel of Evil Bane!)
     this.realmEventsRemaining = 3;
     this.activeQuestEnemy = null;
 
@@ -80,13 +80,14 @@ export class GameEngine {
   }
 
   // ==========================================================================
-  // ACCOUNT PERSISTENCE (Vault, Rupees, Account Fame, Class Stars, Graveyard)
+  // ACCOUNT PERSISTENCE (Vault, Sunshards, Holy Crest Shards, Fame, Graveyard)
   // ==========================================================================
   loadAccount() {
     const fallback = {
       accountFame: 250,
-      rupees: 150,
+      sunshards: 150,
       lastClassId: 'knight',
+      crestShards: [false, false, false, false, false],
       classBestFame: { knight: 25, ranger: 20, pyromancer: 0, paladin: 0, assassin: 0 },
       vault: [
         'wep_sword_ut_master',
@@ -104,7 +105,14 @@ export class GameEngine {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return fallback;
       const parsed = JSON.parse(raw);
-      return { ...fallback, ...parsed, classBestFame: { ...fallback.classBestFame, ...(parsed.classBestFame || {}) } };
+      return {
+        ...fallback,
+        ...parsed,
+        crestShards: Array.isArray(parsed.crestShards) && parsed.crestShards.length === 5
+          ? parsed.crestShards
+          : [...fallback.crestShards],
+        classBestFame: { ...fallback.classBestFame, ...(parsed.classBestFame || {}) }
+      };
     } catch (e) {
       return fallback;
     }
@@ -114,6 +122,50 @@ export class GameEngine {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(this.account));
     } catch (e) {}
+  }
+
+  getRestoredShardsCount() {
+    if (!this.account || !Array.isArray(this.account.crestShards)) return 0;
+    return this.account.crestShards.filter(Boolean).length;
+  }
+
+  attuneCrestShard(shardIndex) {
+    if (shardIndex === undefined || shardIndex < 0 || shardIndex >= CREST_SHARDS.length) return false;
+    const shardMeta = CREST_SHARDS[shardIndex];
+    const wasAlreadyAttuned = !!this.account.crestShards[shardIndex];
+    this.account.crestShards[shardIndex] = true;
+    this.account.accountFame += wasAlreadyAttuned ? 25 : 100;
+    this.saveAccount();
+    this.recalcPlayerStats(false);
+
+    const count = this.getRestoredShardsCount();
+    sound.playSfx('white_bag');
+    this.cameraShake = 0.45;
+    if (this.player) {
+      this.spawnBurstParticles(this.player.x, this.player.y, shardMeta.color, 34);
+      this.spawnFloatingText(
+        this.player.x,
+        this.player.y - 1.1,
+        `★ ${shardMeta.name.toUpperCase()} RESTORED! (${count}/5) ★`,
+        shardMeta.color,
+        15
+      );
+    }
+    this.addChatMessage(
+      'HIGH ELDER VAELEN',
+      `"You have reclaimed the ${shardMeta.name} (${count}/5 Holy Crest Shards)! Permanent Blessing unlocked: ${shardMeta.blessing}!"`,
+      '#fde047'
+    );
+
+    if (count === 5) {
+      this.addChatMessage(
+        'HOLY CREST REFORGED',
+        '★ ALL 5 SHARDS OF THE HOLY CREST ARE REUNITED! The barrier of Aethelgard blazes with sovereign power — storm the Citadel of Evil Bane and vanquish Malakor! ★',
+        '#22d3ee'
+      );
+    }
+    if (this.ui && this.ui.onStatsChanged) this.ui.onStatsChanged();
+    return true;
   }
 
   getTotalStars() {
@@ -128,7 +180,7 @@ export class GameEngine {
   }
 
   // ==========================================================================
-  // HERO CREATION & STAT CALCULATION (0/8 to 8/8 Maxing!)
+  // HERO CREATION & STAT CALCULATION (0/8 to 8/8 Maxing + Crest Blessings!)
   // ==========================================================================
   spawnNewHero(classId = 'knight') {
     const cls = CLASSES[classId] || CLASSES.knight;
@@ -145,7 +197,7 @@ export class GameEngine {
 
     this.player = {
       id: 'hero_' + Math.random().toString(36).slice(2, 8),
-      name: 'HeroOfTime',
+      name: 'Crestbearer',
       classId: cls.id,
       className: cls.name,
       palette: { ...cls.palette },
@@ -198,7 +250,7 @@ export class GameEngine {
     this.recalcPlayerStats(true);
     this.warpToMap('nexus');
     this.addChatMessage('SYSTEM', `Welcome to Realm of the Shattered Crest! Playing as ${cls.name}.`, '#fde047');
-    this.addChatMessage('TIP', 'WASD to Move | Left-Click to Slash/Shoot (Hold for 360° Spin!) | Right-Click to Shield Parry | Q for Zelda Relic | R for Instant Nexus!', '#38bdf8');
+    this.addChatMessage('HIGH ELDER VAELEN', 'Approach me in the center of the Sanctuary Hub and press [E] to learn how the Holy Crest was shattered across the realms!', '#38bdf8');
   }
 
   recalcPlayerStats(healToFull = false) {
@@ -215,6 +267,24 @@ export class GameEngine {
           totals[st] = (totals[st] || 0) + val;
         }
       }
+    }
+
+    // Apply permanent blessings from each restored Holy Crest Shard!
+    const shardBonuses = [
+      { hp: 25, spd: 2 }, // Shard 0: Tide-Crest Shard
+      { hp: 25, dex: 2 }, // Shard 1: Wild-Crest Shard
+      { mp: 20, wis: 2 }, // Shard 2: Astral-Crest Shard
+      { atk: 2, vit: 2 }, // Shard 3: Ossuary-Crest Shard
+      { hp: 25, def: 3 }  // Shard 4: Flame-Crest Shard
+    ];
+    if (this.account && Array.isArray(this.account.crestShards)) {
+      this.account.crestShards.forEach((unlocked, idx) => {
+        if (unlocked && shardBonuses[idx]) {
+          for (const [st, val] of Object.entries(shardBonuses[idx])) {
+            totals[st] = (totals[st] || 0) + val;
+          }
+        }
+      });
     }
 
     p.stats = totals;
@@ -270,13 +340,13 @@ export class GameEngine {
       this.spawnFloatingText(p.x, p.y - 0.8, `LEVEL ${p.level}!`, '#fde047', 16);
       this.spawnBurstParticles(p.x, p.y, '#fde047', 22);
       if (p.level === 20) {
-        this.addChatMessage('SYSTEM', '★ LEVEL 20 REACHED! Now hunt Gods & Dungeon Bosses for Blue Bag Stat Potions to reach 8/8 Maxed!', '#22c55e');
+        this.addChatMessage('SYSTEM', '★ LEVEL 20 REACHED! Now hunt Blight Gods & Dungeon Guardians for Stat Potions (8/8) and the 5 Holy Crest Shards!', '#22c55e');
       }
     }
   }
 
   // ==========================================================================
-  // MAP SWITCHING (Nexus <-> Overworld Realm <-> 6 Zelda/RotMG Dungeons)
+  // MAP SWITCHING (Sanctuary Hub <-> Overworld Realm <-> 6 Shard Dungeons)
   // ==========================================================================
   warpToMap(targetType, options = {}) {
     const p = this.player;
@@ -297,11 +367,11 @@ export class GameEngine {
       if (options.zone === 'godlands') {
         p.x = this.realmMap.godlandsSpawnX;
         p.y = this.realmMap.godlandsSpawnY;
-        this.addChatMessage('REALM', 'Entered The Dark World Godlands (Level 20 Endgame Zone)! Watch out for Medusa & Beholder volleys!', '#c084fc');
+        this.addChatMessage('REALM', 'Entered The Blighted Godlands (Level 20 Endgame Zone)! Defeat Blight Gods for Stat Potions and Dungeon Portals!', '#c084fc');
       } else {
         p.x = this.realmMap.spawnX;
         p.y = this.realmMap.spawnY;
-        this.addChatMessage('REALM', 'Entered Realm of the Shattered Crest! Head North toward the center for Highlands & Godlands!', '#22c55e');
+        this.addChatMessage('REALM', 'Entered The Shattered Realm! Push inland toward the center for Highlands & The Blighted Godlands!', '#22c55e');
       }
     } else if (targetType === 'dungeon') {
       const dungeonId = options.dungeonId || 'deku_temple';
@@ -323,8 +393,8 @@ export class GameEngine {
     this.activeQuestEnemy = null;
 
     if (this.currentMap.id === 'nexus') {
-      // Spawn 2 friendly Training Target Dummies in Nexus West Courtyard
-      this.spawnEnemy('octorok', 12.5, 28.0, { isDummy: true, name: 'Hylian Training Dummy' });
+      // Spawn 2 friendly Training Target Dummies in the West Courtyard
+      this.spawnEnemy('octorok', 12.5, 28.0, { isDummy: true, name: 'Vanguard Combat Dummy' });
       this.spawnEnemy('darknut_knight', 15.0, 28.0, { isDummy: true, name: 'Armored Parry Dummy' });
       return;
     }
@@ -386,7 +456,7 @@ export class GameEngine {
 
   spawnRealmEventBoss() {
     if (this.currentMap.id !== 'realm') return;
-    const events = ['event_skull_lord', 'event_cube_overseer', 'event_goron_colossus'];
+    const events = ['event_skull_lord', 'event_cube_overseer', 'event_molten_colossus'];
     const pick = events[Math.max(0, 3 - this.realmEventsRemaining) % events.length];
     const cx = this.currentMap.cx;
     const cy = this.currentMap.cy;
@@ -394,7 +464,7 @@ export class GameEngine {
     const ey = cy - 8;
     const boss = this.spawnEnemy(pick, ex, ey);
     this.activeQuestEnemy = boss;
-    this.addChatMessage('ALDEROTH THE MAD KING', `"My ${boss.name} shall crush you insects! (${this.realmEventsRemaining} Realm Events until the Sanctum opens!)"`, '#ef4444');
+    this.addChatMessage('MALAKOR THE EVIL BANE', `"My ${boss.name} shall grind the remnants of your Holy Crest to dust! (${this.realmEventsRemaining} Blight Events until the Citadel opens!)"`, '#ef4444');
   }
 
   spawnEnemy(enemyId, x, y, overrides = {}) {
@@ -409,6 +479,7 @@ export class GameEngine {
       isBoss: !!tpl.isBoss,
       isEvent: !!tpl.isEvent,
       isFinalBoss: !!tpl.isFinalBoss,
+      crestShardIndex: tpl.crestShardIndex,
       isDummy: !!overrides.isDummy,
       frontShield: !!tpl.frontShield,
       x,
@@ -506,7 +577,7 @@ export class GameEngine {
   }
 
   // ==========================================================================
-  // ZELDA PRIMARY WEAPON ATTACK, SPIN ATTACK & SHIELD PARRY
+  // PRIMARY WEAPON ATTACK, SPIN ATTACK & SHIELD PARRY
   // ==========================================================================
   performPrimaryAttack(isSpin = false) {
     const p = this.player;
@@ -515,7 +586,7 @@ export class GameEngine {
     const wep = ITEMS[p.equipment.weapon] || ITEMS.wep_sword_t1;
     const angle = p.aimAngle;
 
-    // 1. Trigger Zelda Melee Arc Slash! (Every weapon has a close-range slash that cuts grass/pots/switches and cleaves adjacent foes!)
+    // 1. Trigger Melee Arc Slash! (Every weapon has a close-range slash that cuts grass/urns/switches and cleaves adjacent foes!)
     p.slashDuration = isSpin ? 0.30 : 0.16;
     p.slashTimer = p.slashDuration;
     p.isSpinSlash = isSpin;
@@ -545,7 +616,7 @@ export class GameEngine {
       }
     }
 
-    // Check Melee Arc against Zelda Interactive Props (Bushes, Pots, Crystal Switches!)
+    // Check Melee Arc against Interactive Props (Bushes, Urns, Crystal Switches!)
     this.hitPropsInRadius(p.x, p.y, meleeTiles, angle, isSpin ? Math.PI * 2 : p.slashArcRad);
 
     // If Hurricane Spin Attack: deflect nearby enemy projectiles!
@@ -562,7 +633,7 @@ export class GameEngine {
       }
     }
 
-    // 2. Spawn Ranged Projectiles (Sword Beams / Piercing Arrows / Twin Spellbolts / Kunai)
+    // 2. Spawn Ranged Projectiles (Sword Beams / Piercing Arrows / Twin Spellbolts / Daggers)
     const shouldFireBeam =
       wep.subType !== 'sword' ||
       wep.alwaysBeam ||
@@ -610,9 +681,9 @@ export class GameEngine {
   }
 
   // ==========================================================================
-  // ZELDA RELIC ABILITIES (Slot 2 — Q Key: Boomerang, Hookshot, Bomb, Ocarina, Wand)
+  // SACRED RELIC ABILITIES (Slot 2 — Q Key: Chakram, Grapple, Bomb, Warhorn, Scepter)
   // ==========================================================================
-  useZeldaRelic() {
+  useRelicAbility() {
     const p = this.player;
     if (!p || p.dead) return;
     const relic = ITEMS[p.equipment.relic];
@@ -647,7 +718,7 @@ export class GameEngine {
             hitSet: new Set()
           });
         }
-        // UT Mirror Shield & Cyclone Crest reflects nearby bullets on cast!
+        // UT Aegis Mirror & Cyclone Glaive reflects nearby bullets on cast!
         if (relic.reflectNova) {
           sound.playSfx('parry');
           this.spawnBurstParticles(p.x, p.y, '#facc15', 24);
@@ -670,7 +741,7 @@ export class GameEngine {
         let bestTarget = null;
         let bestDist = maxRange;
 
-        // 1. Check for Zelda Grapple Pillars along aim ray!
+        // 1. Check for Grapple Anchor Pillars along aim ray!
         for (const prop of this.currentMap.props) {
           if (prop.type !== 'grapple_post') continue;
           const dx = prop.x - p.x;
@@ -701,7 +772,7 @@ export class GameEngine {
           if (bestTarget.type === 'pillar') {
             p.hookTarget = { x: bestTarget.x, y: bestTarget.y, shockwave: !!relic.shockwave, dmg: (relic.dmg || 200) * wisBonus };
             p.invulnTimer = Math.max(p.invulnTimer, 0.65);
-            this.spawnFloatingText(p.x, p.y - 0.7, 'HOOKSHOT!', '#facc15', 13);
+            this.spawnFloatingText(p.x, p.y - 0.7, 'CHAIN-GRAPPLE!', '#facc15', 13);
           } else if (bestTarget.type === 'enemy') {
             const e = bestTarget.enemy;
             this.damageEnemy(e, (relic.dmg || 180) * wisBonus, angle, true);
@@ -713,7 +784,7 @@ export class GameEngine {
             }
           }
         } else {
-          // Fire a piercing hook-bolt even if no anchor was locked
+          // Fire a piercing grapple-bolt even if no anchor was locked
           this.projectiles.push({
             x: p.x, y: p.y,
             vx: Math.cos(angle) * 15, vy: Math.sin(angle) * 15,
@@ -764,7 +835,7 @@ export class GameEngine {
           p.debuffs.armorBroken = 0;
         }
         this.spawnBurstParticles(p.x, p.y, '#fde047', 28);
-        this.spawnFloatingText(p.x, p.y - 0.9, `+${healAmt} HP [OCARINA HYMN!]`, '#4ade80', 14);
+        this.spawnFloatingText(p.x, p.y - 0.9, `+${healAmt} HP [SOLAR ANTHEM!]`, '#4ade80', 14);
         break;
       }
 
@@ -797,7 +868,7 @@ export class GameEngine {
   }
 
   // ==========================================================================
-  // ZELDA WORLD INTERACTIONS: BUSHES, POTS, CRACKED WALLS, CRYSTAL SWITCHES
+  // WORLD INTERACTIONS: BUSHES, URNS, CRACKED WALLS, CRYSTAL SWITCHES
   // ==========================================================================
   hitPropsInRadius(cx, cy, radius, aimAngle = 0, arcRad = Math.PI * 2) {
     const props = this.currentMap.props;
@@ -816,13 +887,13 @@ export class GameEngine {
       if (prop.type === 'bush') {
         sound.playSfx('bush');
         this.spawnBurstParticles(prop.x, prop.y, '#22c55e', 10);
-        this.rollZeldaPropDrop(prop.x, prop.y);
+        this.rollPropDrop(prop.x, prop.y);
         props.splice(i, 1);
       } else if (prop.type === 'pot') {
         sound.playSfx('pot');
         this.player.potsSmashed++;
         this.spawnBurstParticles(prop.x, prop.y, '#ea580c', 12);
-        this.rollZeldaPropDrop(prop.x, prop.y, true);
+        this.rollPropDrop(prop.x, prop.y, true);
         props.splice(i, 1);
       } else if (prop.type === 'crystal_switch') {
         prop.state = prop.state === 'red' ? 'blue' : 'red';
@@ -841,7 +912,7 @@ export class GameEngine {
     if (!p || p.dead) return;
 
     if (p.carriedPot) {
-      // Hurl carried pot toward cursor!
+      // Hurl carried urn toward cursor!
       p.carriedPot = false;
       sound.playSfx('slash');
       const angle = p.aimAngle;
@@ -867,7 +938,7 @@ export class GameEngine {
       return;
     }
 
-    // Find adjacent pot to lift
+    // Find adjacent urn to lift
     const props = this.currentMap.props;
     for (let i = props.length - 1; i >= 0; i--) {
       const prop = props[i];
@@ -875,24 +946,24 @@ export class GameEngine {
         props.splice(i, 1);
         p.carriedPot = true;
         sound.playSfx('dash');
-        this.spawnFloatingText(p.x, p.y - 0.8, 'POT LIFTED! [F to Throw]', '#fdba74', 12);
+        this.spawnFloatingText(p.x, p.y - 0.8, 'URN LIFTED! [F to Throw]', '#fdba74', 12);
         return;
       }
     }
   }
 
-  rollZeldaPropDrop(x, y, isPot = false) {
+  rollPropDrop(x, y, isPot = false) {
     const r = Math.random();
     if (r < 0.38) {
-      // Green / Blue / Red Zelda Rupee!
+      // Green / Blue / Red Sunshard Crystal!
       const val = isPot ? (Math.random() < 0.35 ? 20 : 5) : (Math.random() < 0.25 ? 5 : 1);
       const color = val >= 20 ? '#ef4444' : val >= 5 ? '#3b82f6' : '#22c55e';
-      this.groundDrops.push({ type: 'rupee', x, y, amount: val, color, timer: 18 });
+      this.groundDrops.push({ type: 'sunshard', x, y, amount: val, color, timer: 18 });
     } else if (r < 0.65) {
       // Recovery Heart!
       this.groundDrops.push({ type: 'heart', x, y, amount: 45, color: '#f43f5e', timer: 18 });
     } else if (r < 0.82) {
-      // Magic Jar!
+      // Mana Vial!
       this.groundDrops.push({ type: 'magic', x, y, amount: 35, color: '#22c55e', timer: 18 });
     }
   }
@@ -902,10 +973,10 @@ export class GameEngine {
     prop.opened = true;
     sound.playSfx('secret');
     this.player.secretsFound++;
-    this.account.rupees += 50;
+    this.account.sunshards += 50;
     this.saveAccount();
     this.spawnLootBag(prop.x, prop.y + 0.6, prop.loot || ['pot_def', 'pot_spd']);
-    this.spawnFloatingText(prop.x, prop.y - 0.8, 'TREASURE CHEST OPENED! (+50 Rupees)', '#facc15', 14);
+    this.spawnFloatingText(prop.x, prop.y - 0.8, 'TREASURE CHEST OPENED! (+50 Sunshards)', '#facc15', 14);
   }
 
   // ==========================================================================
@@ -916,9 +987,8 @@ export class GameEngine {
 
     let dmg = rawDmg;
 
-    // Zelda Darknut Directional Front Shield Check!
+    // Ironclad Dreadnought Directional Front Shield Check!
     if (enemy.frontShield && !ignoreArmor && enemy.stunTimer <= 0 && enemy.armorBreakTimer <= 0) {
-      // Attack coming from front of Darknut?
       const incomingAngle = this.normalizeAngle(hitAngle + Math.PI);
       const diff = Math.abs(this.normalizeAngle(incomingAngle - (enemy.facingAngle || 0)));
       if (diff < 1.05) {
@@ -959,10 +1029,15 @@ export class GameEngine {
     this.gainXp(enemy.xp || 30);
     this.spawnBurstParticles(enemy.x, enemy.y, enemy.color, enemy.isBoss ? 36 : 16);
 
-    // Always drop Rupees / Hearts around defeated enemy
-    this.rollZeldaPropDrop(enemy.x + 0.3, enemy.y);
+    // Always drop Sunshards / Hearts around defeated enemy
+    this.rollPropDrop(enemy.x + 0.3, enemy.y);
     if (enemy.isBoss || enemy.isGod) {
-      this.groundDrops.push({ type: 'rupee', x: enemy.x - 0.4, y: enemy.y, amount: 25, color: '#ef4444', timer: 25 });
+      this.groundDrops.push({ type: 'sunshard', x: enemy.x - 0.4, y: enemy.y, amount: 25, color: '#ef4444', timer: 25 });
+    }
+
+    // If this Boss guards one of the 5 Holy Crest Shards, attune it automatically!
+    if (enemy.crestShardIndex !== undefined) {
+      this.attuneCrestShard(enemy.crestShardIndex);
     }
 
     // Roll RotMG Loot Table -> Spawn Physical Colored Loot Bag!
@@ -1003,11 +1078,11 @@ export class GameEngine {
     if (enemy.isEvent) {
       this.realmEventsRemaining = Math.max(0, this.realmEventsRemaining - 1);
       if (this.realmEventsRemaining === 0) {
-        this.addChatMessage('ALDEROTH THE MAD KING', '"NO! YOU HAVE SLAIN MY REALM GUARDIANS! COME FACE ME IN THE SANCTUM OF THE MAD CALAMITY!"', '#facc15');
+        this.addChatMessage('MALAKOR THE EVIL BANE', '"IMPOSSIBLE! YOU HAVE SLAIN MY BLIGHT HERALDS! COME FACE ME IN THE CITADEL OF EVIL BANE!"', '#facc15');
         this.cameraShake = 0.8;
         this.currentMap.portals.push({
           id: 'portal_mad_sanctum_event',
-          name: '★ SANCTUM OF THE MAD CALAMITY ★',
+          name: '★ CITADEL OF EVIL BANE ★',
           targetMap: 'dungeon',
           dungeonId: 'mad_sanctum',
           x: enemy.x,
@@ -1019,20 +1094,28 @@ export class GameEngine {
       }
     }
 
-    // If Dungeon Boss died -> Spawn Return to Realm/Nexus Portal!
+    // If Dungeon Boss died -> Spawn Return to Sanctuary Portal!
     if (enemy.isBoss && this.currentMap.id.startsWith('dungeon_')) {
       p.dungeonsCompleted++;
       this.account.accountFame += 40;
       this.saveAccount();
       this.currentMap.portals.push({
         id: 'portal_boss_victory',
-        name: 'Victory Return to Nexus',
+        name: 'Victory Return to Sanctuary Hub',
         targetMap: 'nexus',
         x: enemy.x,
         y: enemy.y - 1.5,
         color: '#22c55e'
       });
-      this.addChatMessage('VICTORY', `★ ${enemy.name} DEFEATED! Collect your Blue & White Bag loot and enter the Victory Portal!`, '#fde047');
+      if (enemy.isFinalBoss) {
+        this.addChatMessage(
+          'HIGH ELDER VAELEN',
+          '"★ MALAKOR, THE EVIL BANE HAS FALLEN! With the Holy Crest reforged, the Blight recedes and Aethelgard is saved! ★"',
+          '#22d3ee'
+        );
+      } else {
+        this.addChatMessage('VICTORY', `★ ${enemy.name} DEFEATED! Collect your Blue & White Bag loot and return to High Elder Vaelen in the Sanctuary!`, '#fde047');
+      }
     }
   }
 
@@ -1068,7 +1151,7 @@ export class GameEngine {
   }
 
   // ==========================================================================
-  // INVENTORY, DRINKING STAT POTIONS & EQUIPPING ITEMS
+  // INVENTORY, DRINKING STAT POTIONS, ATTUNING CREST SHARDS & EQUIPPING ITEMS
   // ==========================================================================
   useOrEquipItem(sourceType, slotIndex, bagObj = null) {
     const p = this.player;
@@ -1080,14 +1163,16 @@ export class GameEngine {
     const item = ITEMS[itemId];
     if (!item) return false;
 
-    // 1. Consumable Stat Potion / Bottled Fairy
+    // 1. Consumable Stat Potion / Lumina Wisp / Holy Crest Shard
     if (item.slot === 'consumable') {
-      if (item.subType === 'stat_pot') {
+      if (item.subType === 'crest_shard') {
+        this.attuneCrestShard(item.shardIndex);
+      } else if (item.subType === 'stat_pot') {
         const cls = CLASSES[p.classId];
         const st = item.stat;
         if (p.baseStats[st] >= cls.maxStats[st]) {
           this.spawnFloatingText(p.x, p.y - 0.8, `${st.toUpperCase()} ALREADY MAXED!`, '#fde047', 13);
-          this.addChatMessage('SYSTEM', `Your ${st.toUpperCase()} is already maxed! Store extra potions in your Nexus Vault.`, '#fde047');
+          this.addChatMessage('SYSTEM', `Your ${st.toUpperCase()} is already maxed! Store extra potions in your Sanctuary Vault.`, '#fde047');
           return false;
         }
         p.baseStats[st] = Math.min(cls.maxStats[st], p.baseStats[st] + item.amount);
@@ -1110,7 +1195,7 @@ export class GameEngine {
         p.hp = Math.min(p.stats.hp, p.hp + (item.healHp || 250));
         p.mp = Math.min(p.stats.mp, p.mp + (item.healMp || 100));
         sound.playSfx('heart');
-        this.spawnFloatingText(p.x, p.y - 0.8, 'FAIRY HEAL!', '#f472b6', 14);
+        this.spawnFloatingText(p.x, p.y - 0.8, 'LUMINA WISP HEAL!', '#f472b6', 14);
       }
 
       if (sourceType === 'bag' && bagObj) {
@@ -1132,7 +1217,6 @@ export class GameEngine {
         const prevEquipped = p.equipment[item.slot];
         p.equipment[item.slot] = itemId;
         if (prevEquipped) {
-          // Put old equipped item into inventory if space, else back in bag
           const emptyIdx = p.inventory.findIndex(x => !x);
           if (emptyIdx !== -1) {
             p.inventory[emptyIdx] = prevEquipped;
@@ -1177,13 +1261,13 @@ export class GameEngine {
   }
 
   // ==========================================================================
-  // PLAYER HIT, PERFECT SHIELD PARRY & PERMADEATH / FAIRY REVIVAL
+  // PLAYER HIT, PERFECT SHIELD PARRY & PERMADEATH / LUMINA WISP REVIVAL
   // ==========================================================================
   damagePlayer(rawDmg, proj = null, killerName = 'Realm Monster') {
     const p = this.player;
     if (!p || p.dead) return;
 
-    // Check Hylian Shield Block & Perfect Parry!
+    // Check Bulwark Shield Block & Perfect Parry!
     if (p.shielding && proj) {
       const incomingAngle = Math.atan2(p.y - proj.y, p.x - proj.x);
       const shieldFacing = this.normalizeAngle(p.aimAngle + Math.PI);
@@ -1192,7 +1276,7 @@ export class GameEngine {
       if (diff <= 1.2) {
         const timeSinceRaised = this.time - p.shieldRaiseTime;
         if (timeSinceRaised <= 0.25) {
-          // ★ PERFECT ZELDA SHIELD PARRY! ★
+          // ★ PERFECT BULWARK SHIELD PARRY! ★
           p.parries++;
           p.mp = Math.min(p.stats.mp, p.mp + 18);
           proj.fromEnemy = false;
@@ -1234,7 +1318,7 @@ export class GameEngine {
       p.debuffs.slowed = 2.5;
     }
 
-    // Check Fatal Damage -> Bottled Fairy Auto-Revive OR RotMG Permadeath!
+    // Check Fatal Damage -> Bottled Lumina Wisp Auto-Revive OR RotMG Permadeath!
     if (p.hp <= 0) {
       const fairyIdx = p.inventory.indexOf('con_fairy');
       if (fairyIdx !== -1) {
@@ -1244,8 +1328,8 @@ export class GameEngine {
         p.invulnTimer = 2.2;
         sound.playSfx('secret');
         this.spawnBurstParticles(p.x, p.y, '#f472b6', 32);
-        this.spawnFloatingText(p.x, p.y - 1.1, '★ BOTTLED FAIRY REVIVED YOU! ★', '#f472b6', 16);
-        this.addChatMessage('FAIRY', 'Your Bottled Fairy burst out and saved you from Permadeath!', '#f472b6');
+        this.spawnFloatingText(p.x, p.y - 1.1, '★ LUMINA WISP REVIVED YOU! ★', '#f472b6', 16);
+        this.addChatMessage('SANCTUARY', 'Your Bottled Lumina Wisp burst free and saved you from Permadeath!', '#f472b6');
         if (this.ui && this.ui.onStatsChanged) this.ui.onStatsChanged();
         return;
       }
@@ -1264,11 +1348,13 @@ export class GameEngine {
     // Calculate RotMG Fame Bonuses
     const baseFame = Math.max(5, Math.floor(p.fame));
     const bonuses = [];
-    if (p.godKills > 0) bonuses.push({ name: 'Slayer of the Gods', amount: p.godKills * 15 });
-    if (p.dungeonsCompleted > 0) bonuses.push({ name: 'Tunnel Rat', amount: p.dungeonsCompleted * 25 });
-    if (p.parries > 0) bonuses.push({ name: 'Hylian Parry Master', amount: p.parries * 12 });
+    if (p.godKills > 0) bonuses.push({ name: 'Slayer of Blight Gods', amount: p.godKills * 15 });
+    if (p.dungeonsCompleted > 0) bonuses.push({ name: 'Sanctum Conqueror', amount: p.dungeonsCompleted * 25 });
+    if (p.parries > 0) bonuses.push({ name: 'Bulwark Parry Master', amount: p.parries * 12 });
     if (p.secretsFound > 0) bonuses.push({ name: 'Seeker of Secrets', amount: p.secretsFound * 20 });
     if (p.maxedCount > 0) bonuses.push({ name: `${p.maxedCount}/8 Maxed Hero`, amount: p.maxedCount * 30 });
+    const shardsRestored = this.getRestoredShardsCount();
+    if (shardsRestored > 0) bonuses.push({ name: `Rebuilder of the Holy Crest (${shardsRestored}/5)`, amount: shardsRestored * 35 });
 
     let gearFame = 0;
     for (const slot of ['weapon', 'relic', 'armor', 'ring']) {
@@ -1360,7 +1446,7 @@ export class GameEngine {
       p.stamina = Math.min(p.maxStamina, p.stamina + 28 * dt);
     }
 
-    // Orbiting Fairy Companion Heal & Zap!
+    // Orbiting Lumina Wisp Companion Heal!
     p.fairyTimer += dt;
     if (p.fairyTimer >= 2.8) {
       p.fairyTimer = 0;
@@ -1370,7 +1456,7 @@ export class GameEngine {
       }
     }
 
-    // Hookshot Flight Override!
+    // Chain-Grapple Flight Override!
     if (p.hookTarget) {
       const dx = p.hookTarget.x - p.x;
       const dy = p.hookTarget.y - p.y;
@@ -1427,7 +1513,7 @@ export class GameEngine {
     if (this.isWalkable(nx, p.y)) p.x = nx;
     if (this.isWalkable(p.x, ny)) p.y = ny;
 
-    // Tile Effects under Player (Fairy Healing Spring vs Magma Lava)
+    // Tile Effects under Player (Sanctuary Healing Spring vs Magma Lava)
     const underTile = this.getTileAt(Math.floor(p.x), Math.floor(p.y));
     if (underTile === TILES.HEAL_SPRING) {
       p.hp = Math.min(p.stats.hp, p.hp + 95 * dt);
@@ -1457,7 +1543,7 @@ export class GameEngine {
       }
     } else if (p.chargeTime > 0) {
       if (p.chargeTime >= 0.55) {
-        this.performPrimaryAttack(true); // 360° Zelda Hurricane Spin!
+        this.performPrimaryAttack(true); // 360° Hurricane Spin!
         p.attackCooldown = cooldownDur * 1.1;
       }
       p.chargeTime = 0;
@@ -1528,9 +1614,9 @@ export class GameEngine {
           bot.chatCooldown = 28 + Math.random() * 25;
           const phrases = [
             `Fighting ${nearest.name}! Click my name to TP!`,
-            `Godlands train rolling! TP to ${bot.name}!`,
+            `Blighted Godlands train rolling! TP to ${bot.name}!`,
             `Watch the radial shotgun on ${nearest.name}!`,
-            `Need Paladin Ocarina buff here!`
+            `Need Solar Templar Warhorn buff here!`
           ];
           this.addChatMessage(bot.name, phrases[Math.floor(Math.random() * phrases.length)], '#93c5fd', bot);
         }
@@ -1675,7 +1761,7 @@ export class GameEngine {
   }
 
   // ==========================================================================
-  // PROJECTILES, BOOMERANGS, BOMBS & DROPS UPDATE
+  // PROJECTILES, CHAKRAMS, BOMBS & DROPS UPDATE
   // ==========================================================================
   updateProjectiles(dt) {
     const p = this.player;
@@ -1715,12 +1801,10 @@ export class GameEngine {
       if (pr.fromEnemy) {
         if (p && !p.dead && Math.hypot(pr.x - p.x, pr.y - p.y) <= 0.48) {
           this.damagePlayer(pr.dmg, pr, pr.ownerName);
-          // If projectile was reflected by a Perfect Parry, don't delete it!
           if (!pr.fromEnemy) continue;
           this.projectiles.splice(i, 1);
         }
       } else {
-        // Player / Reflected Projectile hitting Enemies & Props
         if (!pr.fromBot) {
           this.hitPropsInRadius(pr.x, pr.y, 0.55);
         }
@@ -1774,7 +1858,7 @@ export class GameEngine {
         b.y += (dy / d) * step;
       }
 
-      // Boomerang cuts bushes, flips switches, stuns enemies, AND pulls Loot Bags & Hearts!
+      // Chakram cuts bushes, flips switches, stuns enemies, AND pulls Loot Bags & Hearts!
       this.hitPropsInRadius(b.x, b.y, 0.85);
 
       for (const e of this.enemies) {
@@ -1786,7 +1870,7 @@ export class GameEngine {
         }
       }
 
-      // Zelda Gale Boomerang Loot Magnet! Pull nearby Loot Bags & Drops to Player!
+      // Tempest Chakram Loot Magnet! Pull nearby Loot Bags & Drops to Player!
       if (p) {
         for (const bag of this.lootBags) {
           if (Math.hypot(bag.x - b.x, bag.y - b.y) <= 2.2) {
@@ -1838,7 +1922,7 @@ export class GameEngine {
     // 2. Smash Props in Blast Radius
     this.hitPropsInRadius(bm.x, bm.y, bm.radius);
 
-    // 3. ZELDA SECRET MECHANIC: Blow open Cracked Dungeon/Realm Walls (`TILES.WALL_CRACKED`)!
+    // 3. SECRET MECHANIC: Blow open Cracked Dungeon/Sanctuary Walls (`TILES.WALL_CRACKED`)!
     const m = this.currentMap;
     const minX = Math.max(0, Math.floor(bm.x - bm.radius));
     const maxX = Math.min(m.width - 1, Math.ceil(bm.x + bm.radius));
@@ -1859,7 +1943,7 @@ export class GameEngine {
       sound.playSfx('secret');
       this.player.secretsFound++;
       this.spawnFloatingText(bm.x, bm.y - 1.0, '★ SECRET PASSAGE DISCOVERED! ★', '#facc15', 16);
-      this.addChatMessage('SECRET', 'You blasted open a Cracked Wall and discovered a hidden treasure room!', '#facc15');
+      this.addChatMessage('SECRET', 'You blasted open a Cracked Wall and discovered a hidden treasure chamber!', '#facc15');
     }
   }
 
@@ -1879,11 +1963,11 @@ export class GameEngine {
           dr.y += (p.y - dr.y) * 9 * dt;
         }
         if (d < 0.65) {
-          if (dr.type === 'rupee') {
-            this.account.rupees += dr.amount;
+          if (dr.type === 'sunshard') {
+            this.account.sunshards += dr.amount;
             this.saveAccount();
             sound.playSfx('rupee');
-            this.spawnFloatingText(p.x, p.y - 0.6, `+${dr.amount} Rupee`, dr.color, 11);
+            this.spawnFloatingText(p.x, p.y - 0.6, `+${dr.amount} Sunshard`, dr.color, 11);
           } else if (dr.type === 'heart') {
             p.hp = Math.min(p.stats.hp, p.hp + dr.amount);
             sound.playSfx('heart');
@@ -1978,9 +2062,16 @@ export class GameEngine {
       }
     }
     for (const prop of this.currentMap.props) {
-      if (Math.hypot(prop.x - p.x, prop.y - p.y) <= 1.8) {
+      if (Math.hypot(prop.x - p.x, prop.y - p.y) <= 2.1) {
+        if (prop.type === 'elder_npc') {
+          return {
+            kind: 'elder',
+            obj: prop,
+            label: `Speak with High Elder Vaelen — Lore & Holy Crest (${this.getRestoredShardsCount()}/5 Shards) [E]`
+          };
+        }
         if (prop.type === 'vault_chest') return { kind: 'vault', obj: prop, label: 'Open Account Vault [E]' };
-        if (prop.type === 'forge_anvil') return { kind: 'forge', obj: prop, label: 'Open Goron Relic Forge [E]' };
+        if (prop.type === 'forge_anvil') return { kind: 'forge', obj: prop, label: 'Open Relic Forge [E]' };
         if (prop.type === 'chest' && !prop.opened) return { kind: 'chest', obj: prop, label: 'Open Treasure Chest [E]' };
       }
     }
@@ -1993,6 +2084,11 @@ export class GameEngine {
     if (target.kind === 'portal') {
       const pt = target.obj;
       this.warpToMap(pt.targetMap, { zone: pt.targetZone, dungeonId: pt.dungeonId });
+      return true;
+    }
+    if (target.kind === 'elder' && this.ui && this.ui.onOpenModal) {
+      sound.playSfx('secret');
+      this.ui.onOpenModal('elder');
       return true;
     }
     if (target.kind === 'vault' && this.ui && this.ui.onOpenModal) {
@@ -2076,7 +2172,7 @@ export class GameEngine {
       ctx.restore();
     }
 
-    // 3. Draw Zelda Interactive Props
+    // 3. Draw Interactive Props (including High Elder Vaelen in the Sanctuary Hub!)
     for (const prop of m.props) {
       const sx = prop.x * TILE_SIZE - camX;
       const sy = prop.y * TILE_SIZE - camY;
@@ -2084,14 +2180,14 @@ export class GameEngine {
       drawProp(ctx, prop, sx, sy, this.time);
     }
 
-    // 4. Draw Ground Drops (Rupees, Hearts, Magic Jars)
+    // 4. Draw Ground Drops (Sunshards, Hearts, Mana Vials)
     for (const dr of this.groundDrops) {
       const sx = dr.x * TILE_SIZE - camX;
       const sy = dr.y * TILE_SIZE - camY + Math.sin(this.time * 6 + dr.x) * 2;
       ctx.save();
       ctx.translate(sx, sy);
-      if (dr.type === 'rupee') {
-        // Classic Hexagonal Zelda Rupee Gem!
+      if (dr.type === 'sunshard') {
+        // Hexagonal Sunshard Crystal!
         ctx.fillStyle = dr.color;
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 1.2;

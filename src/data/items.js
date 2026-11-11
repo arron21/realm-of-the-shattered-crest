@@ -1,16 +1,6 @@
 // ============================================================================
 // REALM OF THE SHATTERED CREST — ITEM, RELIC, LOOT BAG & POTION DATABASE
-// Includes Tiered Gear (T1-T6), ST Sets, UT White Bags, and 8 Stat Potions
 // ============================================================================
-
-// RotMG Bag Types:
-// 0 = Brown Bag (Consumables / Low tier)
-// 1 = Pink Bag (T1-T2 Gear)
-// 2 = Purple Bag (T3-T4 Gear)
-// 3 = Cyan Bag (T5-T6 Godlands Gear)
-// 4 = Blue Bag (Permanent Stat Potions!)
-// 5 = Orange Bag (ST Set Items)
-// 6 = WHITE BAG (Untiered / UT Legendary Items!)
 
 export const BAG_TYPES = {
   0: { id: 0, name: 'Brown Bag',  color: '#a16207', ribbon: '#713f12', glow: 'rgba(161,98,7,0.35)' },
@@ -24,82 +14,82 @@ export const BAG_TYPES = {
 
 export const ITEMS = {
   // ==========================================================================
-  // SWORDS (180° Zelda Arc Slash + Full-HP Sword Beam + Hurricane Spin)
+  // SWORDS (180° Arc Cleave + Full-HP Blade Wave + 360° Whirlwind Spin)
   // ==========================================================================
   wep_sword_t1: {
-    id: 'wep_sword_t1', name: 'Kokiri Broadsword', tier: 'T1', slot: 'weapon', subType: 'sword',
+    id: 'wep_sword_t1', name: 'Initiate Broadsword', tier: 'T1', slot: 'weapon', subType: 'sword',
     bagType: 1, minDmg: 45, maxDmg: 70, shots: 1, range: 4.4, arcDeg: 115, beamDmg: 0.55,
     color: '#94a3b8', bladeColor: '#cbd5e1', fameBonus: 1,
-    desc: 'A trusty forest blade. Unleashes a sweeping melee slash and a piercing beam at full health.'
+    desc: 'A sturdy steel broadsword. Unleashes a sweeping melee cleave and a piercing energy wave at high life.'
   },
   wep_sword_t2: {
-    id: 'wep_sword_t2', name: 'Hylian Soldier Blade', tier: 'T3', slot: 'weapon', subType: 'sword',
+    id: 'wep_sword_t2', name: 'Citadel Longblade', tier: 'T3', slot: 'weapon', subType: 'sword',
     bagType: 2, minDmg: 75, maxDmg: 110, shots: 1, range: 4.6, arcDeg: 120, beamDmg: 0.65,
     color: '#60a5fa', bladeColor: '#93c5fd', fameBonus: 2,
-    desc: 'Forged in Castle Town armories. Balanced for swift parries and wide cleaves.'
+    desc: 'Forged in the Aethelgard armories. Balanced for swift parries and wide cleaves.'
   },
   wep_sword_t3: {
-    id: 'wep_sword_t3', name: 'Tempered Razor Sword', tier: 'T5', slot: 'weapon', subType: 'sword',
+    id: 'wep_sword_t3', name: 'Tempered Crimson Edge', tier: 'T5', slot: 'weapon', subType: 'sword',
     bagType: 2, minDmg: 110, maxDmg: 155, shots: 1, range: 4.8, arcDeg: 125, beamDmg: 0.75,
     color: '#f43f5e', bladeColor: '#fda4af', fameBonus: 3,
-    desc: 'Honed with Goron mountain dust. Cuts through multiple foes and emits crimson beams.'
+    desc: 'Honed with volcanic cinder-ash. Cuts through multiple foes and emits crimson waves.'
   },
   wep_sword_t4: {
-    id: 'wep_sword_t4', name: 'Gilded Greatblade', tier: 'T8', slot: 'weapon', subType: 'sword',
+    id: 'wep_sword_t4', name: 'Gilded Sunblade', tier: 'T8', slot: 'weapon', subType: 'sword',
     bagType: 3, minDmg: 155, maxDmg: 210, shots: 1, range: 5.0, arcDeg: 130, beamDmg: 0.85,
     color: '#eab308', bladeColor: '#fef08a', fameBonus: 4,
-    desc: 'Gold-inlaid blade that never dulls. Emits a radiant golden wave even above 75% HP.'
+    desc: 'Gold-inlaid blade that never dulls. Emits a radiant solar wave.'
   },
   wep_sword_t5: {
-    id: 'wep_sword_t5', name: 'Skyward Acclaim Blade', tier: 'T12', slot: 'weapon', subType: 'sword',
+    id: 'wep_sword_t5', name: 'Astral Acclaim Greatsword', tier: 'T12', slot: 'weapon', subType: 'sword',
     bagType: 3, minDmg: 215, maxDmg: 280, shots: 1, range: 5.3, arcDeg: 140, beamDmg: 1.0,
     color: '#38bdf8', bladeColor: '#e0f2fe', fameBonus: 6,
-    desc: 'Supreme tiered broadsword blessed by the Skyloft winds. Always fires a Skyward Beam.'
+    desc: 'Supreme tiered broadsword blessed by the First Wardens. Always fires an Astral Wave.'
   },
   wep_sword_ut_master: {
-    id: 'wep_sword_ut_master', name: 'Blade of Evil\'s Bane', tier: 'UT', slot: 'weapon', subType: 'sword',
+    id: 'wep_sword_ut_master', name: 'Blade of the Reborn Crest', tier: 'UT', slot: 'weapon', subType: 'sword',
     bagType: 6, minDmg: 240, maxDmg: 310, shots: 2, spreadDeg: 18, range: 5.8, arcDeg: 150, beamDmg: 1.15,
     alwaysBeam: true, pierceArmor: false, stats: { def: 4, wis: 4 },
     color: '#38bdf8', bladeColor: '#67e8f9', fameBonus: 8,
-    desc: 'LEGENDARY UT: Fires twin sacred crescent waves with every swing regardless of HP.'
+    desc: 'LEGENDARY UT: Forged to vanquish the Evil Bane. Fires twin sacred crescent waves with every swing.'
   },
   wep_sword_ut_demon: {
-    id: 'wep_sword_ut_demon', name: 'Goron Demon Edge', tier: 'UT', slot: 'weapon', subType: 'sword',
+    id: 'wep_sword_ut_demon', name: 'Abyssal Magma Cleaver', tier: 'UT', slot: 'weapon', subType: 'sword',
     bagType: 6, minDmg: 195, maxDmg: 255, shots: 2, spreadDeg: 38, range: 4.3, arcDeg: 145, beamDmg: 0.9,
     alwaysBeam: true, stats: { atk: 5, vit: 5 },
     color: '#ef4444', bladeColor: '#fca5a5', fameBonus: 7,
-    desc: 'LEGENDARY UT (Abyss Drop): Twin-forked obsidian blade that fires two magma waves at point-blank.'
+    desc: 'LEGENDARY UT (Caldera Drop): Twin-forked obsidian blade that fires two magma waves at point-blank.'
   },
 
   // ==========================================================================
-  // BOWS (Close-quarters slash + Ranged Piercing Arrow Volleys)
+  // BOWS (Close-Quarters Riposte + Ranged Piercing Arrow Volleys)
   // ==========================================================================
   wep_bow_t1: {
-    id: 'wep_bow_t1', name: 'Fairy Slingshot Bow', tier: 'T1', slot: 'weapon', subType: 'bow',
+    id: 'wep_bow_t1', name: 'Ashwood Shortbow', tier: 'T1', slot: 'weapon', subType: 'bow',
     bagType: 1, minDmg: 38, maxDmg: 60, shots: 1, spreadDeg: 0, range: 7.8, pierce: true,
     color: '#a3e635', bladeColor: '#d9f99d', fameBonus: 1,
-    desc: 'Carved from Deku wood. Fires piercing arrows and slashes adjacent enemies.'
+    desc: 'Carved from ironwood heart. Fires piercing arrows and slashes adjacent enemies.'
   },
   wep_bow_t2: {
-    id: 'wep_bow_t2', name: 'Hero\'s Recurve Bow', tier: 'T4', slot: 'weapon', subType: 'bow',
+    id: 'wep_bow_t2', name: 'Warden\'s Recurve Bow', tier: 'T4', slot: 'weapon', subType: 'bow',
     bagType: 2, minDmg: 58, maxDmg: 88, shots: 2, spreadDeg: 10, range: 8.0, pierce: true,
     color: '#22c55e', bladeColor: '#86efac', fameBonus: 2,
     desc: 'Fires two synchronized piercing arrows that skewer entire columns of foes.'
   },
   wep_bow_t3: {
-    id: 'wep_bow_t3', name: 'Golden Tri-Bow', tier: 'T8', slot: 'weapon', subType: 'bow',
+    id: 'wep_bow_t3', name: 'Gilded Tri-Bow', tier: 'T8', slot: 'weapon', subType: 'bow',
     bagType: 3, minDmg: 75, maxDmg: 110, shots: 3, spreadDeg: 14, range: 8.2, pierce: true,
     color: '#eab308', bladeColor: '#fef08a', fameBonus: 4,
-    desc: 'Iconic three-arrow spread bow of the Godlands. Devastating crowd control.'
+    desc: 'Iconic three-arrow spread bow of the Blightlands. Devastating crowd control.'
   },
   wep_bow_t4: {
-    id: 'wep_bow_t4', name: 'Bow of the Ancient Sages', tier: 'T12', slot: 'weapon', subType: 'bow',
+    id: 'wep_bow_t4', name: 'Longbow of the First Watch', tier: 'T12', slot: 'weapon', subType: 'bow',
     bagType: 3, minDmg: 105, maxDmg: 145, shots: 3, spreadDeg: 11, range: 8.6, pierce: true,
     color: '#38bdf8', bladeColor: '#bae6fd', fameBonus: 6,
-    desc: 'Tightly grouped triple-shot bow infused with ancient light energy.'
+    desc: 'Tightly grouped triple-shot bow infused with ancient radiant energy.'
   },
   wep_bow_ut_light: {
-    id: 'wep_bow_ut_light', name: 'Doom Bow of Sacred Light', tier: 'UT', slot: 'weapon', subType: 'bow',
+    id: 'wep_bow_ut_light', name: 'Starfall Sovereign Greatbow', tier: 'UT', slot: 'weapon', subType: 'bow',
     bagType: 6, minDmg: 420, maxDmg: 540, shots: 1, spreadDeg: 0, range: 9.5, pierce: true,
     rateMult: 0.55, stats: { atk: 6, wis: 4 },
     color: '#fde047', bladeColor: '#ffffff', fameBonus: 8,
@@ -107,7 +97,7 @@ export const ITEMS = {
   },
 
   // ==========================================================================
-  // MAGIC RODS (Arcane Melee Shockwave + Homing/Dual Spellbolts)
+  // SPELLRODS (Arcane Melee Shockwave + Dual Weaving Spellbolts)
   // ==========================================================================
   wep_rod_t1: {
     id: 'wep_rod_t1', name: 'Apprentice Ember Rod', tier: 'T1', slot: 'weapon', subType: 'rod',
@@ -116,39 +106,39 @@ export const ITEMS = {
     desc: 'Channels twin firebolts in a wavy spiral while emitting a close-range heat pulse.'
   },
   wep_rod_t2: {
-    id: 'wep_rod_t2', name: 'Rod of Somaria', tier: 'T4', slot: 'weapon', subType: 'rod',
+    id: 'wep_rod_t2', name: 'Scepter of Crimson Flux', tier: 'T4', slot: 'weapon', subType: 'rod',
     bagType: 2, minDmg: 55, maxDmg: 85, shots: 2, spreadDeg: 7, range: 8.5, wave: true,
     color: '#ec4899', bladeColor: '#f9a8d4', fameBonus: 2,
     desc: 'Fires twin crimson energy orbs that weave toward their target.'
   },
   wep_rod_t3: {
-    id: 'wep_rod_t3', name: 'Staff of Din\'s Inferno', tier: 'T8', slot: 'weapon', subType: 'rod',
+    id: 'wep_rod_t3', name: 'Staff of the Magma Spire', tier: 'T8', slot: 'weapon', subType: 'rod',
     bagType: 3, minDmg: 85, maxDmg: 125, shots: 2, spreadDeg: 6, range: 8.8, wave: true,
     color: '#ef4444', bladeColor: '#fca5a5', fameBonus: 4,
-    desc: 'High-tier volcanic rod that scorches Godlands deities.'
+    desc: 'High-tier volcanic rod that scorches Blightlands deities.'
   },
   wep_rod_t4: {
-    id: 'wep_rod_t4', name: 'Cosmic Triforce Scepter', tier: 'T12', slot: 'weapon', subType: 'rod',
+    id: 'wep_rod_t4', name: 'Scepter of the Holy Crest', tier: 'T12', slot: 'weapon', subType: 'rod',
     bagType: 3, minDmg: 118, maxDmg: 165, shots: 2, spreadDeg: 5, range: 9.0, wave: true,
     color: '#eab308', bladeColor: '#fef08a', fameBonus: 6,
     desc: 'Pinnacle spellcaster rod radiating twin golden astral bolts.'
   },
   wep_rod_ut_seasons: {
-    id: 'wep_rod_ut_seasons', name: 'Rod of the Four Seasons', tier: 'UT', slot: 'weapon', subType: 'rod',
+    id: 'wep_rod_ut_seasons', name: 'Conduit of the Four Elements', tier: 'UT', slot: 'weapon', subType: 'rod',
     bagType: 6, minDmg: 95, maxDmg: 135, shots: 4, spreadDeg: 16, range: 8.4, pierceArmor: true,
     stats: { mp: 40, atk: 5, dex: 5 },
     color: '#10b981', bladeColor: '#6ee7b7', fameBonus: 8,
-    desc: 'LEGENDARY UT (Sprite World Drop): Fires 4 elemental bolts that completely ignore enemy DEF.'
+    desc: 'LEGENDARY UT (Astral Conduit Drop): Fires 4 elemental bolts that completely ignore enemy DEF.'
   },
 
   // ==========================================================================
-  // DAGGERS / TWIN BLADES (Ultra-Fast Double Arc + Kunai Blades)
+  // DAGGERS / TWIN BLADES (Ultra-Fast Double Arc + Throwing Blades)
   // ==========================================================================
   wep_dagger_t1: {
-    id: 'wep_dagger_t1', name: 'Sheikah Kunai', tier: 'T1', slot: 'weapon', subType: 'dagger',
+    id: 'wep_dagger_t1', name: 'Shadow Steel Stiletto', tier: 'T1', slot: 'weapon', subType: 'dagger',
     bagType: 1, minDmg: 36, maxDmg: 58, shots: 1, range: 5.8, rateMult: 1.25,
     color: '#38bdf8', bladeColor: '#bae6fd', fameBonus: 1,
-    desc: 'Lightning-fast throwing dagger and twin-slash wakizashi.'
+    desc: 'Lightning-fast throwing dagger and twin-slash shortblade.'
   },
   wep_dagger_t2: {
     id: 'wep_dagger_t2', name: 'Phantom Twin-Edge', tier: 'T4', slot: 'weapon', subType: 'dagger',
@@ -157,255 +147,255 @@ export const ITEMS = {
     desc: 'Shadow-forged twin blades with blistering attack cadence.'
   },
   wep_dagger_t3: {
-    id: 'wep_dagger_t3', name: 'Emerald Foul Blade', tier: 'T8', slot: 'weapon', subType: 'dagger',
+    id: 'wep_dagger_t3', name: 'Emerald Viper Dirk', tier: 'T8', slot: 'weapon', subType: 'dagger',
     bagType: 3, minDmg: 102, maxDmg: 150, shots: 1, range: 6.3, rateMult: 1.32,
     color: '#10b981', bladeColor: '#6ee7b7', fameBonus: 4,
-    desc: 'Deadly Kakariko assassin blade that shreds targets before they can react.'
+    desc: 'Deadly Nightblade dirk that shreds targets before they can react.'
   },
   wep_dagger_t4: {
-    id: 'wep_dagger_t4', name: 'Twilight Shadow Katana', tier: 'T12', slot: 'weapon', subType: 'dagger',
+    id: 'wep_dagger_t4', name: 'Eclipse Shadow Katana', tier: 'T12', slot: 'weapon', subType: 'dagger',
     bagType: 3, minDmg: 145, maxDmg: 205, shots: 1, range: 6.6, rateMult: 1.35,
     color: '#f43f5e', bladeColor: '#fecdd3', fameBonus: 6,
-    desc: 'Masterwork Sheikah katana that slices the very fabric of twilight.'
+    desc: 'Masterwork Nightblade katana that slices through shadow and steel alike.'
   },
   wep_dagger_ut_fierce: {
-    id: 'wep_dagger_ut_fierce', name: 'Fierce Deity Double-Helix', tier: 'UT', slot: 'weapon', subType: 'dagger',
+    id: 'wep_dagger_ut_fierce', name: 'Astral Helix Twin-Blades', tier: 'UT', slot: 'weapon', subType: 'dagger',
     bagType: 6, minDmg: 175, maxDmg: 245, shots: 2, spreadDeg: 8, range: 7.2, rateMult: 1.3,
     pierce: true, stats: { spd: 6, dex: 6 },
     color: '#f8fafc', bladeColor: '#38bdf8', fameBonus: 8,
-    desc: 'LEGENDARY UT (Mad King Drop): Unleashes double-helix crescent waves that pierce all targets.'
+    desc: 'LEGENDARY UT (Evil Bane Drop): Unleashes double-helix crescent waves that pierce all targets.'
   },
 
   // ==========================================================================
-  // ZELDA RELICS / ABILITIES (Slot 2 — Press Q or Space/Middle-Click)
+  // RELIC ABILITIES (Slot 2 — Press Q or Middle-Click)
   // ==========================================================================
-  // 1. BOOMERANGS (Stuns enemies, cuts bushes, pulls loot bags & hearts to you!)
+  // 1. CHAKRAMS (Stuns enemies, cuts bushes, pulls loot bags & life hearts to you!)
   rel_boom_t1: {
-    id: 'rel_boom_t1', name: 'Wooden Boomerang', tier: 'T1', slot: 'relic', subType: 'boomerang',
+    id: 'rel_boom_t1', name: 'Iron Wind-Chakram', tier: 'T1', slot: 'relic', subType: 'boomerang',
     bagType: 1, mpCost: 35, dmg: 140, stunSec: 1.8, range: 7.5, stats: { def: 2 },
     color: '#d97706', fameBonus: 1,
-    desc: 'Stuns enemies in its path, cuts bushes, and pulls Loot Bags & Hearts back to you!'
+    desc: 'Hurls a returning chakram that stuns foes, cuts bushes, and pulls Loot Bags & Life Hearts to you!'
   },
   rel_boom_t2: {
-    id: 'rel_boom_t2', name: 'Magical Gale Boomerang', tier: 'T4', slot: 'relic', subType: 'boomerang',
+    id: 'rel_boom_t2', name: 'Tempest Gale Chakram', tier: 'T4', slot: 'relic', subType: 'boomerang',
     bagType: 2, mpCost: 45, dmg: 290, stunSec: 2.6, range: 9.0, stats: { def: 5, spd: 3 },
     color: '#38bdf8', fameBonus: 3,
-    desc: 'Summons a whirlwind that stuns enemies for 2.6s and vacuums distant loot bags.'
+    desc: 'Summons a returning whirlwind blade that stuns enemies for 2.6s and vacuums distant loot bags.'
   },
   rel_boom_ut: {
-    id: 'rel_boom_ut', name: 'Mirror Shield & Cyclone Crest', tier: 'UT', slot: 'relic', subType: 'boomerang',
+    id: 'rel_boom_ut', name: 'Aegis of the Cyclone Crest', tier: 'UT', slot: 'relic', subType: 'boomerang',
     bagType: 6, mpCost: 50, dmg: 480, stunSec: 3.4, range: 10.5, reflectNova: true,
     stats: { hp: 60, def: 10, spd: 4 },
     color: '#facc15', fameBonus: 7,
-    desc: 'LEGENDARY UT: Throws twin golden cyclones AND reflects all nearby enemy bullets on cast!'
+    desc: 'LEGENDARY UT: Throws twin golden cyclone chakrams AND reflects all nearby enemy bullets on cast!'
   },
 
-  // 2. HOOKSHOTS (Grapples to pillars across chasms/lava OR pulls/stuns enemies!)
+  // 2. CHAIN GRAPPLES (Vaults to pillars across chasms/lava OR stuns enemies!)
   rel_hook_t1: {
-    id: 'rel_hook_t1', name: 'Iron Hookshot', tier: 'T1', slot: 'relic', subType: 'hookshot',
+    id: 'rel_hook_t1', name: 'Iron Chain-Grapple', tier: 'T1', slot: 'relic', subType: 'hookshot',
     bagType: 1, mpCost: 30, dmg: 160, stunSec: 1.5, range: 8.5, stats: { dex: 2 },
     color: '#94a3b8', fameBonus: 1,
-    desc: 'Grapples you across chasms to Grapple Pillars with i-frames, or stuns & pierces foes!'
+    desc: 'Grapples you across chasms to Anchor Pillars with i-frames, or stuns & pierces foes!'
   },
   rel_hook_t2: {
-    id: 'rel_hook_t2', name: 'Longshot of Lake Hylia', tier: 'T4', slot: 'relic', subType: 'hookshot',
+    id: 'rel_hook_t2', name: 'Titan Anchor-Grapple', tier: 'T4', slot: 'relic', subType: 'hookshot',
     bagType: 2, mpCost: 40, dmg: 320, stunSec: 2.2, range: 11.0, stats: { dex: 5, atk: 3 },
     color: '#38bdf8', fameBonus: 3,
     desc: 'Extended titanium chain that reaches distant anchors and deals heavy armor-piercing damage.'
   },
   rel_hook_ut: {
-    id: 'rel_hook_ut', name: 'Double Clawshot of the Sky', tier: 'UT', slot: 'relic', subType: 'hookshot',
+    id: 'rel_hook_ut', name: 'Twin Sky-Claw Grapple', tier: 'UT', slot: 'relic', subType: 'hookshot',
     bagType: 6, mpCost: 35, dmg: 520, stunSec: 2.8, range: 12.5, shockwave: true,
     stats: { atk: 7, dex: 7, spd: 5 },
     color: '#f59e0b', fameBonus: 7,
     desc: 'LEGENDARY UT: Zips to any target and unleashes a lightning shockwave upon arrival!'
   },
 
-  // 3. BOMBS (Blasts open Cracked Walls / Boulders + Massive Armor-Piercing AoE!)
+  // 3. BRIMSTONE CHARGES (Blasts open Cracked Walls + Massive Armor-Piercing AoE!)
   rel_bomb_t1: {
-    id: 'rel_bomb_t1', name: 'Dodongo Bomb Bag', tier: 'T1', slot: 'relic', subType: 'bomb',
+    id: 'rel_bomb_t1', name: 'Sapper\'s Brimstone Satchel', tier: 'T1', slot: 'relic', subType: 'bomb',
     bagType: 1, mpCost: 40, dmg: 260, blastRadius: 3.4, stats: { atk: 2 },
     color: '#3b82f6', fameBonus: 1,
-    desc: 'Lobs an explosive bomb that shatters Cracked Dungeon Walls and deals armor-piercing AoE.'
+    desc: 'Lobs an explosive charge that shatters Cracked Dungeon Walls and deals armor-piercing AoE.'
   },
   rel_bomb_t2: {
-    id: 'rel_bomb_t2', name: 'Super Powder Keg', tier: 'T4', slot: 'relic', subType: 'bomb',
+    id: 'rel_bomb_t2', name: 'Caldera Demolition Keg', tier: 'T4', slot: 'relic', subType: 'bomb',
     bagType: 2, mpCost: 55, dmg: 520, blastRadius: 4.2, stats: { atk: 5, wis: 4 },
     color: '#ef4444', fameBonus: 3,
-    desc: 'Goron-certified demolition keg. Inflicts Armor Broken on bosses for 4 seconds!'
+    desc: 'Heavy siege keg. Inflicts Armor Broken on bosses for 4.5 seconds!'
   },
   rel_bomb_ut: {
-    id: 'rel_bomb_ut', name: 'Golden Bombchu Swarm', tier: 'UT', slot: 'relic', subType: 'bomb',
+    id: 'rel_bomb_ut', name: 'Sunfire Seeker Cluster', tier: 'UT', slot: 'relic', subType: 'bomb',
     bagType: 6, mpCost: 50, dmg: 780, blastRadius: 4.8, cluster: 3,
     stats: { hp: 50, atk: 8, wis: 6 },
     color: '#eab308', fameBonus: 7,
-    desc: 'LEGENDARY UT: Deploys 3 homing Bombchus that breach walls, stun bosses, and shred armor!'
+    desc: 'LEGENDARY UT: Deploys 3 cluster charges that breach walls, stun bosses, and shred armor!'
   },
 
-  // 4. OCARINAS (RotMG Seal/Tome Party Buffs — Heals + Damaging + Armored)
+  // 4. SANCTUARY WARHORNS (Party Buffs — Heals + Damaging + Armored)
   rel_ocarina_t1: {
-    id: 'rel_ocarina_t1', name: 'Fairy Ocarina', tier: 'T1', slot: 'relic', subType: 'ocarina',
+    id: 'rel_ocarina_t1', name: 'Sanctuary Chime', tier: 'T1', slot: 'relic', subType: 'ocarina',
     bagType: 1, mpCost: 45, heal: 90, buffSec: 4.5, radius: 6.5, stats: { wis: 3 },
     color: '#d97706', fameBonus: 1,
-    desc: 'Plays Saria\'s Melody: Heals nearby allies and grants Damaging (+35% ATK) & Speedy!'
+    desc: 'Sounds the Warden’s Litany: Heals nearby allies and grants Damaging (+35% ATK) & Speedy!'
   },
   rel_ocarina_t2: {
-    id: 'rel_ocarina_t2', name: 'Ocarina of Sacred Time', tier: 'T4', slot: 'relic', subType: 'ocarina',
+    id: 'rel_ocarina_t2', name: 'Warhorn of the First Dawn', tier: 'T4', slot: 'relic', subType: 'ocarina',
     bagType: 2, mpCost: 60, heal: 175, buffSec: 6.0, radius: 8.0, stats: { hp: 40, wis: 6 },
     color: '#3b82f6', fameBonus: 3,
     desc: 'Restores 175 HP to the party and grants Damaging, Armored (+50% DEF), and Speedy!'
   },
   rel_ocarina_ut: {
-    id: 'rel_ocarina_ut', name: 'Wind Waker Conductor Baton', tier: 'UT', slot: 'relic', subType: 'ocarina',
+    id: 'rel_ocarina_ut', name: 'Anthem of the Holy Crest', tier: 'UT', slot: 'relic', subType: 'ocarina',
     bagType: 6, mpCost: 65, heal: 260, buffSec: 7.5, radius: 9.5, purify: true,
     stats: { hp: 80, def: 6, wis: 8 },
     color: '#f8fafc', fameBonus: 7,
-    desc: 'LEGENDARY UT: Purifies all debuffs, heals 260 HP, grants Berserk/Damaging/Armored, and slows bullets!'
+    desc: 'LEGENDARY UT: Purifies all debuffs, heals 260 HP, and grants Damaging, Armored & Speedy!'
   },
 
-  // 5. FROST / SHADOW WANDS (Phase Dash + Freeze Nova)
+  // 5. FROST / PHASE SCEPTERS (Phase Blink + Freeze Nova)
   rel_wand_t1: {
-    id: 'rel_wand_t1', name: 'Ice Rod of Lanayru', tier: 'T1', slot: 'relic', subType: 'wand',
+    id: 'rel_wand_t1', name: 'Scepter of Rime', tier: 'T1', slot: 'relic', subType: 'wand',
     bagType: 1, mpCost: 35, dmg: 180, slowSec: 3.0, stats: { spd: 3 },
     color: '#38bdf8', fameBonus: 1,
     desc: 'Blinks forward in a frost mist and unleashes an Ice Nova that freezes & slows foes.'
   },
   rel_wand_t2: {
-    id: 'rel_wand_t2', name: 'Byrna Cane of Invulnerability', tier: 'T4', slot: 'relic', subType: 'wand',
+    id: 'rel_wand_t2', name: 'Cane of the Astral Ward', tier: 'T4', slot: 'relic', subType: 'wand',
     bagType: 2, mpCost: 50, dmg: 350, slowSec: 4.0, invulnSec: 1.2, stats: { spd: 6, dex: 4 },
     color: '#22d3ee', fameBonus: 3,
-    desc: 'Surrounds you with the Orbit of Byrna (1.2s Invulnerability) and freezes enemies.'
+    desc: 'Surrounds you with an Astral Ward (1.2s Invulnerability) and freezes enemies.'
   },
   rel_wand_ut: {
-    id: 'rel_wand_ut', name: 'Fierce Mask of Twilight', tier: 'UT', slot: 'relic', subType: 'wand',
+    id: 'rel_wand_ut', name: 'Mantle of the Blood Eclipse', tier: 'UT', slot: 'relic', subType: 'wand',
     bagType: 6, mpCost: 55, dmg: 600, slowSec: 5.0, invulnSec: 1.8,
     stats: { atk: 6, spd: 8, dex: 8 },
     color: '#f43f5e', fameBonus: 7,
-    desc: 'LEGENDARY UT: Shadow-teleports to cursor, grants 1.8s Invulnerability, and unleashes 12 twilight blades!'
+    desc: 'LEGENDARY UT: Shadow-blinks toward cursor, grants 1.8s Invulnerability, and shatters nearby foes!'
   },
 
   // ==========================================================================
-  // ARMORS (Tunics, Mails, Robes)
+  // ARMORS (Heavy Plate, Warden Leather, Arcane Robes)
   // ==========================================================================
   arm_heavy_t1: {
-    id: 'arm_heavy_t1', name: 'Hylian Chainmail', tier: 'T1', slot: 'armor', subType: 'heavy',
+    id: 'arm_heavy_t1', name: 'Citadel Chainmail', tier: 'T1', slot: 'armor', subType: 'heavy',
     bagType: 1, stats: { def: 7, hp: 20 }, color: '#94a3b8', fameBonus: 1,
-    desc: 'Standard issue steel links worn by Hyrule Castle sentries.'
+    desc: 'Standard steel links worn by Aethelgard Citadel sentries.'
   },
   arm_heavy_t2: {
-    id: 'arm_heavy_t2', name: 'Zora Scale Armor', tier: 'T4', slot: 'armor', subType: 'heavy',
+    id: 'arm_heavy_t2', name: 'Tideforged Scale Mail', tier: 'T4', slot: 'armor', subType: 'heavy',
     bagType: 2, stats: { def: 14, hp: 45, wis: 3 }, color: '#3b82f6', fameBonus: 2,
-    desc: 'Sapphire dragon-scales that deflect high-velocity projectiles.'
+    desc: 'Sapphire sea-scales that deflect high-velocity projectiles.'
   },
   arm_heavy_t3: {
-    id: 'arm_heavy_t3', name: 'Goron Mythril Plate', tier: 'T8', slot: 'armor', subType: 'heavy',
+    id: 'arm_heavy_t3', name: 'Caldera Mythril Plate', tier: 'T8', slot: 'armor', subType: 'heavy',
     bagType: 3, stats: { def: 21, hp: 70, vit: 5 }, color: '#ef4444', fameBonus: 4,
-    desc: 'Forged in Death Mountain magma. Resistant to volcanic fire and demonic blades.'
+    desc: 'Forged in volcanic magma. Resistant to dragonfire and demonic blades.'
   },
   arm_heavy_t4: {
-    id: 'arm_heavy_t4', name: 'Acropolis Triforce Cuirass', tier: 'T12', slot: 'armor', subType: 'heavy',
+    id: 'arm_heavy_t4', name: 'Aethelgard Sovereign Cuirass', tier: 'T12', slot: 'armor', subType: 'heavy',
     bagType: 3, stats: { def: 26, hp: 100, vit: 6 }, color: '#eab308', fameBonus: 6,
-    desc: 'Royal golden plate armor engraved with the Crest of Courage.'
+    desc: 'Royal golden plate armor engraved with the emblem of the Holy Crest.'
   },
 
   arm_leather_t1: {
-    id: 'arm_leather_t1', name: 'Kokiri Forest Tunic', tier: 'T1', slot: 'armor', subType: 'leather',
+    id: 'arm_leather_t1', name: 'Sylvan Scout Tunic', tier: 'T1', slot: 'armor', subType: 'leather',
     bagType: 1, stats: { def: 5, spd: 2, dex: 2 }, color: '#22c55e', fameBonus: 1,
-    desc: 'Woven by the Great Deku Tree. Light and effortless to roll in.'
+    desc: 'Woven by forest wardens. Light and effortless to roll in.'
   },
   arm_leather_t2: {
-    id: 'arm_leather_t2', name: 'Sheikah Stealth Garb', tier: 'T4', slot: 'armor', subType: 'leather',
+    id: 'arm_leather_t2', name: 'Nightblade Stealth Garb', tier: 'T4', slot: 'armor', subType: 'leather',
     bagType: 2, stats: { def: 10, spd: 4, dex: 4, hp: 30 }, color: '#0ea5e9', fameBonus: 2,
-    desc: 'Reinforced shadow-weave tunic favored by Kakariko scouts.'
+    desc: 'Reinforced shadow-weave tunic favored by Astral Watch scouts.'
   },
   arm_leather_t3: {
     id: 'arm_leather_t3', name: 'Wyvern Hide Brigandine', tier: 'T8', slot: 'armor', subType: 'leather',
     bagType: 3, stats: { def: 16, spd: 5, dex: 6, hp: 55 }, color: '#10b981', fameBonus: 4,
-    desc: 'Crafted from Valoo\'s shed scales. Balances agility with formidable protection.'
+    desc: 'Crafted from drake scales. Balances agility with formidable protection.'
   },
   arm_leather_t4: {
-    id: 'arm_leather_t4', name: 'Hydra Tunic of the Wild', tier: 'T12', slot: 'armor', subType: 'leather',
+    id: 'arm_leather_t4', name: 'Strider Armor of the First Watch', tier: 'T12', slot: 'armor', subType: 'leather',
     bagType: 3, stats: { def: 20, spd: 7, dex: 7, atk: 4, hp: 75 }, color: '#38bdf8', fameBonus: 6,
-    desc: 'Legendary Champion\'s Tunic granting unmatched dexterity and poise.'
+    desc: 'Legendary Warden armor granting unmatched dexterity and poise.'
   },
 
   arm_robe_t1: {
-    id: 'arm_robe_t1', name: 'Novice Sage Vestment', tier: 'T1', slot: 'armor', subType: 'robe',
+    id: 'arm_robe_t1', name: 'Novice Chronicler Vestment', tier: 'T1', slot: 'armor', subType: 'robe',
     bagType: 1, stats: { def: 4, mp: 30, wis: 3, atk: 2 }, color: '#f97316', fameBonus: 1,
     desc: 'Simple linen robe inscribed with minor mana runes.'
   },
   arm_robe_t2: {
-    id: 'arm_robe_t2', name: 'Robe of the Fire Sanctuary', tier: 'T4', slot: 'armor', subType: 'robe',
+    id: 'arm_robe_t2', name: 'Robe of the Ember Sanctum', tier: 'T4', slot: 'armor', subType: 'robe',
     bagType: 2, stats: { def: 8, mp: 55, wis: 5, atk: 4 }, color: '#ef4444', fameBonus: 2,
-    desc: 'Amplifies offensive spellblade weaving and magic regeneration.'
+    desc: 'Amplifies offensive spellblade weaving and mana regeneration.'
   },
   arm_robe_t3: {
-    id: 'arm_robe_t3', name: 'Elder Wizzrobe Mantle', tier: 'T8', slot: 'armor', subType: 'robe',
+    id: 'arm_robe_t3', name: 'Elder Arcanist Mantle', tier: 'T8', slot: 'armor', subType: 'robe',
     bagType: 3, stats: { def: 13, mp: 85, wis: 7, atk: 6, dex: 3 }, color: '#ec4899', fameBonus: 4,
-    desc: 'Worn by high archmages of the Dark World.'
+    desc: 'Worn by high battle-mages of the Blightlands.'
   },
   arm_robe_t4: {
-    id: 'arm_robe_t4', name: 'Grand Sorcerer Vestment of Nayru', tier: 'T12', slot: 'armor', subType: 'robe',
+    id: 'arm_robe_t4', name: 'Grand Vestment of the Astral Elder', tier: 'T12', slot: 'armor', subType: 'robe',
     bagType: 3, stats: { def: 16, mp: 120, wis: 9, atk: 8, dex: 5 }, color: '#eab308', fameBonus: 6,
-    desc: 'Radiates divine wisdom and boundless arcane power.'
+    desc: 'Radiates ancient wisdom and boundless arcane power.'
   },
   arm_ut_magic_armor: {
-    id: 'arm_ut_magic_armor', name: 'Golden Magic Armor of the Hero', tier: 'UT', slot: 'armor', subType: 'any',
+    id: 'arm_ut_magic_armor', name: 'Radiant Aegis of the Holy Crest', tier: 'UT', slot: 'armor', subType: 'any',
     bagType: 6, stats: { hp: 130, mp: 70, def: 24, atk: 6, spd: 5 }, color: '#facc15', fameBonus: 8,
-    desc: 'LEGENDARY UT (Wearable by ANY Class!): Forged from pure Triforce gold. Supreme protection and vigor.'
+    desc: 'LEGENDARY UT (Wearable by ANY Class!): Forged from pure Crest gold. Supreme protection and vigor.'
   },
 
   // ==========================================================================
-  // RINGS & RELIC CHARMS (Slot 4)
+  // RINGS & SIGNETS (Slot 4)
   // ==========================================================================
   rng_hp_t1: {
-    id: 'rng_hp_t1', name: 'Piece of Heart Ring', tier: 'T1', slot: 'ring',
+    id: 'rng_hp_t1', name: 'Heartstone Band', tier: 'T1', slot: 'ring',
     bagType: 1, stats: { hp: 50, def: 2 }, color: '#ef4444', fameBonus: 1,
-    desc: 'A crystallized Heart Piece that bolsters your life force (+50 HP, +2 DEF).'
+    desc: 'A crimson vitality stone that bolsters your life force (+50 HP, +2 DEF).'
   },
   rng_dex_t1: {
-    id: 'rng_dex_t1', name: 'Pegasus Anklet', tier: 'T1', slot: 'ring',
+    id: 'rng_dex_t1', name: 'Zephyr Anklet', tier: 'T1', slot: 'ring',
     bagType: 1, stats: { dex: 4, spd: 4 }, color: '#22c55e', fameBonus: 1,
-    desc: 'Feather-light charm that accelerates both footsteps and sword swings.'
+    desc: 'Feather-light charm that accelerates both footsteps and weapon swings.'
   },
   rng_atk_t1: {
-    id: 'rng_atk_t1', name: 'Goron Ruby Bracelet', tier: 'T1', slot: 'ring',
+    id: 'rng_atk_t1', name: 'Cinder Garnet Ring', tier: 'T1', slot: 'ring',
     bagType: 1, stats: { atk: 4, hp: 30 }, color: '#f97316', fameBonus: 1,
-    desc: 'Sworn symbol of Goron brotherhood (+4 ATK, +30 HP).'
+    desc: 'Sworn emblem of Caldera vanguards (+4 ATK, +30 HP).'
   },
   rng_wis_t1: {
-    id: 'rng_wis_t1', name: 'Zora Sapphire Ring', tier: 'T1', slot: 'ring',
+    id: 'rng_wis_t1', name: 'Tide Sapphire Ring', tier: 'T1', slot: 'ring',
     bagType: 1, stats: { wis: 5, mp: 40 }, color: '#3b82f6', fameBonus: 1,
-    desc: 'Cool ocean gem that accelerates mana flow (+5 WIS, +40 MP).'
+    desc: 'Deep ocean gem that accelerates mana flow (+5 WIS, +40 MP).'
   },
   rng_spd_t1: {
-    id: 'rng_spd_t1', name: 'Bunny Hood Charm', tier: 'T1', slot: 'ring',
+    id: 'rng_spd_t1', name: 'Windrunner Charm', tier: 'T1', slot: 'ring',
     bagType: 1, stats: { spd: 6, dex: 3 }, color: '#eab308', fameBonus: 1,
-    desc: 'Lets the wearer dash like the wind across Hyrule Field.'
+    desc: 'Lets the wearer dash like a gale across the realm.'
   },
   rng_para_hp: {
-    id: 'rng_para_hp', name: 'Ring of Paramount Heart', tier: 'T4', slot: 'ring',
+    id: 'rng_para_hp', name: 'Ring of Paramount Vitality', tier: 'T4', slot: 'ring',
     bagType: 2, stats: { hp: 120, def: 5, vit: 4 }, color: '#f43f5e', fameBonus: 3,
-    desc: 'A full Heart Container bound in silver filigree.'
+    desc: 'A pure life-vessel bound in silver filigree.'
   },
   rng_exalted_hp: {
-    id: 'rng_exalted_hp', name: 'Ring of the Exalted Hero', tier: 'T6', slot: 'ring',
+    id: 'rng_exalted_hp', name: 'Ring of the Exalted Warden', tier: 'T6', slot: 'ring',
     bagType: 3, stats: { hp: 180, def: 8, atk: 5, spd: 5 }, color: '#eab308', fameBonus: 5,
-    desc: 'Godlands treasure pulsing with the resilience of ancient heroes.'
+    desc: 'Blightlands treasure pulsing with the resilience of the First Wardens.'
   },
   rng_ut_crown: {
-    id: 'rng_ut_crown', name: 'Crown of the Shattered Triforce', tier: 'UT', slot: 'ring',
+    id: 'rng_ut_crown', name: 'Crown of the Reborn Crest', tier: 'UT', slot: 'ring',
     bagType: 6, stats: { hp: 160, mp: 80, atk: 10, dex: 10, def: 6, spd: 6 }, color: '#f8fafc', fameBonus: 8,
-    desc: 'LEGENDARY UT (Mad King Drop): The apex relic of the Realm. Massive boost to offensive & defensive stats.'
+    desc: 'LEGENDARY UT (Evil Bane Drop): The apex relic of Aethelgard. Massive boost to offensive & defensive stats.'
   },
   rng_ut_pyra: {
-    id: 'rng_ut_pyra', name: 'Ring of the Ancient Pyramid', tier: 'UT', slot: 'ring',
+    id: 'rng_ut_pyra', name: 'Signet of the Ancient Obelisk', tier: 'UT', slot: 'ring',
     bagType: 6, stats: { hp: 140, atk: 8, def: 8, vit: 6 }, color: '#facc15', fameBonus: 7,
-    desc: 'LEGENDARY UT (Desert Sphinx / Tomb Drop): Balanced perfection of Life, Attack, and Defense.'
+    desc: 'LEGENDARY UT: Balanced perfection of Life, Attack, and Defense.'
   },
 
   // ==========================================================================
-  // ROTMG PERMANENT STAT POTIONS (Blue Bags! Drink to reach 8/8 Maxed!)
+  // PERMANENT STAT POTIONS (Blue Bags! Drink to reach 8/8 Maxed!)
   // ==========================================================================
   pot_atk: {
     id: 'pot_atk', name: 'Potion of Attack', tier: 'POT', slot: 'consumable', subType: 'stat_pot',
@@ -438,28 +428,54 @@ export const ITEMS = {
     desc: 'PERMANENTLY increases Wisdom (WIS) by +1 toward your 8/8 Class Cap!'
   },
   pot_life: {
-    id: 'pot_life', name: 'Potion of Life (Heart Elixir)', tier: 'POT', slot: 'consumable', subType: 'stat_pot',
+    id: 'pot_life', name: 'Potion of Life (Vitality Elixir)', tier: 'POT', slot: 'consumable', subType: 'stat_pot',
     bagType: 4, stat: 'hp', amount: 15, color: '#2dd4bf', fameBonus: 0,
     desc: 'PERMANENTLY increases Maximum HP by +15 toward your 8/8 Class Cap!'
   },
   pot_mana: {
-    id: 'pot_mana', name: 'Potion of Mana (Golden Elixir)', tier: 'POT', slot: 'consumable', subType: 'stat_pot',
+    id: 'pot_mana', name: 'Potion of Mana (Astral Elixir)', tier: 'POT', slot: 'consumable', subType: 'stat_pot',
     bagType: 4, stat: 'mp', amount: 10, color: '#facc15', fameBonus: 0,
     desc: 'PERMANENTLY increases Maximum MP by +10 toward your 8/8 Class Cap!'
   },
   pot_omni: {
-    id: 'pot_omni', name: 'Nectar of the Triforce (Max-All)', tier: 'UT', slot: 'consumable', subType: 'stat_omni',
+    id: 'pot_omni', name: 'Nectar of the Holy Crest (Max-All)', tier: 'UT', slot: 'consumable', subType: 'stat_omni',
     bagType: 6, color: '#fde047', fameBonus: 0,
     desc: 'LEGENDARY ELIXIR: Boosts ALL 8 stats significantly toward 8/8 Maxed!'
   },
 
   // ==========================================================================
-  // CONSUMABLES (Bottled Fairies & Elixirs)
+  // CONSUMABLES & SACRED CREST SHARDS
   // ==========================================================================
   con_fairy: {
-    id: 'con_fairy', name: 'Bottled Fairy', tier: 'CON', slot: 'consumable', subType: 'heal',
+    id: 'con_fairy', name: 'Bottled Lumina Wisp', tier: 'CON', slot: 'consumable', subType: 'heal',
     bagType: 0, healHp: 250, healMp: 100, color: '#f472b6', fameBonus: 0,
-    desc: 'Restores 250 HP & 100 MP on use—OR automatically revives you from a fatal blow if in inventory!'
+    desc: 'Restores 250 HP & 100 MP on use—OR automatically revives you from a fatal blow if in your backpack!'
+  },
+
+  shard_tide: {
+    id: 'shard_tide', name: 'Crest Shard I: Silver Tide', tier: 'UT', slot: 'consumable', subType: 'crest_shard',
+    shardIndex: 0, bagType: 6, color: '#38bdf8', fameBonus: 10,
+    desc: 'SACRED CREST FRAGMENT (1/5): Click to attune and rebuild the First Point of the Holy Crest!'
+  },
+  shard_wilds: {
+    id: 'shard_wilds', name: 'Crest Shard II: Sylvan Root', tier: 'UT', slot: 'consumable', subType: 'crest_shard',
+    shardIndex: 1, bagType: 6, color: '#22c55e', fameBonus: 10,
+    desc: 'SACRED CREST FRAGMENT (2/5): Click to attune and rebuild the Second Point of the Holy Crest!'
+  },
+  shard_astral: {
+    id: 'shard_astral', name: 'Crest Shard III: Astral Wind', tier: 'UT', slot: 'consumable', subType: 'crest_shard',
+    shardIndex: 2, bagType: 6, color: '#c084fc', fameBonus: 10,
+    desc: 'SACRED CREST FRAGMENT (3/5): Click to attune and rebuild the Third Point of the Holy Crest!'
+  },
+  shard_ossuary: {
+    id: 'shard_ossuary', name: 'Crest Shard IV: Dawn Vigil', tier: 'UT', slot: 'consumable', subType: 'crest_shard',
+    shardIndex: 3, bagType: 6, color: '#facc15', fameBonus: 10,
+    desc: 'SACRED CREST FRAGMENT (4/5): Click to attune and rebuild the Fourth Point of the Holy Crest!'
+  },
+  shard_flame: {
+    id: 'shard_flame', name: 'Crest Shard V: Primordial Flame', tier: 'UT', slot: 'consumable', subType: 'crest_shard',
+    shardIndex: 4, bagType: 6, color: '#ef4444', fameBonus: 10,
+    desc: 'SACRED CREST FRAGMENT (5/5): Click to attune and rebuild the Fifth Point of the Holy Crest!'
   }
 };
 

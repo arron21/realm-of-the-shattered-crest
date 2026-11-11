@@ -42,67 +42,69 @@ function buildHtmlBundle() {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Realm of the Shattered Crest — Top-Down Zelda × RotMG MMO ARPG</title>
-  <meta name="description" content="An MMO Action RPG in the spirit of Realm of the Mad God that plays like a traditional top-down Legend of Zelda game." />
+  <title>Realm of the Shattered Crest — Top-Down Bullet-Hell MMO Action RPG</title>
+  <meta name="description" content="Rebuild the shattered Holy Crest piece by piece across five fallen realms to vanquish Malakor, the Evil Bane in this top-down bullet-hell MMO Action RPG." />
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
   <style>
 ${css}
   </style>
 </head>
 <body>
-  <h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">Realm of the Shattered Crest — Zelda × RotMG MMO Action RPG</h1>
+  <h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">Realm of the Shattered Crest — Top-Down Bullet-Hell MMO Action RPG</h1>
 
   <main id="app-root">
     <!-- CENTER / LEFT GAME VIEWPORT -->
     <section id="viewport-wrap" aria-label="Game World Viewport">
       <canvas id="game-canvas"></canvas>
 
-      <!-- TOP-LEFT ZELDA HEARTS & CURRENCY HUD -->
+      <!-- TOP-LEFT LIFE HEARTS, HOLY CREST SHARDS & CURRENCY HUD -->
       <div id="top-left-hud">
         <div class="hud-card">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:5px;">
-            <strong id="hud-zone-title" style="font-size:12px;color:#fde047;letter-spacing:0.03em;">The Sacred Nexus Sanctuary</strong>
-            <span id="hud-star-badge" style="font-size:11.5px;font-weight:900;color:#93c5fd;" title="RotMG Class Star Rank">★ 2</span>
+            <strong id="hud-zone-title" style="font-size:12px;color:#fde047;letter-spacing:0.03em;">The Radiant Sanctuary Hub</strong>
+            <span id="hud-star-badge" style="font-size:11.5px;font-weight:900;color:#93c5fd;" title="Class Star Rank">★ 2</span>
           </div>
-          <div id="zelda-hearts-row" title="Zelda Heart Containers (Each Heart = 50 HP)"></div>
-          <div style="display:flex;align-items:center;gap:14px;margin-top:6px;font-size:11px;font-weight:800;">
-            <span style="color:#4ade80;" title="Zelda Rupees (Collected from Bushes, Pots & Enemies)">◆ <span id="hud-rupees">150</span> Rupees</span>
-            <span style="color:#facc15;" title="RotMG Persistent Account Fame">★ <span id="hud-account-fame">250</span> Fame</span>
+          <div id="life-hearts-row" title="Life Heart Containers (Each Heart = 50 HP)"></div>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:6px;font-size:11px;font-weight:800;flex-wrap:wrap;">
+            <span id="hud-crest-badge" style="color:#22d3ee;cursor:pointer;" title="Click to inspect the 5 Shards of the Holy Crest & Elder Vaelen's Lore">✨ <span id="hud-crest-shards">0/5</span> Crest Shards</span>
+            <span style="color:#4ade80;" title="Sunshards (Collected from Bushes, Urns & Enemies)">◆ <span id="hud-sunshards">150</span> Sunshards</span>
+            <span style="color:#facc15;" title="Persistent Account Fame">★ <span id="hud-account-fame">250</span> Fame</span>
           </div>
         </div>
 
         <div class="hud-card" style="padding:6px 10px;font-size:10.5px;color:#cbd5e1;line-height:1.45;">
-          <div><strong style="color:#fde047;">L-Click:</strong> Sword Slash + Beam <em>(Hold: 360° Spin!)</em></div>
+          <div><strong style="color:#fde047;">L-Click:</strong> Blade Slash + Beam <em>(Hold: 360° Spin!)</em></div>
           <div><strong style="color:#38bdf8;">R-Click:</strong> Shield Block &amp; <strong>Perfect Parry</strong> | <strong style="color:#4ade80;">Shift:</strong> Roll</div>
-          <div><strong style="color:#f472b6;">Q:</strong> Zelda Relic | <strong style="color:#fdba74;">F:</strong> Lift/Throw Pot | <strong style="color:#60a5fa;">R:</strong> Nexus</div>
+          <div><strong style="color:#f472b6;">Q:</strong> Sacred Relic | <strong style="color:#22d3ee;">E / L:</strong> Elder &amp; Lore | <strong style="color:#60a5fa;">R:</strong> Sanctuary</div>
         </div>
       </div>
 
       <!-- TOP-CENTER ACTION & INSTANT WARP BAR -->
       <nav id="top-action-bar" aria-label="Realm Navigation and Modals">
-        <button id="btn-warp-nexus" class="hud-btn" title="Instant Warp to Nexus Sanctuary (Hotkey: R)">🏛️ Nexus [R]</button>
-        <button id="btn-warp-realm" class="hud-btn" title="Enter Kokiri Shore in the Overworld Realm">🏝️ Realm Shore</button>
-        <button id="btn-warp-godlands" class="hud-btn primary-gold" title="Warp directly to Level 20 Dark World Godlands!">⚔️ Godlands (Lvl 20)</button>
-        <button id="btn-warp-sanctum" class="hud-btn danger-crimson" title="Challenge Alderoth the Mad King in the Sanctum!">👑 Mad King Raid</button>
-        <button id="btn-open-classes" class="hud-btn" title="Switch or Inspect 5 Zelda/RotMG Classes">🛡️ Classes (5)</button>
+        <button id="btn-warp-nexus" class="hud-btn" title="Instant Warp to Radiant Sanctuary Hub (Hotkey: R)">🏛️ Sanctuary [R]</button>
+        <button id="btn-open-elder" class="hud-btn primary-gold" title="Speak with High Elder Vaelen — Lore & Holy Crest Shards (Hotkey: L)">📜 Elder &amp; Lore</button>
+        <button id="btn-warp-realm" class="hud-btn" title="Enter Sunlit Haven Shore in the Overworld Realm">🏝️ Realm Shore</button>
+        <button id="btn-warp-godlands" class="hud-btn" title="Warp directly to Level 20 Blighted Godlands!">⚔️ Godlands (Lvl 20)</button>
+        <button id="btn-warp-sanctum" class="hud-btn danger-crimson" title="Challenge Malakor, the Evil Bane in his Citadel!">👑 Evil Bane Raid</button>
+        <button id="btn-open-classes" class="hud-btn" title="Switch or Inspect 5 Hero Classes">🛡️ Classes (5)</button>
         <button id="btn-open-vault" class="hud-btn" title="Open Persistent Account Vault & Potion Storage">📦 Vault</button>
         <button id="btn-open-forge" class="hud-btn" title="Craft Stat Potions & Legendary UT White Bag Relics">⚒️ Forge</button>
         <button id="btn-toggle-audio" class="hud-btn" title="Toggle 16-Bit Chiptune Audio">🔊 Audio</button>
       </nav>
 
       <!-- INTERACT PROMPT BANNER -->
-      <div id="interact-banner">Enter Portal [E]</div>
+      <div id="interact-banner">Speak with High Elder Vaelen [E]</div>
 
       <!-- BOTTOM-LEFT MMO CHAT & CALLOUTS -->
       <aside id="bottom-left-chat" aria-label="MMO Realm Chat">
         <div id="chat-messages"></div>
         <div id="chat-input-row">
-          <input id="chat-input" type="text" placeholder="Press Enter to chat or type /glands, /boss, /max88, /whitebag..." />
+          <input id="chat-input" type="text" placeholder="Press Enter to chat or type /elder, /glands, /boss, /max88, /whitebag..." />
         </div>
       </aside>
     </section>
 
-    <!-- RIGHT-SIDE ROTMG SIDEBAR -->
+    <!-- RIGHT-SIDE SIDEBAR -->
     <aside id="rotmg-sidebar" aria-label="Character HUD and Inventory">
       <!-- 1. MINIMAP -->
       <div class="sidebar-section">
@@ -140,7 +142,7 @@ ${css}
         </div>
       </div>
 
-      <!-- 4. ROTMG 8-STAT MAXING PANEL (0/8 TO 8/8) -->
+      <!-- 4. 8-STAT MAXING PANEL (0/8 TO 8/8) -->
       <div class="sidebar-section">
         <div class="section-header">
           <span>Hero Stats</span>
@@ -149,7 +151,7 @@ ${css}
         <div id="stats-grid"></div>
       </div>
 
-      <!-- 5. EQUIPPED GEAR (WEAPON, ZELDA RELIC, ARMOR, RING) -->
+      <!-- 5. EQUIPPED GEAR (WEAPON, SACRED RELIC, ARMOR, RING) -->
       <div class="sidebar-section">
         <div class="section-header">
           <span>Equipped Relics</span>
@@ -181,15 +183,42 @@ ${css}
   <!-- HOVER ITEM TOOLTIP -->
   <div id="item-tooltip"></div>
 
+  <!-- MODAL 0: HIGH ELDER VAELEN — CHRONICLE OF THE SHATTERED HOLY CREST -->
+  <div id="modal-elder" class="modal-backdrop">
+    <div class="modal-card" style="width:760px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <h2 style="margin:0;font-size:18px;color:#fde047;">📜 High Elder Vaelen — Chronicle of the Shattered Crest</h2>
+          <div style="font-size:11.5px;color:#38bdf8;font-weight:700;margin-top:2px;">
+            Keeper of the Radiant Sanctuary &amp; Guardian of the Five Sacred Seals
+          </div>
+        </div>
+        <button class="hud-btn modal-close-btn">✕ Close</button>
+      </div>
+
+      <div id="elder-crest-status" style="margin:10px 0;padding:8px 12px;background:rgba(234,179,8,0.12);border:1px solid rgba(250,204,21,0.45);border-radius:6px;font-size:12px;"></div>
+
+      <div style="font-size:11.5px;font-weight:800;color:#22d3ee;text-transform:uppercase;letter-spacing:0.05em;margin-top:8px;">
+        The Five Shattered Shards of the Holy Crest (Rebuild Piece by Piece)
+      </div>
+      <div id="elder-shards-grid" class="class-cards-grid" style="margin-bottom:14px;"></div>
+
+      <div style="font-size:11.5px;font-weight:800;color:#fde047;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">
+        The Elder's Chronicle: How the Holy Crest Held Back Evil Bane
+      </div>
+      <div id="elder-lore-chapters"></div>
+    </div>
+  </div>
+
   <!-- MODAL 1: PLAYABLE CLASSES SELECTOR -->
   <div id="modal-classes" class="modal-backdrop">
     <div class="modal-card">
       <div style="display:flex;justify-content:space-between;align-items:center;">
-        <h2 style="margin:0;font-size:18px;color:#fde047;">Choose Your Hero Class (Zelda × RotMG Archetypes)</h2>
+        <h2 style="margin:0;font-size:18px;color:#fde047;">Choose Your Champion of the Reborn Crest</h2>
         <button class="hud-btn modal-close-btn">✕ Close</button>
       </div>
       <p style="font-size:12px;color:#94a3b8;margin:6px 0 0;">
-        Each class pairs a signature Top-Down Zelda primary weapon with a classic Zelda Dungeon Relic and unique 8/8 RotMG stat caps.
+        Each champion pairs a signature primary weapon with a Sacred Dungeon Relic and unique 8/8 stat caps.
       </p>
       <div id="classes-modal-grid" class="class-cards-grid"></div>
     </div>
@@ -212,16 +241,16 @@ ${css}
     </div>
   </div>
 
-  <!-- MODAL 3: GORON RELIC & UT FORGE -->
+  <!-- MODAL 3: ANCIENT RELIC & UT FORGE -->
   <div id="modal-forge" class="modal-backdrop">
     <div class="modal-card">
       <div style="display:flex;justify-content:space-between;align-items:center;">
-        <h2 style="margin:0;font-size:18px;color:#f97316;">Goron Relic &amp; White Bag Forge</h2>
+        <h2 style="margin:0;font-size:18px;color:#f97316;">Ancient Relic &amp; White Bag Forge</h2>
         <button class="hud-btn modal-close-btn">✕ Close</button>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin:6px 0 10px;">
-        <span style="font-size:12px;color:#94a3b8;">Spend Rupees &amp; Account Fame to forge Stat Potions or Legendary UT White Bag items!</span>
-        <strong id="forge-rupee-balance" style="font-size:12px;color:#4ade80;">150 Rupees</strong>
+        <span style="font-size:12px;color:#94a3b8;">Spend Sunshards &amp; Account Fame to forge Stat Potions or Legendary UT White Bag items!</span>
+        <strong id="forge-sunshard-balance" style="font-size:12px;color:#4ade80;">150 Sunshards</strong>
       </div>
       <div id="forge-recipes-grid" class="class-cards-grid"></div>
     </div>
@@ -233,7 +262,7 @@ ${css}
       <div id="death-summary-body"></div>
       <div style="display:flex;justify-content:center;">
         <button id="btn-respawn-hero" class="hud-btn primary-gold" style="padding:9px 22px;font-size:13px;">
-          ★ Reincarnate in the Nexus Sanctuary ★
+          ★ Reincarnate in the Radiant Sanctuary ★
         </button>
       </div>
     </div>

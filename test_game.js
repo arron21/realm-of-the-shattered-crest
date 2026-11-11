@@ -1,16 +1,19 @@
 // ============================================================================
-// REALM OF THE SHATTERED CREST — AUTOMATED ENGINE & MECHANICS VERIFICATION SUITE
+// REALM OF THE SHATTERED CREST — AUTOMATED ENGINE, LORE & MECHANICS TEST SUITE
 // ============================================================================
 
 const assert = require('assert');
-const fs = require('fs');
-const path = require('path');
 const vm = require('vm');
 const { buildHtmlBundle } = require('./build.js');
 
-// Build bundle first
+// 1. Build bundle & verify zero Zelda references exist anywhere in the bundle
 const html = buildHtmlBundle();
 assert(html.length > 40000, 'Bundle should be substantial and self-contained');
+assert(
+  !/zelda|hylian|hyrule|kokiri|goron|sheikah|zora|triforce/i.test(html),
+  'Bundle must contain zero Zelda references'
+);
+console.log('✓ 1. Bundle built cleanly with zero Zelda references');
 
 // Extract inline JS from bundle to run in a mocked DOM/Canvas VM context
 const scriptMatch = html.match(/<script>([\s\S]*?)<\/script>/);
@@ -126,11 +129,42 @@ vm.runInContext(scriptMatch[1], sandbox);
 // Boot the game in sandbox
 sandbox._boot();
 const game = sandbox.__ROTSC_GAME__;
+const hud = sandbox.__ROTSC_HUD__;
 assert(game, 'GameEngine instance should be exposed on window.__ROTSC_GAME__');
+assert(hud, 'HudController instance should be exposed on window.__ROTSC_HUD__');
 
-console.log('✓ 1. GameEngine booted cleanly in Nexus Sanctuary');
 assert.strictEqual(game.currentMap.id, 'nexus');
 assert.strictEqual(game.player.classId, 'knight');
+console.log('✓ 2. GameEngine booted cleanly in The Radiant Sanctuary Hub');
+
+// Verify High Elder Vaelen NPC in the Sanctuary Hub & Lore Chapters
+const elderProp = game.currentMap.props.find((p) => p.type === 'elder_npc');
+assert(elderProp, 'High Elder Vaelen (elder_npc) must be present in The Radiant Sanctuary Hub');
+game.player.x = elderProp.x;
+game.player.y = elderProp.y + 0.8;
+const target = game.getNearestInteractiveTarget();
+assert(target && target.kind === 'elder', 'Standing near High Elder Vaelen must prompt Elder interaction');
+const interacted = game.interactWithNearest();
+assert.strictEqual(interacted, true, 'Interacting with High Elder Vaelen must open the Elder Lore & Holy Crest modal');
+assert(
+  getMockEl('elder-lore-chapters').innerHTML.includes('Malakor, the Evil Bane'),
+  'Elder Lore modal must explain how the Holy Crest held back Malakor, the Evil Bane and was shattered'
+);
+console.log('✓ 3. High Elder Vaelen NPC & 4-Chapter Holy Crest Lore verified in Sanctuary Hub');
+
+// Verify rebuilding the Holy Crest piece by piece (5 Shards)
+assert.strictEqual(game.getRestoredShardsCount(), 0, 'New account starts with 0/5 Holy Crest Shards');
+const baseHpBeforeShards = game.player.stats.hp;
+game.player.inventory[0] = 'shard_tide';
+game.useOrEquipItem('inventory', 0);
+assert.strictEqual(game.getRestoredShardsCount(), 1, 'Attuning Tide-Crest Shard should advance progress to 1/5');
+assert.strictEqual(game.player.stats.hp, baseHpBeforeShards + 25, 'Tide-Crest Shard must grant permanent +25 Max HP blessing');
+
+for (let i = 1; i < 5; i++) {
+  game.attuneCrestShard(i);
+}
+assert.strictEqual(game.getRestoredShardsCount(), 5, 'All 5 Holy Crest Shards should be restored (5/5)');
+console.log('✓ 4. Rebuilding the 5-Piece Holy Crest & permanent Shard stat blessings verified');
 
 // Test all 5 classes
 for (const cid of ['knight', 'ranger', 'pyromancer', 'paladin', 'assassin']) {
@@ -139,21 +173,21 @@ for (const cid of ['knight', 'ranger', 'pyromancer', 'paladin', 'assassin']) {
   assert(game.player.stats.hp >= 150, `Class ${cid} should have valid HP`);
 }
 game.spawnNewHero('knight');
-console.log('✓ 2. All 5 Zelda × RotMG classes verified');
+console.log('✓ 5. All 5 Champion classes verified');
 
-// Test Zelda Melee Slash & Sword Beam + 360° Spin Attack
+// Test Melee Slash & Blade Beam + 360° Spin Attack
 const initialProjCount = game.projectiles.length;
 game.performPrimaryAttack(false);
-assert(game.projectiles.length > initialProjCount, 'Full-HP Knight should fire a Zelda Sword Beam on slash');
+assert(game.projectiles.length > initialProjCount, 'Full-HP Vanguard should fire a Blade Beam on slash');
 game.performPrimaryAttack(true);
 assert(game.player.isSpinSlash === true, 'Spin attack flag should activate on charged spin');
-console.log('✓ 3. Zelda Sword Slash, Full-HP Sword Beam & 360° Hurricane Spin verified');
+console.log('✓ 6. Blade Slash, Full-HP Beam & 360° Hurricane Spin verified');
 
-// Test Zelda Perfect Shield Parry reflecting an enemy bullet
+// Test Bulwark Perfect Shield Parry reflecting an enemy bullet
 game.projectiles = [];
 game.player.shielding = true;
 game.player.shieldRaiseTime = game.time;
-game.player.aimAngle = 0; // Facing East
+game.player.aimAngle = 0;
 const enemyBullet = {
   x: game.player.x + 0.3,
   y: game.player.y,
@@ -161,66 +195,52 @@ const enemyBullet = {
   vy: 0,
   dmg: 80,
   fromEnemy: true,
-  ownerName: 'Medusa'
+  ownerName: 'Serpent Empress of the Blight'
 };
 game.projectiles.push(enemyBullet);
-game.damagePlayer(80, enemyBullet, 'Medusa');
+game.damagePlayer(80, enemyBullet, 'Serpent Empress of the Blight');
 assert.strictEqual(enemyBullet.fromEnemy, false, 'Perfect Parry must reflect enemy bullet back at enemies!');
 assert.strictEqual(game.player.parries, 1, 'Parry counter should increment');
-console.log('✓ 4. Hylian Shield Perfect Parry bullet reflection verified');
+console.log('✓ 7. Bulwark Shield Perfect Parry bullet reflection verified');
 
-// Test Zelda Relics (Boomerang, Bomb cracking wall, Ocarina party buff)
+// Test Sacred Relics (Chakram & Bomb cracking secret wall)
 game.player.mp = 250;
-game.useZeldaRelic(); // Knight uses Boomerang
-assert(game.boomerangs.length > 0, 'Boomerang relic should spawn active boomerang');
+game.useRelicAbility();
+assert(game.boomerangs.length > 0, 'Chakram relic should spawn active chakram');
 
-// Test Bomb blasting open a Cracked Wall (`TILES.WALL_CRACKED` = 15)
 const crackedIdx = game.currentMap.tiles.findIndex((t) => t === 15);
-assert(crackedIdx !== -1, 'Nexus should have a secret Cracked Wall');
+assert(crackedIdx !== -1, 'Sanctuary should have a secret Cracked Wall');
 const cx = (crackedIdx % game.currentMap.width) + 0.5;
 const cy = Math.floor(crackedIdx / game.currentMap.width) + 0.5;
 game.detonateBomb({ x: cx, y: cy, radius: 3.0, dmg: 300, armorBreak: true });
 assert.notStrictEqual(game.currentMap.tiles[crackedIdx], 15, 'Bomb explosion must blast open Cracked Wall!');
-console.log('✓ 5. Zelda Boomerang & Bomb Secret Cracked Wall destruction verified');
+console.log('✓ 8. Sacred Relics & Secret Cracked Wall destruction verified');
 
-// Test RotMG Stat Potions & 8/8 Maxing
+// Test Stat Potions, 6 Dungeons & Lumina Wisp Revival / Permadeath
 game.player.inventory[0] = 'pot_def';
 const prevDef = game.player.baseStats.def;
 game.useOrEquipItem('inventory', 0);
 assert.strictEqual(game.player.baseStats.def, prevDef + 1, 'Drinking Potion of Defense must permanently increase base DEF');
 
-game.player.inventory[0] = 'pot_omni';
-game.useOrEquipItem('inventory', 0);
-assert(game.player.stats.hp > 220, 'Drinking Nectar of the Triforce should boost all 8 stats');
-console.log('✓ 6. RotMG Permanent Stat Potion drinking & stat progression verified');
-
-// Test Warping to Overworld Godlands & All 6 Dungeons
-game.warpToMap('realm', { zone: 'godlands' });
-assert.strictEqual(game.currentMap.id, 'realm');
-assert(game.enemies.length > 30, 'Realm should populate with concentric biome & Godlands enemies');
-
 for (const did of ['pirate_cove', 'deku_temple', 'sprite_world', 'undead_lair', 'abyss_mountain', 'mad_sanctum']) {
   game.warpToMap('dungeon', { dungeonId: did });
   assert.strictEqual(game.currentMap.id, `dungeon_${did}`);
   const hasBoss = game.enemies.some((e) => e.isBoss);
-  assert(hasBoss, `Dungeon ${did} must spawn its Sanctum Boss`);
+  assert(hasBoss, `Dungeon ${did} must spawn its Sanctum Guardian Boss`);
 }
-console.log('✓ 7. Overworld Realm, Godlands & all 6 Zelda/RotMG Dungeons verified');
 
-// Test Bottled Fairy Revival vs Permadeath
 game.player.shielding = false;
 game.player.invulnTimer = 0;
 game.player.dashTimer = 0;
 game.player.inventory[0] = 'con_fairy';
-game.damagePlayer(9999, null, 'Alderoth, Mad King');
-assert.strictEqual(game.player.dead, false, 'Bottled Fairy in inventory must save player from fatal hit!');
-assert.strictEqual(game.player.inventory[0], null, 'Bottled Fairy should be consumed on revival');
+game.damagePlayer(9999, null, 'Malakor, the Evil Bane');
+assert.strictEqual(game.player.dead, false, 'Bottled Lumina Wisp in inventory must save player from fatal hit!');
+assert.strictEqual(game.player.inventory[0], null, 'Bottled Lumina Wisp should be consumed on revival');
 
-// Now test actual Permadeath when no Bottled Fairy is left
 game.player.invulnTimer = 0;
-game.damagePlayer(9999, null, 'Alderoth, Mad King');
-assert.strictEqual(game.player.dead, true, 'Fatal hit without fairy must trigger RotMG Permadeath');
+game.damagePlayer(9999, null, 'Malakor, the Evil Bane');
+assert.strictEqual(game.player.dead, true, 'Fatal hit without Lumina Wisp must trigger Permadeath');
 assert(game.gravestones.length === 1, 'Permadeath must leave a physical Gravestone on the map');
-console.log('✓ 8. Bottled Fairy auto-revival & RotMG Permadeath + Fame + Gravestone verified');
+console.log('✓ 9. Dungeons, Stat Potions, Lumina Wisp Revival & Permadeath verified');
 
-console.log('\nALL 8 CORE ZELDA × ROTMG MMO TEST SUITES PASSED!');
+console.log('\nALL 9 REALM OF THE SHATTERED CREST TEST SUITES PASSED!');

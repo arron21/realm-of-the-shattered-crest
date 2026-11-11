@@ -10,7 +10,6 @@ export const TILE_SIZE = 36; // World tile size in pixels
 const tileCache = new Map();
 const itemIconCache = new Map();
 
-// Generate cached 36x36 tile canvases for blazing-fast 60fps map rendering
 export function getTileCanvas(tileType, animFrame = 0, switchState = 'red') {
   const key = `${tileType}_${animFrame}_${switchState}`;
   if (tileCache.has(key)) return tileCache.get(key);
@@ -47,7 +46,6 @@ export function getTileCanvas(tileType, animFrame = 0, switchState = 'red') {
       ctx.fillRect(0, 0, s, s);
       ctx.fillStyle = '#16a34a';
       ctx.fillRect(1, 1, s - 2, s - 2);
-      // Zelda-style grass blade tufts
       ctx.fillStyle = '#22c55e';
       ctx.fillRect(6, 8, 2, 5);
       ctx.fillRect(9, 6, 2, 7);
@@ -110,7 +108,7 @@ export function getTileCanvas(tileType, animFrame = 0, switchState = 'red') {
       ctx.fillRect(0, 0, s, s);
       ctx.fillStyle = '#fef9c3';
       ctx.fillRect(2, 2, s - 4, s - 4);
-      // Triforce / Crest diamond in center
+      // Holy Crest diamond inlay in center
       ctx.fillStyle = '#eab308';
       ctx.beginPath();
       ctx.moveTo(s / 2, 7);
@@ -175,7 +173,6 @@ export function getTileCanvas(tileType, animFrame = 0, switchState = 'red') {
       break;
     }
     case TILES.WALL_CRACKED: {
-      // Bombable Zelda Wall! Distinct golden-orange fissure lines so players spot secrets!
       ctx.fillStyle = '#1e293b';
       ctx.fillRect(0, 0, s, s);
       ctx.fillStyle = '#64748b';
@@ -228,7 +225,7 @@ export function getTileCanvas(tileType, animFrame = 0, switchState = 'red') {
       ctx.fillRect(0, 0, s, s);
       ctx.fillStyle = '#38bdf8';
       ctx.fillRect(3, 3, s - 6, s - 6);
-      ctx.fillStyle = '#f472b6'; // Fairy pink shimmer
+      ctx.fillStyle = '#f472b6';
       ctx.beginPath();
       ctx.arc(s / 2, s / 2, 6 + (animFrame % 2) * 2, 0, Math.PI * 2);
       ctx.fill();
@@ -245,15 +242,88 @@ export function getTileCanvas(tileType, animFrame = 0, switchState = 'red') {
 }
 
 // ============================================================================
-// RENDER ZELDA INTERACTIVE PROPS (Bushes, Pots, Grapple Posts, Switches, Chests)
+// RENDER INTERACTIVE PROPS & HIGH ELDER VAELEN IN THE SANCTUARY HUB
 // ============================================================================
 export function drawProp(ctx, prop, screenX, screenY, time) {
   ctx.save();
   ctx.translate(screenX, screenY);
 
   switch (prop.type) {
+    case 'elder_npc': {
+      // Radiant Pedestal Aura of the Holy Crest
+      const grad = ctx.createRadialGradient(0, 0, 4, 0, 0, 34);
+      grad.addColorStop(0, 'rgba(250, 204, 21, 0.45)');
+      grad.addColorStop(1, 'rgba(250, 204, 21, 0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(0, 0, 34, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Golden Crest Seal on the Sanctuary floor beneath Elder Vaelen
+      ctx.strokeStyle = '#facc15';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, 4, 20, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // High Elder Vaelen's Robes (White & Gold Astral Vestments)
+      ctx.fillStyle = '#1e3a8a';
+      ctx.strokeStyle = '#facc15';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.roundRect(-11, -7, 22, 20, 6);
+      ctx.fill();
+      ctx.stroke();
+
+      // Elder Head & Flowing Silver Beard
+      ctx.fillStyle = '#fed7aa';
+      ctx.beginPath();
+      ctx.arc(0, -10, 8.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Silver Beard
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath();
+      ctx.moveTo(-6, -6);
+      ctx.lineTo(6, -6);
+      ctx.lineTo(0, 7);
+      ctx.closePath();
+      ctx.fill();
+
+      // Golden Elder Circlet Crown
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(-7, -17, 14, 4);
+
+      // Astral Crozier Staff in Right Hand with Floating Crest Gem
+      ctx.strokeStyle = '#eab308';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(14, 12);
+      ctx.lineTo(14, -16);
+      ctx.stroke();
+
+      const bob = Math.sin(time * 4) * 2.5;
+      ctx.fillStyle = '#38bdf8';
+      ctx.beginPath();
+      ctx.arc(14, -20 + bob, 5.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#fde047';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Overhead Nameplate & Lore Prompt
+      ctx.fillStyle = '#fde047';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('📜 HIGH ELDER VAELEN [E]', 0, -30);
+      ctx.fillStyle = '#93c5fd';
+      ctx.font = 'bold 9.5px sans-serif';
+      ctx.fillText('Lore & Holy Crest Shards', 0, -19);
+      break;
+    }
+
     case 'bush': {
-      // Classic A Link to the Past round leafy bush
       ctx.fillStyle = 'rgba(0,0,0,0.35)';
       ctx.beginPath();
       ctx.ellipse(0, 8, 13, 6, 0, 0, Math.PI * 2);
@@ -277,7 +347,6 @@ export function drawProp(ctx, prop, screenX, screenY, time) {
     }
 
     case 'pot': {
-      // Zelda Ceramic Pot (smashable or throwable with F!)
       ctx.fillStyle = 'rgba(0,0,0,0.35)';
       ctx.beginPath();
       ctx.ellipse(0, 8, 11, 5, 0, 0, Math.PI * 2);
@@ -293,7 +362,6 @@ export function drawProp(ctx, prop, screenX, screenY, time) {
       ctx.arc(-2, -1, 8, 0, Math.PI * 2);
       ctx.fill();
 
-      // Pot rim
       ctx.fillStyle = '#431407';
       ctx.beginPath();
       ctx.ellipse(0, -6, 7, 3.5, 0, 0, Math.PI * 2);
@@ -305,12 +373,10 @@ export function drawProp(ctx, prop, screenX, screenY, time) {
     }
 
     case 'grapple_post': {
-      // Hookshot Grapple Anchor Pillar
       ctx.fillStyle = '#334155';
       ctx.fillRect(-10, -12, 20, 24);
       ctx.fillStyle = '#64748b';
       ctx.fillRect(-8, -10, 16, 20);
-      // Golden hook target ring
       ctx.strokeStyle = '#facc15';
       ctx.lineWidth = 2.5;
       ctx.beginPath();
@@ -320,7 +386,6 @@ export function drawProp(ctx, prop, screenX, screenY, time) {
     }
 
     case 'crystal_switch': {
-      // Zelda Crystal Orb Switch (Red / Blue)
       ctx.fillStyle = '#475569';
       ctx.fillRect(-11, 2, 22, 10);
       const isRed = prop.state === 'red';
@@ -344,7 +409,6 @@ export function drawProp(ctx, prop, screenX, screenY, time) {
       ctx.strokeStyle = '#facc15';
       ctx.lineWidth = 2.5;
       ctx.strokeRect(-14, -10, 28, 20);
-      // Lock clasp
       ctx.fillStyle = '#fde047';
       ctx.fillRect(-3, -2, 6, 6);
       if (isVault) {
@@ -375,7 +439,7 @@ export function drawProp(ctx, prop, screenX, screenY, time) {
 }
 
 // ============================================================================
-// RENDER ROTMG LOOT BAGS (Including Iconic White Bag with Cyan Ribbon!)
+// RENDER LOOT BAGS (Including White Bag with Cyan Ribbon!)
 // ============================================================================
 export function drawLootBag(ctx, bag, screenX, screenY, time) {
   const meta = BAG_TYPES[bag.bagType] || BAG_TYPES[0];
@@ -384,7 +448,6 @@ export function drawLootBag(ctx, bag, screenX, screenY, time) {
   ctx.save();
   ctx.translate(screenX, screenY + bob);
 
-  // White Bag & Blue Bag Heavenly Aura!
   if (bag.bagType >= 4) {
     const grad = ctx.createRadialGradient(0, 0, 2, 0, 0, bag.bagType === 6 ? 32 : 22);
     grad.addColorStop(0, meta.glow);
@@ -395,13 +458,11 @@ export function drawLootBag(ctx, bag, screenX, screenY, time) {
     ctx.fill();
 
     if (bag.bagType === 6) {
-      // White Bag vertical light beam
       ctx.fillStyle = 'rgba(56, 189, 248, 0.22)';
       ctx.fillRect(-10, -48, 20, 48);
     }
   }
 
-  // Bag pouch body
   ctx.fillStyle = meta.color;
   ctx.strokeStyle = '#0f172a';
   ctx.lineWidth = 2;
@@ -410,7 +471,6 @@ export function drawLootBag(ctx, bag, screenX, screenY, time) {
   ctx.fill();
   ctx.stroke();
 
-  // Top tied neck of bag
   ctx.fillStyle = meta.color;
   ctx.beginPath();
   ctx.moveTo(-6, -10);
@@ -421,7 +481,6 @@ export function drawLootBag(ctx, bag, screenX, screenY, time) {
   ctx.fill();
   ctx.stroke();
 
-  // Iconic Ribbon Tie (Cyan on White Bag, Silver on Blue Bag, Gold on Purple/Orange)
   ctx.fillStyle = meta.ribbon;
   ctx.fillRect(-6, -5, 12, 3.5);
 
@@ -441,7 +500,7 @@ export function drawLootBag(ctx, bag, screenX, screenY, time) {
 }
 
 // ============================================================================
-// RENDER HERO / MMO PLAYER (Zelda Tunic + Pointed Cap + Shield + Sword Arc)
+// RENDER WARDEN HERO / MMO PLAYER (Tunic + Hood + Bulwark Shield + Blade Arc)
 // ============================================================================
 export function drawHero(ctx, entity, screenX, screenY, time, isSelf = false) {
   ctx.save();
@@ -455,13 +514,11 @@ export function drawHero(ctx, entity, screenX, screenY, time, isSelf = false) {
     shield: '#3b82f6'
   };
 
-  // Shadow
   ctx.fillStyle = 'rgba(0,0,0,0.4)';
   ctx.beginPath();
   ctx.ellipse(0, 12, 12, 5, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Spin Attack Charge Ring!
   if (entity.chargeTime && entity.chargeTime > 0.15) {
     const ready = entity.chargeTime >= 0.55;
     ctx.strokeStyle = ready ? '#facc15' : '#38bdf8';
@@ -471,7 +528,6 @@ export function drawHero(ctx, entity, screenX, screenY, time, isSelf = false) {
     ctx.stroke();
   }
 
-  // Active Ocarina / Invulnerability Buff Aura
   if (entity.invulnTimer > 0 || (entity.buffs && entity.buffs.armored > 0)) {
     ctx.strokeStyle = entity.invulnTimer > 0 ? '#38bdf8' : '#fde047';
     ctx.lineWidth = 2;
@@ -480,7 +536,6 @@ export function drawHero(ctx, entity, screenX, screenY, time, isSelf = false) {
     ctx.stroke();
   }
 
-  // Body Tunic
   ctx.fillStyle = pal.tunic;
   ctx.strokeStyle = '#0f172a';
   ctx.lineWidth = 2;
@@ -489,18 +544,15 @@ export function drawHero(ctx, entity, screenX, screenY, time, isSelf = false) {
   ctx.fill();
   ctx.stroke();
 
-  // Golden Triforce Belt
   ctx.fillStyle = pal.trim;
   ctx.fillRect(-10, 3, 20, 3);
 
-  // Head
   ctx.fillStyle = pal.skin;
   ctx.beginPath();
   ctx.arc(0, -8, 8.5, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // Classic Pointed Zelda Hero Cap trailing behind facing angle
   const angle = entity.aimAngle || 0;
   ctx.fillStyle = pal.cap;
   ctx.beginPath();
@@ -510,14 +562,13 @@ export function drawHero(ctx, entity, screenX, screenY, time, isSelf = false) {
   ctx.fill();
   ctx.stroke();
 
-  // Eyes facing aim direction
   const ex = Math.cos(angle) * 3.5;
   const ey = Math.sin(angle) * 2.5 - 7.5;
   ctx.fillStyle = '#0f172a';
   ctx.fillRect(ex - 3, ey - 1, 2, 2.5);
   ctx.fillRect(ex + 1, ey - 1, 2, 2.5);
 
-  // Hylian Shield (Raised in front when blocking, or at side when idle)
+  // Runic Bulwark Shield
   const shieldDist = entity.shielding ? 13 : 9;
   const shieldAngle = entity.shielding ? angle : angle + 1.1;
   const sx = Math.cos(shieldAngle) * shieldDist;
@@ -532,17 +583,17 @@ export function drawHero(ctx, entity, screenX, screenY, time, isSelf = false) {
   ctx.roundRect(-6, -7, 12, 14, 3);
   ctx.fill();
   ctx.stroke();
-  // Triforce crest on shield
+  // Holy Crest diamond on shield
   ctx.fillStyle = '#facc15';
   ctx.beginPath();
   ctx.moveTo(0, -4);
-  ctx.lineTo(3.5, 2);
-  ctx.lineTo(-3.5, 2);
+  ctx.lineTo(3.5, 0);
+  ctx.lineTo(0, 4);
+  ctx.lineTo(-3.5, 0);
   ctx.closePath();
   ctx.fill();
   ctx.restore();
 
-  // Active Sword Slash / Hurricane Spin Visual Arc!
   if (entity.slashTimer > 0) {
     const progress = 1 - entity.slashTimer / entity.slashDuration;
     const isSpin = entity.isSpinSlash;
@@ -551,14 +602,12 @@ export function drawHero(ctx, entity, screenX, screenY, time, isSelf = false) {
     const currentA = startA + arcSpan * progress;
     const radius = entity.slashRadiusPx || 44;
 
-    // Glowing crescent trail
     ctx.strokeStyle = entity.bladeColor || '#67e8f9';
     ctx.lineWidth = isSpin ? 8 : 6;
     ctx.beginPath();
     ctx.arc(0, 0, radius * 0.82, startA, currentA);
     ctx.stroke();
 
-    // Physical Sword Blade
     ctx.save();
     ctx.rotate(currentA);
     ctx.fillStyle = '#f8fafc';
@@ -569,12 +618,11 @@ export function drawHero(ctx, entity, screenX, screenY, time, isSelf = false) {
     ctx.restore();
   }
 
-  // If carrying a Pot over head (Zelda lift & throw!)
   if (entity.carriedPot) {
     drawProp(ctx, { type: 'pot' }, 0, -24, time);
   }
 
-  // Orbiting Navi / Fairy Pet Companion!
+  // Orbiting Lumina Wisp Companion
   if (entity.hasFairy !== false) {
     const fx = Math.cos(time * 3.5 + (entity.id ? entity.id.length : 0)) * 22;
     const fy = Math.sin(time * 5.0) * 10 - 14;
@@ -589,7 +637,6 @@ export function drawHero(ctx, entity, screenX, screenY, time, isSelf = false) {
     ctx.fill();
   }
 
-  // Overhead Nameplate & 8/8 Badge for Players
   if (entity.name) {
     ctx.font = 'bold 10px sans-serif';
     ctx.textAlign = 'center';
@@ -610,13 +657,11 @@ export function drawEnemy(ctx, enemy, screenX, screenY, time) {
 
   const r = enemy.size || 16;
 
-  // Shadow
   ctx.fillStyle = 'rgba(0,0,0,0.42)';
   ctx.beginPath();
   ctx.ellipse(0, r * 0.75, r * 0.85, r * 0.35, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Boss / Event Aura
   if (enemy.isBoss || enemy.isGod) {
     ctx.strokeStyle = enemy.isBoss ? 'rgba(250, 204, 21, 0.5)' : 'rgba(168, 85, 247, 0.35)';
     ctx.lineWidth = enemy.isBoss ? 3 : 2;
@@ -625,7 +670,6 @@ export function drawEnemy(ctx, enemy, screenX, screenY, time) {
     ctx.stroke();
   }
 
-  // Main Body
   ctx.fillStyle = enemy.hitFlash > 0 ? '#ffffff' : enemy.color;
   ctx.strokeStyle = '#090d16';
   ctx.lineWidth = 2.5;
@@ -638,16 +682,13 @@ export function drawEnemy(ctx, enemy, screenX, screenY, time) {
   ctx.fill();
   ctx.stroke();
 
-  // Inner Armor / Crest detail
   ctx.fillStyle = enemy.accent || '#fde047';
   ctx.beginPath();
   ctx.arc(0, -2, r * 0.45, 0, Math.PI * 2);
   ctx.fill();
 
-  // Glaring Eye(s)
   ctx.fillStyle = '#090d16';
   if (enemy.id.includes('beholder') || enemy.id.includes('gohma')) {
-    // Cyclops Eye
     ctx.beginPath();
     ctx.arc(0, -2, r * 0.22, 0, Math.PI * 2);
     ctx.fill();
@@ -656,7 +697,6 @@ export function drawEnemy(ctx, enemy, screenX, screenY, time) {
     ctx.fillRect(r * 0.15, -4, 3.5, 4);
   }
 
-  // Darknut Directional Front Shield!
   if (enemy.frontShield) {
     const fa = enemy.facingAngle || 0;
     ctx.save();
@@ -669,7 +709,7 @@ export function drawEnemy(ctx, enemy, screenX, screenY, time) {
     ctx.restore();
   }
 
-  // Final Boss Crown (Alderoth the Mad King)
+  // Final Boss Crown (Malakor, the Evil Bane)
   if (enemy.isFinalBoss) {
     ctx.fillStyle = '#facc15';
     ctx.strokeStyle = '#090d16';
@@ -687,7 +727,6 @@ export function drawEnemy(ctx, enemy, screenX, screenY, time) {
     ctx.stroke();
   }
 
-  // Status Effect Badges (Stunned / Slowed / Armor Broken)
   if (enemy.stunTimer > 0) {
     ctx.fillStyle = '#facc15';
     ctx.font = 'bold 10px monospace';
@@ -700,7 +739,6 @@ export function drawEnemy(ctx, enemy, screenX, screenY, time) {
     ctx.fillText('ARMOR BROKEN', 0, -r - 14);
   }
 
-  // Health Bar
   if (enemy.hp < enemy.maxHp || enemy.isBoss) {
     const bw = Math.max(32, r * 2);
     const bh = enemy.isBoss ? 6 : 4;
@@ -727,7 +765,6 @@ export function getItemIconDataUrl(itemId) {
   c.height = 40;
   const ctx = c.getContext('2d');
 
-  // Subtle glow backdrop for UT / High-tier
   if (item.tier === 'UT') {
     const grad = ctx.createRadialGradient(20, 20, 2, 20, 20, 18);
     grad.addColorStop(0, 'rgba(56, 189, 248, 0.45)');
@@ -739,9 +776,22 @@ export function getItemIconDataUrl(itemId) {
   ctx.save();
   ctx.translate(20, 20);
 
-  if (item.subType === 'sword' || item.subType === 'dagger') {
+  if (item.subType === 'crest_shard') {
+    // Radiant 5-Pointed Holy Crest Fragment!
+    ctx.fillStyle = item.color || '#facc15';
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, -14);
+    ctx.lineTo(10, -3);
+    ctx.lineTo(6, 13);
+    ctx.lineTo(-6, 13);
+    ctx.lineTo(-10, -3);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  } else if (item.subType === 'sword' || item.subType === 'dagger') {
     ctx.rotate(-Math.PI / 4);
-    // Blade
     ctx.fillStyle = item.bladeColor || item.color;
     ctx.strokeStyle = '#090d16';
     ctx.lineWidth = 2;
@@ -755,7 +805,6 @@ export function getItemIconDataUrl(itemId) {
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
-    // Crossguard & Hilt
     ctx.fillStyle = '#eab308';
     ctx.fillRect(-7, 5, 14, 3);
     ctx.fillStyle = item.color;
@@ -766,7 +815,6 @@ export function getItemIconDataUrl(itemId) {
     ctx.beginPath();
     ctx.arc(-4, 0, 13, -1.1, 1.1);
     ctx.stroke();
-    // Bowstring & Arrow
     ctx.strokeStyle = '#e2e8f0';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
@@ -856,7 +904,6 @@ export function getItemIconDataUrl(itemId) {
     ctx.arc(0, -7, 4.5, 0, Math.PI * 2);
     ctx.fill();
   } else if (item.subType === 'stat_pot' || item.subType === 'stat_omni' || item.subType === 'heal') {
-    // Classic RotMG Potion Flask!
     ctx.fillStyle = item.color;
     ctx.strokeStyle = '#090d16';
     ctx.lineWidth = 2;

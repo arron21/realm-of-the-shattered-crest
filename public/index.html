@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Realm of the Shattered Crest — Top-Down Zelda × RotMG MMO ARPG</title>
-  <meta name="description" content="An MMO Action RPG in the spirit of Realm of the Mad God that plays like a traditional top-down Legend of Zelda game." />
+  <title>Realm of the Shattered Crest — Top-Down Bullet-Hell MMO Action RPG</title>
+  <meta name="description" content="Rebuild the shattered Holy Crest piece by piece across five fallen realms to vanquish Malakor, the Evil Bane in this top-down bullet-hell MMO Action RPG." />
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
   <style>
 /* ==========================================================================
-   REALM OF THE SHATTERED CREST — RETRO-MODERN ZELDA + ROTMG UI STYLESHEET
-   Palette: Deep Obsidian (#090e17), Triforce Gold (#eab308), Hero Emerald (#22c55e),
-   Zora Sapphire (#38bdf8), Crimson Heart (#ef4444)
+   REALM OF THE SHATTERED CREST — RETRO-MODERN TOP-DOWN MMO ARPG STYLESHEET
+   Palette: Deep Obsidian (#090e17), Sovereign Gold (#eab308), Hero Emerald (#22c55e),
+   Astral Sapphire (#38bdf8), Crimson Life (#ef4444)
    ========================================================================== */
 
 :root {
@@ -69,7 +69,7 @@ html, body {
   cursor: crosshair;
 }
 
-/* Top-Left Zelda Heart Containers & Zone Banner */
+/* Top-Left Life Heart Containers & Zone Banner */
 #top-left-hud {
   position: absolute;
   top: 12px;
@@ -89,7 +89,7 @@ html, body {
   pointer-events: auto;
 }
 
-#zelda-hearts-row {
+#life-hearts-row {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -97,7 +97,7 @@ html, body {
   max-width: 280px;
 }
 
-.zelda-heart {
+.life-heart {
   width: 16px;
   height: 16px;
   display: inline-block;
@@ -461,7 +461,7 @@ html, body {
   display: none;
 }
 
-/* Modals (Class Selection, Account Vault, Goron Relic Forge, Permadeath Fame Screen) */
+/* Modals (Elder Lore & Holy Crest, Class Selection, Account Vault, Relic Forge, Permadeath Fame Screen) */
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -522,59 +522,61 @@ html, body {
   </style>
 </head>
 <body>
-  <h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">Realm of the Shattered Crest — Zelda × RotMG MMO Action RPG</h1>
+  <h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">Realm of the Shattered Crest — Top-Down Bullet-Hell MMO Action RPG</h1>
 
   <main id="app-root">
     <!-- CENTER / LEFT GAME VIEWPORT -->
     <section id="viewport-wrap" aria-label="Game World Viewport">
       <canvas id="game-canvas"></canvas>
 
-      <!-- TOP-LEFT ZELDA HEARTS & CURRENCY HUD -->
+      <!-- TOP-LEFT LIFE HEARTS, HOLY CREST SHARDS & CURRENCY HUD -->
       <div id="top-left-hud">
         <div class="hud-card">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:5px;">
-            <strong id="hud-zone-title" style="font-size:12px;color:#fde047;letter-spacing:0.03em;">The Sacred Nexus Sanctuary</strong>
-            <span id="hud-star-badge" style="font-size:11.5px;font-weight:900;color:#93c5fd;" title="RotMG Class Star Rank">★ 2</span>
+            <strong id="hud-zone-title" style="font-size:12px;color:#fde047;letter-spacing:0.03em;">The Radiant Sanctuary Hub</strong>
+            <span id="hud-star-badge" style="font-size:11.5px;font-weight:900;color:#93c5fd;" title="Class Star Rank">★ 2</span>
           </div>
-          <div id="zelda-hearts-row" title="Zelda Heart Containers (Each Heart = 50 HP)"></div>
-          <div style="display:flex;align-items:center;gap:14px;margin-top:6px;font-size:11px;font-weight:800;">
-            <span style="color:#4ade80;" title="Zelda Rupees (Collected from Bushes, Pots & Enemies)">◆ <span id="hud-rupees">150</span> Rupees</span>
-            <span style="color:#facc15;" title="RotMG Persistent Account Fame">★ <span id="hud-account-fame">250</span> Fame</span>
+          <div id="life-hearts-row" title="Life Heart Containers (Each Heart = 50 HP)"></div>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:6px;font-size:11px;font-weight:800;flex-wrap:wrap;">
+            <span id="hud-crest-badge" style="color:#22d3ee;cursor:pointer;" title="Click to inspect the 5 Shards of the Holy Crest & Elder Vaelen's Lore">✨ <span id="hud-crest-shards">0/5</span> Crest Shards</span>
+            <span style="color:#4ade80;" title="Sunshards (Collected from Bushes, Urns & Enemies)">◆ <span id="hud-sunshards">150</span> Sunshards</span>
+            <span style="color:#facc15;" title="Persistent Account Fame">★ <span id="hud-account-fame">250</span> Fame</span>
           </div>
         </div>
 
         <div class="hud-card" style="padding:6px 10px;font-size:10.5px;color:#cbd5e1;line-height:1.45;">
-          <div><strong style="color:#fde047;">L-Click:</strong> Sword Slash + Beam <em>(Hold: 360° Spin!)</em></div>
+          <div><strong style="color:#fde047;">L-Click:</strong> Blade Slash + Beam <em>(Hold: 360° Spin!)</em></div>
           <div><strong style="color:#38bdf8;">R-Click:</strong> Shield Block &amp; <strong>Perfect Parry</strong> | <strong style="color:#4ade80;">Shift:</strong> Roll</div>
-          <div><strong style="color:#f472b6;">Q:</strong> Zelda Relic | <strong style="color:#fdba74;">F:</strong> Lift/Throw Pot | <strong style="color:#60a5fa;">R:</strong> Nexus</div>
+          <div><strong style="color:#f472b6;">Q:</strong> Sacred Relic | <strong style="color:#22d3ee;">E / L:</strong> Elder &amp; Lore | <strong style="color:#60a5fa;">R:</strong> Sanctuary</div>
         </div>
       </div>
 
       <!-- TOP-CENTER ACTION & INSTANT WARP BAR -->
       <nav id="top-action-bar" aria-label="Realm Navigation and Modals">
-        <button id="btn-warp-nexus" class="hud-btn" title="Instant Warp to Nexus Sanctuary (Hotkey: R)">🏛️ Nexus [R]</button>
-        <button id="btn-warp-realm" class="hud-btn" title="Enter Kokiri Shore in the Overworld Realm">🏝️ Realm Shore</button>
-        <button id="btn-warp-godlands" class="hud-btn primary-gold" title="Warp directly to Level 20 Dark World Godlands!">⚔️ Godlands (Lvl 20)</button>
-        <button id="btn-warp-sanctum" class="hud-btn danger-crimson" title="Challenge Alderoth the Mad King in the Sanctum!">👑 Mad King Raid</button>
-        <button id="btn-open-classes" class="hud-btn" title="Switch or Inspect 5 Zelda/RotMG Classes">🛡️ Classes (5)</button>
+        <button id="btn-warp-nexus" class="hud-btn" title="Instant Warp to Radiant Sanctuary Hub (Hotkey: R)">🏛️ Sanctuary [R]</button>
+        <button id="btn-open-elder" class="hud-btn primary-gold" title="Speak with High Elder Vaelen — Lore & Holy Crest Shards (Hotkey: L)">📜 Elder &amp; Lore</button>
+        <button id="btn-warp-realm" class="hud-btn" title="Enter Sunlit Haven Shore in the Overworld Realm">🏝️ Realm Shore</button>
+        <button id="btn-warp-godlands" class="hud-btn" title="Warp directly to Level 20 Blighted Godlands!">⚔️ Godlands (Lvl 20)</button>
+        <button id="btn-warp-sanctum" class="hud-btn danger-crimson" title="Challenge Malakor, the Evil Bane in his Citadel!">👑 Evil Bane Raid</button>
+        <button id="btn-open-classes" class="hud-btn" title="Switch or Inspect 5 Hero Classes">🛡️ Classes (5)</button>
         <button id="btn-open-vault" class="hud-btn" title="Open Persistent Account Vault & Potion Storage">📦 Vault</button>
         <button id="btn-open-forge" class="hud-btn" title="Craft Stat Potions & Legendary UT White Bag Relics">⚒️ Forge</button>
         <button id="btn-toggle-audio" class="hud-btn" title="Toggle 16-Bit Chiptune Audio">🔊 Audio</button>
       </nav>
 
       <!-- INTERACT PROMPT BANNER -->
-      <div id="interact-banner">Enter Portal [E]</div>
+      <div id="interact-banner">Speak with High Elder Vaelen [E]</div>
 
       <!-- BOTTOM-LEFT MMO CHAT & CALLOUTS -->
       <aside id="bottom-left-chat" aria-label="MMO Realm Chat">
         <div id="chat-messages"></div>
         <div id="chat-input-row">
-          <input id="chat-input" type="text" placeholder="Press Enter to chat or type /glands, /boss, /max88, /whitebag..." />
+          <input id="chat-input" type="text" placeholder="Press Enter to chat or type /elder, /glands, /boss, /max88, /whitebag..." />
         </div>
       </aside>
     </section>
 
-    <!-- RIGHT-SIDE ROTMG SIDEBAR -->
+    <!-- RIGHT-SIDE SIDEBAR -->
     <aside id="rotmg-sidebar" aria-label="Character HUD and Inventory">
       <!-- 1. MINIMAP -->
       <div class="sidebar-section">
@@ -612,7 +614,7 @@ html, body {
         </div>
       </div>
 
-      <!-- 4. ROTMG 8-STAT MAXING PANEL (0/8 TO 8/8) -->
+      <!-- 4. 8-STAT MAXING PANEL (0/8 TO 8/8) -->
       <div class="sidebar-section">
         <div class="section-header">
           <span>Hero Stats</span>
@@ -621,7 +623,7 @@ html, body {
         <div id="stats-grid"></div>
       </div>
 
-      <!-- 5. EQUIPPED GEAR (WEAPON, ZELDA RELIC, ARMOR, RING) -->
+      <!-- 5. EQUIPPED GEAR (WEAPON, SACRED RELIC, ARMOR, RING) -->
       <div class="sidebar-section">
         <div class="section-header">
           <span>Equipped Relics</span>
@@ -653,15 +655,42 @@ html, body {
   <!-- HOVER ITEM TOOLTIP -->
   <div id="item-tooltip"></div>
 
+  <!-- MODAL 0: HIGH ELDER VAELEN — CHRONICLE OF THE SHATTERED HOLY CREST -->
+  <div id="modal-elder" class="modal-backdrop">
+    <div class="modal-card" style="width:760px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <h2 style="margin:0;font-size:18px;color:#fde047;">📜 High Elder Vaelen — Chronicle of the Shattered Crest</h2>
+          <div style="font-size:11.5px;color:#38bdf8;font-weight:700;margin-top:2px;">
+            Keeper of the Radiant Sanctuary &amp; Guardian of the Five Sacred Seals
+          </div>
+        </div>
+        <button class="hud-btn modal-close-btn">✕ Close</button>
+      </div>
+
+      <div id="elder-crest-status" style="margin:10px 0;padding:8px 12px;background:rgba(234,179,8,0.12);border:1px solid rgba(250,204,21,0.45);border-radius:6px;font-size:12px;"></div>
+
+      <div style="font-size:11.5px;font-weight:800;color:#22d3ee;text-transform:uppercase;letter-spacing:0.05em;margin-top:8px;">
+        The Five Shattered Shards of the Holy Crest (Rebuild Piece by Piece)
+      </div>
+      <div id="elder-shards-grid" class="class-cards-grid" style="margin-bottom:14px;"></div>
+
+      <div style="font-size:11.5px;font-weight:800;color:#fde047;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">
+        The Elder's Chronicle: How the Holy Crest Held Back Evil Bane
+      </div>
+      <div id="elder-lore-chapters"></div>
+    </div>
+  </div>
+
   <!-- MODAL 1: PLAYABLE CLASSES SELECTOR -->
   <div id="modal-classes" class="modal-backdrop">
     <div class="modal-card">
       <div style="display:flex;justify-content:space-between;align-items:center;">
-        <h2 style="margin:0;font-size:18px;color:#fde047;">Choose Your Hero Class (Zelda × RotMG Archetypes)</h2>
+        <h2 style="margin:0;font-size:18px;color:#fde047;">Choose Your Champion of the Reborn Crest</h2>
         <button class="hud-btn modal-close-btn">✕ Close</button>
       </div>
       <p style="font-size:12px;color:#94a3b8;margin:6px 0 0;">
-        Each class pairs a signature Top-Down Zelda primary weapon with a classic Zelda Dungeon Relic and unique 8/8 RotMG stat caps.
+        Each champion pairs a signature primary weapon with a Sacred Dungeon Relic and unique 8/8 stat caps.
       </p>
       <div id="classes-modal-grid" class="class-cards-grid"></div>
     </div>
@@ -684,16 +713,16 @@ html, body {
     </div>
   </div>
 
-  <!-- MODAL 3: GORON RELIC & UT FORGE -->
+  <!-- MODAL 3: ANCIENT RELIC & UT FORGE -->
   <div id="modal-forge" class="modal-backdrop">
     <div class="modal-card">
       <div style="display:flex;justify-content:space-between;align-items:center;">
-        <h2 style="margin:0;font-size:18px;color:#f97316;">Goron Relic &amp; White Bag Forge</h2>
+        <h2 style="margin:0;font-size:18px;color:#f97316;">Ancient Relic &amp; White Bag Forge</h2>
         <button class="hud-btn modal-close-btn">✕ Close</button>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin:6px 0 10px;">
-        <span style="font-size:12px;color:#94a3b8;">Spend Rupees &amp; Account Fame to forge Stat Potions or Legendary UT White Bag items!</span>
-        <strong id="forge-rupee-balance" style="font-size:12px;color:#4ade80;">150 Rupees</strong>
+        <span style="font-size:12px;color:#94a3b8;">Spend Sunshards &amp; Account Fame to forge Stat Potions or Legendary UT White Bag items!</span>
+        <strong id="forge-sunshard-balance" style="font-size:12px;color:#4ade80;">150 Sunshards</strong>
       </div>
       <div id="forge-recipes-grid" class="class-cards-grid"></div>
     </div>
@@ -705,7 +734,7 @@ html, body {
       <div id="death-summary-body"></div>
       <div style="display:flex;justify-content:center;">
         <button id="btn-respawn-hero" class="hud-btn primary-gold" style="padding:9px 22px;font-size:13px;">
-          ★ Reincarnate in the Nexus Sanctuary ★
+          ★ Reincarnate in the Radiant Sanctuary ★
         </button>
       </div>
     </div>
@@ -715,32 +744,108 @@ html, body {
 (() => {
 // --- MODULE: src/data/classes.js ---
 // ============================================================================
-// REALM OF THE SHATTERED CREST — PLAYABLE CLASSES & PROGRESSION DATA
-// Combines Top-Down Zelda Archetypes with Realm of the Mad God 8/8 Stat Caps
+// REALM OF THE SHATTERED CREST — PLAYABLE CLASSES, LORE & PROGRESSION DATA
 // ============================================================================
 const STAT_NAMES = ['hp', 'mp', 'atk', 'def', 'spd', 'dex', 'vit', 'wis'];
 const STAT_LABELS = {
-  hp:  { short: 'LIFE', name: 'Maximum Hearts / HP', potId: 'pot_life', inc: 5 },
-  mp:  { short: 'MANA', name: 'Maximum Magic / MP',  potId: 'pot_mana', inc: 5 },
+  hp:  { short: 'LIFE', name: 'Maximum Life (HP)',   potId: 'pot_life', inc: 5 },
+  mp:  { short: 'MANA', name: 'Maximum Mana (MP)',   potId: 'pot_mana', inc: 5 },
   atk: { short: 'ATK',  name: 'Attack Power',        potId: 'pot_atk',  inc: 1 },
   def: { short: 'DEF',  name: 'Armor Defense',       potId: 'pot_def',  inc: 1 },
   spd: { short: 'SPD',  name: 'Movement Speed',      potId: 'pot_spd',  inc: 1 },
   dex: { short: 'DEX',  name: 'Attack Speed',        potId: 'pot_dex',  inc: 1 },
-  vit: { short: 'VIT',  name: 'Heart Regeneration',  potId: 'pot_vit',  inc: 1 },
-  wis: { short: 'WIS',  name: 'Magic Regeneration',  potId: 'pot_wis',  inc: 1 }
+  vit: { short: 'VIT',  name: 'Life Regeneration',   potId: 'pot_vit',  inc: 1 },
+  wis: { short: 'WIS',  name: 'Mana Regeneration',   potId: 'pot_wis',  inc: 1 }
 };
+
+// The 5 Sacred Shards of the Holy Crest scattered across the Realms
+const CREST_SHARDS = [
+  {
+    id: 'shard_tide',
+    index: 0,
+    name: 'I. Shard of the Silver Tide',
+    dungeonId: 'pirate_cove',
+    dungeonName: 'Sunken Corsair Grotto',
+    guardian: 'Dread Captain Vorath',
+    color: '#38bdf8',
+    blessing: '+25 Max Life & +2 SPD across all heroes',
+    lore: 'When the Holy Crest fractured upon the High Altar, the western fragment plunged into the Tempest Sea, where Vorath bound its tidal light inside his sunken flagship.'
+  },
+  {
+    id: 'shard_wilds',
+    index: 1,
+    name: 'II. Shard of the Sylvan Root',
+    dungeonId: 'deku_temple',
+    dungeonName: 'Blighted Sylvan Temple',
+    guardian: 'Arachne the Blightweaver',
+    color: '#4ade80',
+    blessing: '+25 Max Life & +2 DEX across all heroes',
+    lore: 'The emerald fragment fell into the ancient canopy of the Whispering Wilds. Evil Bane’s venom twisted the temple roots, birthing Arachne to guard the shard.'
+  },
+  {
+    id: 'shard_astral',
+    index: 2,
+    name: 'III. Shard of the Astral Wind',
+    dungeonId: 'sprite_world',
+    dungeonName: 'The Astral Conduit',
+    guardian: 'Aetherion the Astral Archon',
+    color: '#c084fc',
+    blessing: '+20 Max Mana & +2 WIS across all heroes',
+    lore: 'Hurled beyond the mortal sky, the third fragment lodged within the floating spires of the Astral Conduit, warping the star-spirits into ruthless sentinels.'
+  },
+  {
+    id: 'shard_ossuary',
+    index: 3,
+    name: 'IV. Shard of the Dawn Vigil',
+    dungeonId: 'undead_lair',
+    dungeonName: 'Sunken Catacombs',
+    guardian: 'Mordecai the Undying Lich',
+    color: '#facc15',
+    blessing: '+2 ATK & +2 VIT across all heroes',
+    lore: 'Buried beneath the crypts of the First Wardens, this shard’s radiant energy was inverted by Mordecai to raise legions of tireless bone-knights.'
+  },
+  {
+    id: 'shard_flame',
+    index: 4,
+    name: 'V. Shard of the Primordial Flame',
+    dungeonId: 'abyss_mountain',
+    dungeonName: 'Caldera of the Abyss',
+    guardian: 'Ignis the Magma Overlord',
+    color: '#f97316',
+    blessing: '+3 DEF & +25 Max Life across all heroes',
+    lore: 'Cast into the molten heart of the world, the final outer fragment burns within the Caldera of the Abyss. Unite all five shards to restore the Holy Crest and vanquish Malakor, the Evil Bane!'
+  }
+];
+const ELDER_LORE_CHAPTERS = [
+  {
+    title: 'I. The Age of the Holy Crest',
+    body: 'Greetings, Warden. Before the sky turned to ash, the realm of Aethelgard knew peace under the radiance of the Holy Crest—a five-pointed celestial seal forged by the First Elders. Set upon the High Altar of this very Sanctuary, its golden barrier held back Malakor, the Evil Bane, imprisoning his legions within the outer void.'
+  },
+  {
+    title: 'II. The Night the Crest Shattered',
+    body: 'On the night of the Blood Eclipse, Malakor channeled all his malice into a single cataclysmic lance that struck the High Altar. Rather than bend to his corruption, the Holy Crest shattered into Five Sacred Shards, scattering across the mortal realms and deep into the perilous dungeons of Aethelgard.'
+  },
+  {
+    title: 'III. Corruption of the Blightlands',
+    body: 'With the Holy Crest broken, the center of our world collapsed into the Blightlands—a scorched crater where Malakor’s lieutenant Gods now roam freely. Every fallen Warden leaves behind a monument of stone, yet their legacy fame endures within the Sanctuary.'
+  },
+  {
+    title: 'IV. Rebuilding the Crest Piece by Piece',
+    body: 'Your destiny is clear, hero: venture from the Sunlit Shoals into the five corrupted Dungeons, slay the Guardians who hoard the Crest Shards, and return each fragment to this Sanctuary. Each recovered shard permanently empowers all your future heroes—and when all five are united, the seal to the Sanctum of the Evil Bane will be reforged!'
+  }
+];
 const CLASSES = {
   knight: {
     id: 'knight',
-    name: 'Hylian Knight',
-    subtitle: 'Sword & Shield Vanguard',
-    lore: 'Trained in the Royal Citadel. Cleaves enemies with wide 180° sword arcs, deflects bullets with Perfect Parries, and hurls a Gale Boomerang to stun foes and pull loot bags from afar.',
+    name: 'Aethelgard Vanguard',
+    subtitle: 'Broadblade & Bulwark Sentinel',
+    lore: 'Sworn defender of the High Altar. Cleaves foes with wide 180° broadsword arcs, reflects projectiles with timed Bulwark Parries, and hurls a Gale Chakram to stun enemies and draw loot bags close.',
     weaponType: 'sword',
     relicType: 'boomerang',
     armorType: 'heavy',
     palette: {
-      tunic: '#22c55e',      // Classic Hero Green
-      trim: '#eab308',       // Triforce Gold
+      tunic: '#22c55e',
+      trim: '#eab308',
       cap: '#16a34a',
       skin: '#fed7aa',
       shield: '#3b82f6'
@@ -749,14 +854,14 @@ const CLASSES = {
     growth:    { hp: 24,  mp: 5,   atk: 1.5, def: 0, spd: 1.2, dex: 1.3, vit: 1.2, wis: 1.0 },
     maxStats:  { hp: 780, mp: 255, atk: 55, def: 40, spd: 50, dex: 50, vit: 75, wis: 50 },
     startingGear: ['wep_sword_t1', 'rel_boom_t1', 'arm_heavy_t1', 'rng_hp_t1'],
-    perks: ['Full-HP Sword Beams', 'Heavy Shield Poise (+35%)', 'Gale Loot Magnet']
+    perks: ['Full-HP Blade Waves', 'Bulwark Perfect Parry', 'Gale Chakram Loot Magnet']
   },
 
   ranger: {
     id: 'ranger',
-    name: 'Kokiri Ranger',
-    subtitle: 'Bow & Clawshot Pathfinder',
-    lore: 'Swift guardian of the Lost Woods. Combines quick close-quarters dagger slashes with long-range piercing arrows and a Hookshot that grapples across chasms or stuns bosses.',
+    name: 'Sylvan Warden',
+    subtitle: 'Longbow & Grapple Pathfinder',
+    lore: 'Swift sentinel of the Whispering Wilds. Combines close-range blade slashes with piercing arrow volleys and a Chain Grapple that vaults across chasms or stuns bosses.',
     weaponType: 'bow',
     relicType: 'hookshot',
     armorType: 'leather',
@@ -771,19 +876,19 @@ const CLASSES = {
     growth:    { hp: 21,  mp: 6,   atk: 1.6, def: 0, spd: 1.5, dex: 1.5, vit: 1.0, wis: 1.2 },
     maxStats:  { hp: 700, mp: 260, atk: 75, def: 25, spd: 55, dex: 55, vit: 40, wis: 50 },
     startingGear: ['wep_bow_t1', 'rel_hook_t1', 'arm_leather_t1', 'rng_dex_t1'],
-    perks: ['Piercing Arrow Volleys', 'Chasm Grapple Hookshot', 'Close-Range Dagger Riposte']
+    perks: ['Piercing Arrow Volleys', 'Chasm Chain Grapple', 'Close-Range Riposte']
   },
 
   pyromancer: {
     id: 'pyromancer',
-    name: 'Goron Pyromancer',
-    subtitle: 'Fire Rod & Powder Demolitionist',
-    lore: 'Channeler of Death Mountain magma. Swings a blazing Magic Rod that emits arcane shockwaves AND twin firebolts, while lobbing heavy Bombs that shatter cracked dungeon walls and armor.',
+    name: 'Cinder Pyromancer',
+    subtitle: 'Spellrod & Brimstone Sapper',
+    lore: 'Channeler of Caldera fire. Swings a blazing Spellrod that emits shockwaves and twin firebolts, while lobbing Brimstone Charges that shatter cracked dungeon walls and boss armor.',
     weaponType: 'rod',
     relicType: 'bomb',
     armorType: 'robe',
     palette: {
-      tunic: '#ef4444',      // Goron Red Tunic
+      tunic: '#ef4444',
       trim: '#fbbf24',
       cap: '#b91c1c',
       skin: '#fdba74',
@@ -793,19 +898,19 @@ const CLASSES = {
     growth:    { hp: 19,  mp: 9,   atk: 1.9, def: 0, spd: 1.2, dex: 1.6, vit: 0.9, wis: 1.6 },
     maxStats:  { hp: 670, mp: 385, atk: 75, def: 25, spd: 50, dex: 75, vit: 40, wis: 60 },
     startingGear: ['wep_rod_t1', 'rel_bomb_t1', 'arm_robe_t1', 'rng_atk_t1'],
-    perks: ['Dual Spellblade Bolts', 'Wall-Breaching Bombs', 'Armor-Piercing Blast']
+    perks: ['Dual Spellblade Bolts', 'Wall-Breaching Charges', 'Armor-Shattering Blast']
   },
 
   paladin: {
     id: 'paladin',
-    name: 'Royal Paladin',
-    subtitle: 'Sacred Blade & Ocarina Sage',
-    lore: 'Champion of the Sacred Realm. Wields blessed broadswords and plays sacred Ocarina hymns that grant Healing, Damaging (+40% ATK), and Armored buffs to all nearby MMO allies.',
+    name: 'Solar Templar',
+    subtitle: 'Sunblade & Sanctuary Chronicler',
+    lore: 'Keeper of the Sacred Litany. Wields radiant broadswords and sounds the Sanctuary Warhorn to grant Healing, Damaging (+35% ATK), and Armored buffs to all nearby allies.',
     weaponType: 'sword',
     relicType: 'ocarina',
     armorType: 'heavy',
     palette: {
-      tunic: '#3b82f6',      // Zora / Royal Blue Tunic
+      tunic: '#3b82f6',
       trim: '#fde047',
       cap: '#1d4ed8',
       skin: '#fed7aa',
@@ -815,14 +920,14 @@ const CLASSES = {
     growth:    { hp: 23,  mp: 7,   atk: 1.4, def: 0, spd: 1.3, dex: 1.2, vit: 1.1, wis: 1.5 },
     maxStats:  { hp: 750, mp: 320, atk: 55, def: 30, spd: 55, dex: 50, vit: 60, wis: 75 },
     startingGear: ['wep_sword_t1', 'rel_ocarina_t1', 'arm_heavy_t1', 'rng_wis_t1'],
-    perks: ['Party-Wide Ocarina Buffs', 'Sacred Heal Aura', 'Blessed Spin Attack']
+    perks: ['Party-Wide Warhorn Buffs', 'Radiant Heal Aura', 'Sunburst Spin Cleave']
   },
 
   assassin: {
     id: 'assassin',
-    name: 'Sheikah Shadow',
-    subtitle: 'Twin Blades & Frost Wand Trickster',
-    lore: 'Phantom operative of Kakariko. Unleashes ultra-fast twin katana slashes and wields the Wand of Frost to freeze bullet-hell bosses in their tracks while dashing unseen.',
+    name: 'Nightblade Stalker',
+    subtitle: 'Twin Blades & Frost Mystic',
+    lore: 'Phantom operative of the Astral Watch. Unleashes ultra-fast twin katana slashes and wields the Scepter of Rime to blink through danger and freeze bullet-hell bosses.',
     weaponType: 'dagger',
     relicType: 'wand',
     armorType: 'leather',
@@ -837,12 +942,9 @@ const CLASSES = {
     growth:    { hp: 20,  mp: 6.5, atk: 1.5, def: 0, spd: 1.8, dex: 1.8, vit: 1.0, wis: 1.3 },
     maxStats:  { hp: 680, mp: 285, atk: 65, def: 25, spd: 75, dex: 75, vit: 45, wis: 60 },
     startingGear: ['wep_dagger_t1', 'rel_wand_t1', 'arm_leather_t1', 'rng_spd_t1'],
-    perks: ['Twin-Strike Crit Arcs', 'Cryo-Freeze Relic Wave', 'Extended Dash i-Frames']
+    perks: ['Twin-Strike Crit Arcs', 'Cryo-Freeze Blink Nova', 'Extended Dodge i-Frames']
   }
 };
-
-// RotMG Star Rank System (Total Class Fame Milestones per Class)
-// 5 Stars per Class (20, 150, 400, 800, 2000 Fame) x 5 Classes = 25 Max Stars
 const STAR_THRESHOLDS = [20, 150, 400, 800, 2000];
 function getStarRankColor(totalStars) {
   if (totalStars >= 25) return { name: 'White Star',      color: '#ffffff', glow: '#38bdf8' };
@@ -857,17 +959,7 @@ function getStarRankColor(totalStars) {
 // --- MODULE: src/data/items.js ---
 // ============================================================================
 // REALM OF THE SHATTERED CREST — ITEM, RELIC, LOOT BAG & POTION DATABASE
-// Includes Tiered Gear (T1-T6), ST Sets, UT White Bags, and 8 Stat Potions
 // ============================================================================
-
-// RotMG Bag Types:
-// 0 = Brown Bag (Consumables / Low tier)
-// 1 = Pink Bag (T1-T2 Gear)
-// 2 = Purple Bag (T3-T4 Gear)
-// 3 = Cyan Bag (T5-T6 Godlands Gear)
-// 4 = Blue Bag (Permanent Stat Potions!)
-// 5 = Orange Bag (ST Set Items)
-// 6 = WHITE BAG (Untiered / UT Legendary Items!)
 const BAG_TYPES = {
   0: { id: 0, name: 'Brown Bag',  color: '#a16207', ribbon: '#713f12', glow: 'rgba(161,98,7,0.35)' },
   1: { id: 1, name: 'Pink Bag',   color: '#f472b6', ribbon: '#db2777', glow: 'rgba(244,114,182,0.45)' },
@@ -879,82 +971,82 @@ const BAG_TYPES = {
 };
 const ITEMS = {
   // ==========================================================================
-  // SWORDS (180° Zelda Arc Slash + Full-HP Sword Beam + Hurricane Spin)
+  // SWORDS (180° Arc Cleave + Full-HP Blade Wave + 360° Whirlwind Spin)
   // ==========================================================================
   wep_sword_t1: {
-    id: 'wep_sword_t1', name: 'Kokiri Broadsword', tier: 'T1', slot: 'weapon', subType: 'sword',
+    id: 'wep_sword_t1', name: 'Initiate Broadsword', tier: 'T1', slot: 'weapon', subType: 'sword',
     bagType: 1, minDmg: 45, maxDmg: 70, shots: 1, range: 4.4, arcDeg: 115, beamDmg: 0.55,
     color: '#94a3b8', bladeColor: '#cbd5e1', fameBonus: 1,
-    desc: 'A trusty forest blade. Unleashes a sweeping melee slash and a piercing beam at full health.'
+    desc: 'A sturdy steel broadsword. Unleashes a sweeping melee cleave and a piercing energy wave at high life.'
   },
   wep_sword_t2: {
-    id: 'wep_sword_t2', name: 'Hylian Soldier Blade', tier: 'T3', slot: 'weapon', subType: 'sword',
+    id: 'wep_sword_t2', name: 'Citadel Longblade', tier: 'T3', slot: 'weapon', subType: 'sword',
     bagType: 2, minDmg: 75, maxDmg: 110, shots: 1, range: 4.6, arcDeg: 120, beamDmg: 0.65,
     color: '#60a5fa', bladeColor: '#93c5fd', fameBonus: 2,
-    desc: 'Forged in Castle Town armories. Balanced for swift parries and wide cleaves.'
+    desc: 'Forged in the Aethelgard armories. Balanced for swift parries and wide cleaves.'
   },
   wep_sword_t3: {
-    id: 'wep_sword_t3', name: 'Tempered Razor Sword', tier: 'T5', slot: 'weapon', subType: 'sword',
+    id: 'wep_sword_t3', name: 'Tempered Crimson Edge', tier: 'T5', slot: 'weapon', subType: 'sword',
     bagType: 2, minDmg: 110, maxDmg: 155, shots: 1, range: 4.8, arcDeg: 125, beamDmg: 0.75,
     color: '#f43f5e', bladeColor: '#fda4af', fameBonus: 3,
-    desc: 'Honed with Goron mountain dust. Cuts through multiple foes and emits crimson beams.'
+    desc: 'Honed with volcanic cinder-ash. Cuts through multiple foes and emits crimson waves.'
   },
   wep_sword_t4: {
-    id: 'wep_sword_t4', name: 'Gilded Greatblade', tier: 'T8', slot: 'weapon', subType: 'sword',
+    id: 'wep_sword_t4', name: 'Gilded Sunblade', tier: 'T8', slot: 'weapon', subType: 'sword',
     bagType: 3, minDmg: 155, maxDmg: 210, shots: 1, range: 5.0, arcDeg: 130, beamDmg: 0.85,
     color: '#eab308', bladeColor: '#fef08a', fameBonus: 4,
-    desc: 'Gold-inlaid blade that never dulls. Emits a radiant golden wave even above 75% HP.'
+    desc: 'Gold-inlaid blade that never dulls. Emits a radiant solar wave.'
   },
   wep_sword_t5: {
-    id: 'wep_sword_t5', name: 'Skyward Acclaim Blade', tier: 'T12', slot: 'weapon', subType: 'sword',
+    id: 'wep_sword_t5', name: 'Astral Acclaim Greatsword', tier: 'T12', slot: 'weapon', subType: 'sword',
     bagType: 3, minDmg: 215, maxDmg: 280, shots: 1, range: 5.3, arcDeg: 140, beamDmg: 1.0,
     color: '#38bdf8', bladeColor: '#e0f2fe', fameBonus: 6,
-    desc: 'Supreme tiered broadsword blessed by the Skyloft winds. Always fires a Skyward Beam.'
+    desc: 'Supreme tiered broadsword blessed by the First Wardens. Always fires an Astral Wave.'
   },
   wep_sword_ut_master: {
-    id: 'wep_sword_ut_master', name: 'Blade of Evil\'s Bane', tier: 'UT', slot: 'weapon', subType: 'sword',
+    id: 'wep_sword_ut_master', name: 'Blade of the Reborn Crest', tier: 'UT', slot: 'weapon', subType: 'sword',
     bagType: 6, minDmg: 240, maxDmg: 310, shots: 2, spreadDeg: 18, range: 5.8, arcDeg: 150, beamDmg: 1.15,
     alwaysBeam: true, pierceArmor: false, stats: { def: 4, wis: 4 },
     color: '#38bdf8', bladeColor: '#67e8f9', fameBonus: 8,
-    desc: 'LEGENDARY UT: Fires twin sacred crescent waves with every swing regardless of HP.'
+    desc: 'LEGENDARY UT: Forged to vanquish the Evil Bane. Fires twin sacred crescent waves with every swing.'
   },
   wep_sword_ut_demon: {
-    id: 'wep_sword_ut_demon', name: 'Goron Demon Edge', tier: 'UT', slot: 'weapon', subType: 'sword',
+    id: 'wep_sword_ut_demon', name: 'Abyssal Magma Cleaver', tier: 'UT', slot: 'weapon', subType: 'sword',
     bagType: 6, minDmg: 195, maxDmg: 255, shots: 2, spreadDeg: 38, range: 4.3, arcDeg: 145, beamDmg: 0.9,
     alwaysBeam: true, stats: { atk: 5, vit: 5 },
     color: '#ef4444', bladeColor: '#fca5a5', fameBonus: 7,
-    desc: 'LEGENDARY UT (Abyss Drop): Twin-forked obsidian blade that fires two magma waves at point-blank.'
+    desc: 'LEGENDARY UT (Caldera Drop): Twin-forked obsidian blade that fires two magma waves at point-blank.'
   },
 
   // ==========================================================================
-  // BOWS (Close-quarters slash + Ranged Piercing Arrow Volleys)
+  // BOWS (Close-Quarters Riposte + Ranged Piercing Arrow Volleys)
   // ==========================================================================
   wep_bow_t1: {
-    id: 'wep_bow_t1', name: 'Fairy Slingshot Bow', tier: 'T1', slot: 'weapon', subType: 'bow',
+    id: 'wep_bow_t1', name: 'Ashwood Shortbow', tier: 'T1', slot: 'weapon', subType: 'bow',
     bagType: 1, minDmg: 38, maxDmg: 60, shots: 1, spreadDeg: 0, range: 7.8, pierce: true,
     color: '#a3e635', bladeColor: '#d9f99d', fameBonus: 1,
-    desc: 'Carved from Deku wood. Fires piercing arrows and slashes adjacent enemies.'
+    desc: 'Carved from ironwood heart. Fires piercing arrows and slashes adjacent enemies.'
   },
   wep_bow_t2: {
-    id: 'wep_bow_t2', name: 'Hero\'s Recurve Bow', tier: 'T4', slot: 'weapon', subType: 'bow',
+    id: 'wep_bow_t2', name: 'Warden\'s Recurve Bow', tier: 'T4', slot: 'weapon', subType: 'bow',
     bagType: 2, minDmg: 58, maxDmg: 88, shots: 2, spreadDeg: 10, range: 8.0, pierce: true,
     color: '#22c55e', bladeColor: '#86efac', fameBonus: 2,
     desc: 'Fires two synchronized piercing arrows that skewer entire columns of foes.'
   },
   wep_bow_t3: {
-    id: 'wep_bow_t3', name: 'Golden Tri-Bow', tier: 'T8', slot: 'weapon', subType: 'bow',
+    id: 'wep_bow_t3', name: 'Gilded Tri-Bow', tier: 'T8', slot: 'weapon', subType: 'bow',
     bagType: 3, minDmg: 75, maxDmg: 110, shots: 3, spreadDeg: 14, range: 8.2, pierce: true,
     color: '#eab308', bladeColor: '#fef08a', fameBonus: 4,
-    desc: 'Iconic three-arrow spread bow of the Godlands. Devastating crowd control.'
+    desc: 'Iconic three-arrow spread bow of the Blightlands. Devastating crowd control.'
   },
   wep_bow_t4: {
-    id: 'wep_bow_t4', name: 'Bow of the Ancient Sages', tier: 'T12', slot: 'weapon', subType: 'bow',
+    id: 'wep_bow_t4', name: 'Longbow of the First Watch', tier: 'T12', slot: 'weapon', subType: 'bow',
     bagType: 3, minDmg: 105, maxDmg: 145, shots: 3, spreadDeg: 11, range: 8.6, pierce: true,
     color: '#38bdf8', bladeColor: '#bae6fd', fameBonus: 6,
-    desc: 'Tightly grouped triple-shot bow infused with ancient light energy.'
+    desc: 'Tightly grouped triple-shot bow infused with ancient radiant energy.'
   },
   wep_bow_ut_light: {
-    id: 'wep_bow_ut_light', name: 'Doom Bow of Sacred Light', tier: 'UT', slot: 'weapon', subType: 'bow',
+    id: 'wep_bow_ut_light', name: 'Starfall Sovereign Greatbow', tier: 'UT', slot: 'weapon', subType: 'bow',
     bagType: 6, minDmg: 420, maxDmg: 540, shots: 1, spreadDeg: 0, range: 9.5, pierce: true,
     rateMult: 0.55, stats: { atk: 6, wis: 4 },
     color: '#fde047', bladeColor: '#ffffff', fameBonus: 8,
@@ -962,7 +1054,7 @@ const ITEMS = {
   },
 
   // ==========================================================================
-  // MAGIC RODS (Arcane Melee Shockwave + Homing/Dual Spellbolts)
+  // SPELLRODS (Arcane Melee Shockwave + Dual Weaving Spellbolts)
   // ==========================================================================
   wep_rod_t1: {
     id: 'wep_rod_t1', name: 'Apprentice Ember Rod', tier: 'T1', slot: 'weapon', subType: 'rod',
@@ -971,39 +1063,39 @@ const ITEMS = {
     desc: 'Channels twin firebolts in a wavy spiral while emitting a close-range heat pulse.'
   },
   wep_rod_t2: {
-    id: 'wep_rod_t2', name: 'Rod of Somaria', tier: 'T4', slot: 'weapon', subType: 'rod',
+    id: 'wep_rod_t2', name: 'Scepter of Crimson Flux', tier: 'T4', slot: 'weapon', subType: 'rod',
     bagType: 2, minDmg: 55, maxDmg: 85, shots: 2, spreadDeg: 7, range: 8.5, wave: true,
     color: '#ec4899', bladeColor: '#f9a8d4', fameBonus: 2,
     desc: 'Fires twin crimson energy orbs that weave toward their target.'
   },
   wep_rod_t3: {
-    id: 'wep_rod_t3', name: 'Staff of Din\'s Inferno', tier: 'T8', slot: 'weapon', subType: 'rod',
+    id: 'wep_rod_t3', name: 'Staff of the Magma Spire', tier: 'T8', slot: 'weapon', subType: 'rod',
     bagType: 3, minDmg: 85, maxDmg: 125, shots: 2, spreadDeg: 6, range: 8.8, wave: true,
     color: '#ef4444', bladeColor: '#fca5a5', fameBonus: 4,
-    desc: 'High-tier volcanic rod that scorches Godlands deities.'
+    desc: 'High-tier volcanic rod that scorches Blightlands deities.'
   },
   wep_rod_t4: {
-    id: 'wep_rod_t4', name: 'Cosmic Triforce Scepter', tier: 'T12', slot: 'weapon', subType: 'rod',
+    id: 'wep_rod_t4', name: 'Scepter of the Holy Crest', tier: 'T12', slot: 'weapon', subType: 'rod',
     bagType: 3, minDmg: 118, maxDmg: 165, shots: 2, spreadDeg: 5, range: 9.0, wave: true,
     color: '#eab308', bladeColor: '#fef08a', fameBonus: 6,
     desc: 'Pinnacle spellcaster rod radiating twin golden astral bolts.'
   },
   wep_rod_ut_seasons: {
-    id: 'wep_rod_ut_seasons', name: 'Rod of the Four Seasons', tier: 'UT', slot: 'weapon', subType: 'rod',
+    id: 'wep_rod_ut_seasons', name: 'Conduit of the Four Elements', tier: 'UT', slot: 'weapon', subType: 'rod',
     bagType: 6, minDmg: 95, maxDmg: 135, shots: 4, spreadDeg: 16, range: 8.4, pierceArmor: true,
     stats: { mp: 40, atk: 5, dex: 5 },
     color: '#10b981', bladeColor: '#6ee7b7', fameBonus: 8,
-    desc: 'LEGENDARY UT (Sprite World Drop): Fires 4 elemental bolts that completely ignore enemy DEF.'
+    desc: 'LEGENDARY UT (Astral Conduit Drop): Fires 4 elemental bolts that completely ignore enemy DEF.'
   },
 
   // ==========================================================================
-  // DAGGERS / TWIN BLADES (Ultra-Fast Double Arc + Kunai Blades)
+  // DAGGERS / TWIN BLADES (Ultra-Fast Double Arc + Throwing Blades)
   // ==========================================================================
   wep_dagger_t1: {
-    id: 'wep_dagger_t1', name: 'Sheikah Kunai', tier: 'T1', slot: 'weapon', subType: 'dagger',
+    id: 'wep_dagger_t1', name: 'Shadow Steel Stiletto', tier: 'T1', slot: 'weapon', subType: 'dagger',
     bagType: 1, minDmg: 36, maxDmg: 58, shots: 1, range: 5.8, rateMult: 1.25,
     color: '#38bdf8', bladeColor: '#bae6fd', fameBonus: 1,
-    desc: 'Lightning-fast throwing dagger and twin-slash wakizashi.'
+    desc: 'Lightning-fast throwing dagger and twin-slash shortblade.'
   },
   wep_dagger_t2: {
     id: 'wep_dagger_t2', name: 'Phantom Twin-Edge', tier: 'T4', slot: 'weapon', subType: 'dagger',
@@ -1012,255 +1104,255 @@ const ITEMS = {
     desc: 'Shadow-forged twin blades with blistering attack cadence.'
   },
   wep_dagger_t3: {
-    id: 'wep_dagger_t3', name: 'Emerald Foul Blade', tier: 'T8', slot: 'weapon', subType: 'dagger',
+    id: 'wep_dagger_t3', name: 'Emerald Viper Dirk', tier: 'T8', slot: 'weapon', subType: 'dagger',
     bagType: 3, minDmg: 102, maxDmg: 150, shots: 1, range: 6.3, rateMult: 1.32,
     color: '#10b981', bladeColor: '#6ee7b7', fameBonus: 4,
-    desc: 'Deadly Kakariko assassin blade that shreds targets before they can react.'
+    desc: 'Deadly Nightblade dirk that shreds targets before they can react.'
   },
   wep_dagger_t4: {
-    id: 'wep_dagger_t4', name: 'Twilight Shadow Katana', tier: 'T12', slot: 'weapon', subType: 'dagger',
+    id: 'wep_dagger_t4', name: 'Eclipse Shadow Katana', tier: 'T12', slot: 'weapon', subType: 'dagger',
     bagType: 3, minDmg: 145, maxDmg: 205, shots: 1, range: 6.6, rateMult: 1.35,
     color: '#f43f5e', bladeColor: '#fecdd3', fameBonus: 6,
-    desc: 'Masterwork Sheikah katana that slices the very fabric of twilight.'
+    desc: 'Masterwork Nightblade katana that slices through shadow and steel alike.'
   },
   wep_dagger_ut_fierce: {
-    id: 'wep_dagger_ut_fierce', name: 'Fierce Deity Double-Helix', tier: 'UT', slot: 'weapon', subType: 'dagger',
+    id: 'wep_dagger_ut_fierce', name: 'Astral Helix Twin-Blades', tier: 'UT', slot: 'weapon', subType: 'dagger',
     bagType: 6, minDmg: 175, maxDmg: 245, shots: 2, spreadDeg: 8, range: 7.2, rateMult: 1.3,
     pierce: true, stats: { spd: 6, dex: 6 },
     color: '#f8fafc', bladeColor: '#38bdf8', fameBonus: 8,
-    desc: 'LEGENDARY UT (Mad King Drop): Unleashes double-helix crescent waves that pierce all targets.'
+    desc: 'LEGENDARY UT (Evil Bane Drop): Unleashes double-helix crescent waves that pierce all targets.'
   },
 
   // ==========================================================================
-  // ZELDA RELICS / ABILITIES (Slot 2 — Press Q or Space/Middle-Click)
+  // RELIC ABILITIES (Slot 2 — Press Q or Middle-Click)
   // ==========================================================================
-  // 1. BOOMERANGS (Stuns enemies, cuts bushes, pulls loot bags & hearts to you!)
+  // 1. CHAKRAMS (Stuns enemies, cuts bushes, pulls loot bags & life hearts to you!)
   rel_boom_t1: {
-    id: 'rel_boom_t1', name: 'Wooden Boomerang', tier: 'T1', slot: 'relic', subType: 'boomerang',
+    id: 'rel_boom_t1', name: 'Iron Wind-Chakram', tier: 'T1', slot: 'relic', subType: 'boomerang',
     bagType: 1, mpCost: 35, dmg: 140, stunSec: 1.8, range: 7.5, stats: { def: 2 },
     color: '#d97706', fameBonus: 1,
-    desc: 'Stuns enemies in its path, cuts bushes, and pulls Loot Bags & Hearts back to you!'
+    desc: 'Hurls a returning chakram that stuns foes, cuts bushes, and pulls Loot Bags & Life Hearts to you!'
   },
   rel_boom_t2: {
-    id: 'rel_boom_t2', name: 'Magical Gale Boomerang', tier: 'T4', slot: 'relic', subType: 'boomerang',
+    id: 'rel_boom_t2', name: 'Tempest Gale Chakram', tier: 'T4', slot: 'relic', subType: 'boomerang',
     bagType: 2, mpCost: 45, dmg: 290, stunSec: 2.6, range: 9.0, stats: { def: 5, spd: 3 },
     color: '#38bdf8', fameBonus: 3,
-    desc: 'Summons a whirlwind that stuns enemies for 2.6s and vacuums distant loot bags.'
+    desc: 'Summons a returning whirlwind blade that stuns enemies for 2.6s and vacuums distant loot bags.'
   },
   rel_boom_ut: {
-    id: 'rel_boom_ut', name: 'Mirror Shield & Cyclone Crest', tier: 'UT', slot: 'relic', subType: 'boomerang',
+    id: 'rel_boom_ut', name: 'Aegis of the Cyclone Crest', tier: 'UT', slot: 'relic', subType: 'boomerang',
     bagType: 6, mpCost: 50, dmg: 480, stunSec: 3.4, range: 10.5, reflectNova: true,
     stats: { hp: 60, def: 10, spd: 4 },
     color: '#facc15', fameBonus: 7,
-    desc: 'LEGENDARY UT: Throws twin golden cyclones AND reflects all nearby enemy bullets on cast!'
+    desc: 'LEGENDARY UT: Throws twin golden cyclone chakrams AND reflects all nearby enemy bullets on cast!'
   },
 
-  // 2. HOOKSHOTS (Grapples to pillars across chasms/lava OR pulls/stuns enemies!)
+  // 2. CHAIN GRAPPLES (Vaults to pillars across chasms/lava OR stuns enemies!)
   rel_hook_t1: {
-    id: 'rel_hook_t1', name: 'Iron Hookshot', tier: 'T1', slot: 'relic', subType: 'hookshot',
+    id: 'rel_hook_t1', name: 'Iron Chain-Grapple', tier: 'T1', slot: 'relic', subType: 'hookshot',
     bagType: 1, mpCost: 30, dmg: 160, stunSec: 1.5, range: 8.5, stats: { dex: 2 },
     color: '#94a3b8', fameBonus: 1,
-    desc: 'Grapples you across chasms to Grapple Pillars with i-frames, or stuns & pierces foes!'
+    desc: 'Grapples you across chasms to Anchor Pillars with i-frames, or stuns & pierces foes!'
   },
   rel_hook_t2: {
-    id: 'rel_hook_t2', name: 'Longshot of Lake Hylia', tier: 'T4', slot: 'relic', subType: 'hookshot',
+    id: 'rel_hook_t2', name: 'Titan Anchor-Grapple', tier: 'T4', slot: 'relic', subType: 'hookshot',
     bagType: 2, mpCost: 40, dmg: 320, stunSec: 2.2, range: 11.0, stats: { dex: 5, atk: 3 },
     color: '#38bdf8', fameBonus: 3,
     desc: 'Extended titanium chain that reaches distant anchors and deals heavy armor-piercing damage.'
   },
   rel_hook_ut: {
-    id: 'rel_hook_ut', name: 'Double Clawshot of the Sky', tier: 'UT', slot: 'relic', subType: 'hookshot',
+    id: 'rel_hook_ut', name: 'Twin Sky-Claw Grapple', tier: 'UT', slot: 'relic', subType: 'hookshot',
     bagType: 6, mpCost: 35, dmg: 520, stunSec: 2.8, range: 12.5, shockwave: true,
     stats: { atk: 7, dex: 7, spd: 5 },
     color: '#f59e0b', fameBonus: 7,
     desc: 'LEGENDARY UT: Zips to any target and unleashes a lightning shockwave upon arrival!'
   },
 
-  // 3. BOMBS (Blasts open Cracked Walls / Boulders + Massive Armor-Piercing AoE!)
+  // 3. BRIMSTONE CHARGES (Blasts open Cracked Walls + Massive Armor-Piercing AoE!)
   rel_bomb_t1: {
-    id: 'rel_bomb_t1', name: 'Dodongo Bomb Bag', tier: 'T1', slot: 'relic', subType: 'bomb',
+    id: 'rel_bomb_t1', name: 'Sapper\'s Brimstone Satchel', tier: 'T1', slot: 'relic', subType: 'bomb',
     bagType: 1, mpCost: 40, dmg: 260, blastRadius: 3.4, stats: { atk: 2 },
     color: '#3b82f6', fameBonus: 1,
-    desc: 'Lobs an explosive bomb that shatters Cracked Dungeon Walls and deals armor-piercing AoE.'
+    desc: 'Lobs an explosive charge that shatters Cracked Dungeon Walls and deals armor-piercing AoE.'
   },
   rel_bomb_t2: {
-    id: 'rel_bomb_t2', name: 'Super Powder Keg', tier: 'T4', slot: 'relic', subType: 'bomb',
+    id: 'rel_bomb_t2', name: 'Caldera Demolition Keg', tier: 'T4', slot: 'relic', subType: 'bomb',
     bagType: 2, mpCost: 55, dmg: 520, blastRadius: 4.2, stats: { atk: 5, wis: 4 },
     color: '#ef4444', fameBonus: 3,
-    desc: 'Goron-certified demolition keg. Inflicts Armor Broken on bosses for 4 seconds!'
+    desc: 'Heavy siege keg. Inflicts Armor Broken on bosses for 4.5 seconds!'
   },
   rel_bomb_ut: {
-    id: 'rel_bomb_ut', name: 'Golden Bombchu Swarm', tier: 'UT', slot: 'relic', subType: 'bomb',
+    id: 'rel_bomb_ut', name: 'Sunfire Seeker Cluster', tier: 'UT', slot: 'relic', subType: 'bomb',
     bagType: 6, mpCost: 50, dmg: 780, blastRadius: 4.8, cluster: 3,
     stats: { hp: 50, atk: 8, wis: 6 },
     color: '#eab308', fameBonus: 7,
-    desc: 'LEGENDARY UT: Deploys 3 homing Bombchus that breach walls, stun bosses, and shred armor!'
+    desc: 'LEGENDARY UT: Deploys 3 cluster charges that breach walls, stun bosses, and shred armor!'
   },
 
-  // 4. OCARINAS (RotMG Seal/Tome Party Buffs — Heals + Damaging + Armored)
+  // 4. SANCTUARY WARHORNS (Party Buffs — Heals + Damaging + Armored)
   rel_ocarina_t1: {
-    id: 'rel_ocarina_t1', name: 'Fairy Ocarina', tier: 'T1', slot: 'relic', subType: 'ocarina',
+    id: 'rel_ocarina_t1', name: 'Sanctuary Chime', tier: 'T1', slot: 'relic', subType: 'ocarina',
     bagType: 1, mpCost: 45, heal: 90, buffSec: 4.5, radius: 6.5, stats: { wis: 3 },
     color: '#d97706', fameBonus: 1,
-    desc: 'Plays Saria\'s Melody: Heals nearby allies and grants Damaging (+35% ATK) & Speedy!'
+    desc: 'Sounds the Warden’s Litany: Heals nearby allies and grants Damaging (+35% ATK) & Speedy!'
   },
   rel_ocarina_t2: {
-    id: 'rel_ocarina_t2', name: 'Ocarina of Sacred Time', tier: 'T4', slot: 'relic', subType: 'ocarina',
+    id: 'rel_ocarina_t2', name: 'Warhorn of the First Dawn', tier: 'T4', slot: 'relic', subType: 'ocarina',
     bagType: 2, mpCost: 60, heal: 175, buffSec: 6.0, radius: 8.0, stats: { hp: 40, wis: 6 },
     color: '#3b82f6', fameBonus: 3,
     desc: 'Restores 175 HP to the party and grants Damaging, Armored (+50% DEF), and Speedy!'
   },
   rel_ocarina_ut: {
-    id: 'rel_ocarina_ut', name: 'Wind Waker Conductor Baton', tier: 'UT', slot: 'relic', subType: 'ocarina',
+    id: 'rel_ocarina_ut', name: 'Anthem of the Holy Crest', tier: 'UT', slot: 'relic', subType: 'ocarina',
     bagType: 6, mpCost: 65, heal: 260, buffSec: 7.5, radius: 9.5, purify: true,
     stats: { hp: 80, def: 6, wis: 8 },
     color: '#f8fafc', fameBonus: 7,
-    desc: 'LEGENDARY UT: Purifies all debuffs, heals 260 HP, grants Berserk/Damaging/Armored, and slows bullets!'
+    desc: 'LEGENDARY UT: Purifies all debuffs, heals 260 HP, and grants Damaging, Armored & Speedy!'
   },
 
-  // 5. FROST / SHADOW WANDS (Phase Dash + Freeze Nova)
+  // 5. FROST / PHASE SCEPTERS (Phase Blink + Freeze Nova)
   rel_wand_t1: {
-    id: 'rel_wand_t1', name: 'Ice Rod of Lanayru', tier: 'T1', slot: 'relic', subType: 'wand',
+    id: 'rel_wand_t1', name: 'Scepter of Rime', tier: 'T1', slot: 'relic', subType: 'wand',
     bagType: 1, mpCost: 35, dmg: 180, slowSec: 3.0, stats: { spd: 3 },
     color: '#38bdf8', fameBonus: 1,
     desc: 'Blinks forward in a frost mist and unleashes an Ice Nova that freezes & slows foes.'
   },
   rel_wand_t2: {
-    id: 'rel_wand_t2', name: 'Byrna Cane of Invulnerability', tier: 'T4', slot: 'relic', subType: 'wand',
+    id: 'rel_wand_t2', name: 'Cane of the Astral Ward', tier: 'T4', slot: 'relic', subType: 'wand',
     bagType: 2, mpCost: 50, dmg: 350, slowSec: 4.0, invulnSec: 1.2, stats: { spd: 6, dex: 4 },
     color: '#22d3ee', fameBonus: 3,
-    desc: 'Surrounds you with the Orbit of Byrna (1.2s Invulnerability) and freezes enemies.'
+    desc: 'Surrounds you with an Astral Ward (1.2s Invulnerability) and freezes enemies.'
   },
   rel_wand_ut: {
-    id: 'rel_wand_ut', name: 'Fierce Mask of Twilight', tier: 'UT', slot: 'relic', subType: 'wand',
+    id: 'rel_wand_ut', name: 'Mantle of the Blood Eclipse', tier: 'UT', slot: 'relic', subType: 'wand',
     bagType: 6, mpCost: 55, dmg: 600, slowSec: 5.0, invulnSec: 1.8,
     stats: { atk: 6, spd: 8, dex: 8 },
     color: '#f43f5e', fameBonus: 7,
-    desc: 'LEGENDARY UT: Shadow-teleports to cursor, grants 1.8s Invulnerability, and unleashes 12 twilight blades!'
+    desc: 'LEGENDARY UT: Shadow-blinks toward cursor, grants 1.8s Invulnerability, and shatters nearby foes!'
   },
 
   // ==========================================================================
-  // ARMORS (Tunics, Mails, Robes)
+  // ARMORS (Heavy Plate, Warden Leather, Arcane Robes)
   // ==========================================================================
   arm_heavy_t1: {
-    id: 'arm_heavy_t1', name: 'Hylian Chainmail', tier: 'T1', slot: 'armor', subType: 'heavy',
+    id: 'arm_heavy_t1', name: 'Citadel Chainmail', tier: 'T1', slot: 'armor', subType: 'heavy',
     bagType: 1, stats: { def: 7, hp: 20 }, color: '#94a3b8', fameBonus: 1,
-    desc: 'Standard issue steel links worn by Hyrule Castle sentries.'
+    desc: 'Standard steel links worn by Aethelgard Citadel sentries.'
   },
   arm_heavy_t2: {
-    id: 'arm_heavy_t2', name: 'Zora Scale Armor', tier: 'T4', slot: 'armor', subType: 'heavy',
+    id: 'arm_heavy_t2', name: 'Tideforged Scale Mail', tier: 'T4', slot: 'armor', subType: 'heavy',
     bagType: 2, stats: { def: 14, hp: 45, wis: 3 }, color: '#3b82f6', fameBonus: 2,
-    desc: 'Sapphire dragon-scales that deflect high-velocity projectiles.'
+    desc: 'Sapphire sea-scales that deflect high-velocity projectiles.'
   },
   arm_heavy_t3: {
-    id: 'arm_heavy_t3', name: 'Goron Mythril Plate', tier: 'T8', slot: 'armor', subType: 'heavy',
+    id: 'arm_heavy_t3', name: 'Caldera Mythril Plate', tier: 'T8', slot: 'armor', subType: 'heavy',
     bagType: 3, stats: { def: 21, hp: 70, vit: 5 }, color: '#ef4444', fameBonus: 4,
-    desc: 'Forged in Death Mountain magma. Resistant to volcanic fire and demonic blades.'
+    desc: 'Forged in volcanic magma. Resistant to dragonfire and demonic blades.'
   },
   arm_heavy_t4: {
-    id: 'arm_heavy_t4', name: 'Acropolis Triforce Cuirass', tier: 'T12', slot: 'armor', subType: 'heavy',
+    id: 'arm_heavy_t4', name: 'Aethelgard Sovereign Cuirass', tier: 'T12', slot: 'armor', subType: 'heavy',
     bagType: 3, stats: { def: 26, hp: 100, vit: 6 }, color: '#eab308', fameBonus: 6,
-    desc: 'Royal golden plate armor engraved with the Crest of Courage.'
+    desc: 'Royal golden plate armor engraved with the emblem of the Holy Crest.'
   },
 
   arm_leather_t1: {
-    id: 'arm_leather_t1', name: 'Kokiri Forest Tunic', tier: 'T1', slot: 'armor', subType: 'leather',
+    id: 'arm_leather_t1', name: 'Sylvan Scout Tunic', tier: 'T1', slot: 'armor', subType: 'leather',
     bagType: 1, stats: { def: 5, spd: 2, dex: 2 }, color: '#22c55e', fameBonus: 1,
-    desc: 'Woven by the Great Deku Tree. Light and effortless to roll in.'
+    desc: 'Woven by forest wardens. Light and effortless to roll in.'
   },
   arm_leather_t2: {
-    id: 'arm_leather_t2', name: 'Sheikah Stealth Garb', tier: 'T4', slot: 'armor', subType: 'leather',
+    id: 'arm_leather_t2', name: 'Nightblade Stealth Garb', tier: 'T4', slot: 'armor', subType: 'leather',
     bagType: 2, stats: { def: 10, spd: 4, dex: 4, hp: 30 }, color: '#0ea5e9', fameBonus: 2,
-    desc: 'Reinforced shadow-weave tunic favored by Kakariko scouts.'
+    desc: 'Reinforced shadow-weave tunic favored by Astral Watch scouts.'
   },
   arm_leather_t3: {
     id: 'arm_leather_t3', name: 'Wyvern Hide Brigandine', tier: 'T8', slot: 'armor', subType: 'leather',
     bagType: 3, stats: { def: 16, spd: 5, dex: 6, hp: 55 }, color: '#10b981', fameBonus: 4,
-    desc: 'Crafted from Valoo\'s shed scales. Balances agility with formidable protection.'
+    desc: 'Crafted from drake scales. Balances agility with formidable protection.'
   },
   arm_leather_t4: {
-    id: 'arm_leather_t4', name: 'Hydra Tunic of the Wild', tier: 'T12', slot: 'armor', subType: 'leather',
+    id: 'arm_leather_t4', name: 'Strider Armor of the First Watch', tier: 'T12', slot: 'armor', subType: 'leather',
     bagType: 3, stats: { def: 20, spd: 7, dex: 7, atk: 4, hp: 75 }, color: '#38bdf8', fameBonus: 6,
-    desc: 'Legendary Champion\'s Tunic granting unmatched dexterity and poise.'
+    desc: 'Legendary Warden armor granting unmatched dexterity and poise.'
   },
 
   arm_robe_t1: {
-    id: 'arm_robe_t1', name: 'Novice Sage Vestment', tier: 'T1', slot: 'armor', subType: 'robe',
+    id: 'arm_robe_t1', name: 'Novice Chronicler Vestment', tier: 'T1', slot: 'armor', subType: 'robe',
     bagType: 1, stats: { def: 4, mp: 30, wis: 3, atk: 2 }, color: '#f97316', fameBonus: 1,
     desc: 'Simple linen robe inscribed with minor mana runes.'
   },
   arm_robe_t2: {
-    id: 'arm_robe_t2', name: 'Robe of the Fire Sanctuary', tier: 'T4', slot: 'armor', subType: 'robe',
+    id: 'arm_robe_t2', name: 'Robe of the Ember Sanctum', tier: 'T4', slot: 'armor', subType: 'robe',
     bagType: 2, stats: { def: 8, mp: 55, wis: 5, atk: 4 }, color: '#ef4444', fameBonus: 2,
-    desc: 'Amplifies offensive spellblade weaving and magic regeneration.'
+    desc: 'Amplifies offensive spellblade weaving and mana regeneration.'
   },
   arm_robe_t3: {
-    id: 'arm_robe_t3', name: 'Elder Wizzrobe Mantle', tier: 'T8', slot: 'armor', subType: 'robe',
+    id: 'arm_robe_t3', name: 'Elder Arcanist Mantle', tier: 'T8', slot: 'armor', subType: 'robe',
     bagType: 3, stats: { def: 13, mp: 85, wis: 7, atk: 6, dex: 3 }, color: '#ec4899', fameBonus: 4,
-    desc: 'Worn by high archmages of the Dark World.'
+    desc: 'Worn by high battle-mages of the Blightlands.'
   },
   arm_robe_t4: {
-    id: 'arm_robe_t4', name: 'Grand Sorcerer Vestment of Nayru', tier: 'T12', slot: 'armor', subType: 'robe',
+    id: 'arm_robe_t4', name: 'Grand Vestment of the Astral Elder', tier: 'T12', slot: 'armor', subType: 'robe',
     bagType: 3, stats: { def: 16, mp: 120, wis: 9, atk: 8, dex: 5 }, color: '#eab308', fameBonus: 6,
-    desc: 'Radiates divine wisdom and boundless arcane power.'
+    desc: 'Radiates ancient wisdom and boundless arcane power.'
   },
   arm_ut_magic_armor: {
-    id: 'arm_ut_magic_armor', name: 'Golden Magic Armor of the Hero', tier: 'UT', slot: 'armor', subType: 'any',
+    id: 'arm_ut_magic_armor', name: 'Radiant Aegis of the Holy Crest', tier: 'UT', slot: 'armor', subType: 'any',
     bagType: 6, stats: { hp: 130, mp: 70, def: 24, atk: 6, spd: 5 }, color: '#facc15', fameBonus: 8,
-    desc: 'LEGENDARY UT (Wearable by ANY Class!): Forged from pure Triforce gold. Supreme protection and vigor.'
+    desc: 'LEGENDARY UT (Wearable by ANY Class!): Forged from pure Crest gold. Supreme protection and vigor.'
   },
 
   // ==========================================================================
-  // RINGS & RELIC CHARMS (Slot 4)
+  // RINGS & SIGNETS (Slot 4)
   // ==========================================================================
   rng_hp_t1: {
-    id: 'rng_hp_t1', name: 'Piece of Heart Ring', tier: 'T1', slot: 'ring',
+    id: 'rng_hp_t1', name: 'Heartstone Band', tier: 'T1', slot: 'ring',
     bagType: 1, stats: { hp: 50, def: 2 }, color: '#ef4444', fameBonus: 1,
-    desc: 'A crystallized Heart Piece that bolsters your life force (+50 HP, +2 DEF).'
+    desc: 'A crimson vitality stone that bolsters your life force (+50 HP, +2 DEF).'
   },
   rng_dex_t1: {
-    id: 'rng_dex_t1', name: 'Pegasus Anklet', tier: 'T1', slot: 'ring',
+    id: 'rng_dex_t1', name: 'Zephyr Anklet', tier: 'T1', slot: 'ring',
     bagType: 1, stats: { dex: 4, spd: 4 }, color: '#22c55e', fameBonus: 1,
-    desc: 'Feather-light charm that accelerates both footsteps and sword swings.'
+    desc: 'Feather-light charm that accelerates both footsteps and weapon swings.'
   },
   rng_atk_t1: {
-    id: 'rng_atk_t1', name: 'Goron Ruby Bracelet', tier: 'T1', slot: 'ring',
+    id: 'rng_atk_t1', name: 'Cinder Garnet Ring', tier: 'T1', slot: 'ring',
     bagType: 1, stats: { atk: 4, hp: 30 }, color: '#f97316', fameBonus: 1,
-    desc: 'Sworn symbol of Goron brotherhood (+4 ATK, +30 HP).'
+    desc: 'Sworn emblem of Caldera vanguards (+4 ATK, +30 HP).'
   },
   rng_wis_t1: {
-    id: 'rng_wis_t1', name: 'Zora Sapphire Ring', tier: 'T1', slot: 'ring',
+    id: 'rng_wis_t1', name: 'Tide Sapphire Ring', tier: 'T1', slot: 'ring',
     bagType: 1, stats: { wis: 5, mp: 40 }, color: '#3b82f6', fameBonus: 1,
-    desc: 'Cool ocean gem that accelerates mana flow (+5 WIS, +40 MP).'
+    desc: 'Deep ocean gem that accelerates mana flow (+5 WIS, +40 MP).'
   },
   rng_spd_t1: {
-    id: 'rng_spd_t1', name: 'Bunny Hood Charm', tier: 'T1', slot: 'ring',
+    id: 'rng_spd_t1', name: 'Windrunner Charm', tier: 'T1', slot: 'ring',
     bagType: 1, stats: { spd: 6, dex: 3 }, color: '#eab308', fameBonus: 1,
-    desc: 'Lets the wearer dash like the wind across Hyrule Field.'
+    desc: 'Lets the wearer dash like a gale across the realm.'
   },
   rng_para_hp: {
-    id: 'rng_para_hp', name: 'Ring of Paramount Heart', tier: 'T4', slot: 'ring',
+    id: 'rng_para_hp', name: 'Ring of Paramount Vitality', tier: 'T4', slot: 'ring',
     bagType: 2, stats: { hp: 120, def: 5, vit: 4 }, color: '#f43f5e', fameBonus: 3,
-    desc: 'A full Heart Container bound in silver filigree.'
+    desc: 'A pure life-vessel bound in silver filigree.'
   },
   rng_exalted_hp: {
-    id: 'rng_exalted_hp', name: 'Ring of the Exalted Hero', tier: 'T6', slot: 'ring',
+    id: 'rng_exalted_hp', name: 'Ring of the Exalted Warden', tier: 'T6', slot: 'ring',
     bagType: 3, stats: { hp: 180, def: 8, atk: 5, spd: 5 }, color: '#eab308', fameBonus: 5,
-    desc: 'Godlands treasure pulsing with the resilience of ancient heroes.'
+    desc: 'Blightlands treasure pulsing with the resilience of the First Wardens.'
   },
   rng_ut_crown: {
-    id: 'rng_ut_crown', name: 'Crown of the Shattered Triforce', tier: 'UT', slot: 'ring',
+    id: 'rng_ut_crown', name: 'Crown of the Reborn Crest', tier: 'UT', slot: 'ring',
     bagType: 6, stats: { hp: 160, mp: 80, atk: 10, dex: 10, def: 6, spd: 6 }, color: '#f8fafc', fameBonus: 8,
-    desc: 'LEGENDARY UT (Mad King Drop): The apex relic of the Realm. Massive boost to offensive & defensive stats.'
+    desc: 'LEGENDARY UT (Evil Bane Drop): The apex relic of Aethelgard. Massive boost to offensive & defensive stats.'
   },
   rng_ut_pyra: {
-    id: 'rng_ut_pyra', name: 'Ring of the Ancient Pyramid', tier: 'UT', slot: 'ring',
+    id: 'rng_ut_pyra', name: 'Signet of the Ancient Obelisk', tier: 'UT', slot: 'ring',
     bagType: 6, stats: { hp: 140, atk: 8, def: 8, vit: 6 }, color: '#facc15', fameBonus: 7,
-    desc: 'LEGENDARY UT (Desert Sphinx / Tomb Drop): Balanced perfection of Life, Attack, and Defense.'
+    desc: 'LEGENDARY UT: Balanced perfection of Life, Attack, and Defense.'
   },
 
   // ==========================================================================
-  // ROTMG PERMANENT STAT POTIONS (Blue Bags! Drink to reach 8/8 Maxed!)
+  // PERMANENT STAT POTIONS (Blue Bags! Drink to reach 8/8 Maxed!)
   // ==========================================================================
   pot_atk: {
     id: 'pot_atk', name: 'Potion of Attack', tier: 'POT', slot: 'consumable', subType: 'stat_pot',
@@ -1293,28 +1385,54 @@ const ITEMS = {
     desc: 'PERMANENTLY increases Wisdom (WIS) by +1 toward your 8/8 Class Cap!'
   },
   pot_life: {
-    id: 'pot_life', name: 'Potion of Life (Heart Elixir)', tier: 'POT', slot: 'consumable', subType: 'stat_pot',
+    id: 'pot_life', name: 'Potion of Life (Vitality Elixir)', tier: 'POT', slot: 'consumable', subType: 'stat_pot',
     bagType: 4, stat: 'hp', amount: 15, color: '#2dd4bf', fameBonus: 0,
     desc: 'PERMANENTLY increases Maximum HP by +15 toward your 8/8 Class Cap!'
   },
   pot_mana: {
-    id: 'pot_mana', name: 'Potion of Mana (Golden Elixir)', tier: 'POT', slot: 'consumable', subType: 'stat_pot',
+    id: 'pot_mana', name: 'Potion of Mana (Astral Elixir)', tier: 'POT', slot: 'consumable', subType: 'stat_pot',
     bagType: 4, stat: 'mp', amount: 10, color: '#facc15', fameBonus: 0,
     desc: 'PERMANENTLY increases Maximum MP by +10 toward your 8/8 Class Cap!'
   },
   pot_omni: {
-    id: 'pot_omni', name: 'Nectar of the Triforce (Max-All)', tier: 'UT', slot: 'consumable', subType: 'stat_omni',
+    id: 'pot_omni', name: 'Nectar of the Holy Crest (Max-All)', tier: 'UT', slot: 'consumable', subType: 'stat_omni',
     bagType: 6, color: '#fde047', fameBonus: 0,
     desc: 'LEGENDARY ELIXIR: Boosts ALL 8 stats significantly toward 8/8 Maxed!'
   },
 
   // ==========================================================================
-  // CONSUMABLES (Bottled Fairies & Elixirs)
+  // CONSUMABLES & SACRED CREST SHARDS
   // ==========================================================================
   con_fairy: {
-    id: 'con_fairy', name: 'Bottled Fairy', tier: 'CON', slot: 'consumable', subType: 'heal',
+    id: 'con_fairy', name: 'Bottled Lumina Wisp', tier: 'CON', slot: 'consumable', subType: 'heal',
     bagType: 0, healHp: 250, healMp: 100, color: '#f472b6', fameBonus: 0,
-    desc: 'Restores 250 HP & 100 MP on use—OR automatically revives you from a fatal blow if in inventory!'
+    desc: 'Restores 250 HP & 100 MP on use—OR automatically revives you from a fatal blow if in your backpack!'
+  },
+
+  shard_tide: {
+    id: 'shard_tide', name: 'Crest Shard I: Silver Tide', tier: 'UT', slot: 'consumable', subType: 'crest_shard',
+    shardIndex: 0, bagType: 6, color: '#38bdf8', fameBonus: 10,
+    desc: 'SACRED CREST FRAGMENT (1/5): Click to attune and rebuild the First Point of the Holy Crest!'
+  },
+  shard_wilds: {
+    id: 'shard_wilds', name: 'Crest Shard II: Sylvan Root', tier: 'UT', slot: 'consumable', subType: 'crest_shard',
+    shardIndex: 1, bagType: 6, color: '#22c55e', fameBonus: 10,
+    desc: 'SACRED CREST FRAGMENT (2/5): Click to attune and rebuild the Second Point of the Holy Crest!'
+  },
+  shard_astral: {
+    id: 'shard_astral', name: 'Crest Shard III: Astral Wind', tier: 'UT', slot: 'consumable', subType: 'crest_shard',
+    shardIndex: 2, bagType: 6, color: '#c084fc', fameBonus: 10,
+    desc: 'SACRED CREST FRAGMENT (3/5): Click to attune and rebuild the Third Point of the Holy Crest!'
+  },
+  shard_ossuary: {
+    id: 'shard_ossuary', name: 'Crest Shard IV: Dawn Vigil', tier: 'UT', slot: 'consumable', subType: 'crest_shard',
+    shardIndex: 3, bagType: 6, color: '#facc15', fameBonus: 10,
+    desc: 'SACRED CREST FRAGMENT (4/5): Click to attune and rebuild the Fourth Point of the Holy Crest!'
+  },
+  shard_flame: {
+    id: 'shard_flame', name: 'Crest Shard V: Primordial Flame', tier: 'UT', slot: 'consumable', subType: 'crest_shard',
+    shardIndex: 4, bagType: 6, color: '#ef4444', fameBonus: 10,
+    desc: 'SACRED CREST FRAGMENT (5/5): Click to attune and rebuild the Fifth Point of the Holy Crest!'
   }
 };
 function canClassEquip(classId, item) {
@@ -1337,14 +1455,14 @@ function canClassEquip(classId, item) {
 
 // --- MODULE: src/data/enemies.js ---
 // ============================================================================
-// REALM OF THE SHATTERED CREST — ENEMIES, GODLANDS DEITIES & BOSSES
+// REALM OF THE SHATTERED CREST — ENEMIES, BLIGHTLANDS DEITIES & BOSSES
 // ============================================================================
 const ENEMIES = {
   // --------------------------------------------------------------------------
-  // BIOME 1: KOKIRI SHORE & BEACH (Levels 1-5)
+  // BIOME 1: SUNLIT SHOALS & COAST (Levels 1-5)
   // --------------------------------------------------------------------------
   octorok: {
-    id: 'octorok', name: 'Red Octorok', biome: 'beach',
+    id: 'octorok', name: 'Crimson Tide-Spitter', biome: 'beach',
     hp: 95, def: 1, xp: 22, speed: 2.1, size: 14, color: '#ef4444', accent: '#fca5a5',
     ai: 'wander_shoot', fireRate: 1.5,
     patterns: [
@@ -1359,7 +1477,7 @@ const ENEMIES = {
   },
 
   chuchu_blue: {
-    id: 'chuchu_blue', name: 'Azure ChuChu', biome: 'beach',
+    id: 'chuchu_blue', name: 'Azure Mire-Slime', biome: 'beach',
     hp: 130, def: 2, xp: 30, speed: 2.4, size: 14, color: '#38bdf8', accent: '#bae6fd',
     ai: 'hop_chase', fireRate: 1.8,
     patterns: [
@@ -1374,7 +1492,7 @@ const ENEMIES = {
   },
 
   pirate_moblin: {
-    id: 'pirate_moblin', name: 'Corsair Moblin', biome: 'beach',
+    id: 'pirate_moblin', name: 'Corsair Reaver', biome: 'beach',
     hp: 240, def: 3, xp: 55, speed: 2.7, size: 16, color: '#d97706', accent: '#fef08a',
     ai: 'chase_shoot', fireRate: 1.4,
     portalDrop: { dungeonId: 'pirate_cove', chance: 0.35 },
@@ -1390,10 +1508,10 @@ const ENEMIES = {
   },
 
   // --------------------------------------------------------------------------
-  // BIOME 2: LOST WOODS & HYRULE LOWLANDS (Levels 5-12)
+  // BIOME 2: WHISPERING WILDS & LOWLANDS (Levels 5-12)
   // --------------------------------------------------------------------------
   deku_scrub: {
-    id: 'deku_scrub', name: 'Mad Deku Scrub', biome: 'lowlands',
+    id: 'deku_scrub', name: 'Blighted Briar-Stalker', biome: 'lowlands',
     hp: 310, def: 4, xp: 75, speed: 2.2, size: 15, color: '#22c55e', accent: '#86efac',
     ai: 'strafe_shoot', fireRate: 1.25,
     portalDrop: { dungeonId: 'deku_temple', chance: 0.25 },
@@ -1409,7 +1527,7 @@ const ENEMIES = {
   },
 
   stalfos_scout: {
-    id: 'stalfos_scout', name: 'Stalfos Boneblade', biome: 'lowlands',
+    id: 'stalfos_scout', name: 'Risen Boneblade', biome: 'lowlands',
     hp: 420, def: 6, xp: 95, speed: 3.1, size: 16, color: '#e2e8f0', accent: '#94a3b8',
     ai: 'chase_shoot', fireRate: 1.3,
     patterns: [
@@ -1424,25 +1542,25 @@ const ENEMIES = {
   },
 
   lizalfos_spear: {
-    id: 'lizalfos_spear', name: 'Lizalfos Lancer', biome: 'lowlands',
+    id: 'lizalfos_spear', name: 'Scalebound Lancer', biome: 'lowlands',
     hp: 490, def: 7, xp: 115, speed: 3.4, size: 17, color: '#10b981', accent: '#f43f5e',
     ai: 'lunge_shoot', fireRate: 1.15,
     patterns: [
       { type: 'spread', count: 3, spreadDeg: 20, speed: 8.4, dmg: 44, color: '#34d399', size: 6, range: 8.2 }
     ],
     drops: [
-      { id: 'wep_rod_t2',    chance: 0.15 },
-      { id: 'arm_robe_t2',   chance: 0.15 },
-      { id: 'rel_bomb_t1',   chance: 0.12 },
-      { id: 'pot_spd',       chance: 0.08 }
+      { id: 'wep_rod_t2',  chance: 0.15 },
+      { id: 'arm_robe_t2', chance: 0.15 },
+      { id: 'rel_bomb_t1', chance: 0.12 },
+      { id: 'pot_spd',     chance: 0.08 }
     ]
   },
 
   // --------------------------------------------------------------------------
-  // BIOME 3: DEATH MOUNTAIN HIGHLANDS (Levels 12-18)
+  // BIOME 3: SHATTERED CRAGS & HIGHLANDS (Levels 12-18)
   // --------------------------------------------------------------------------
   darknut_knight: {
-    id: 'darknut_knight', name: 'Iron Darknut Juggernaut', biome: 'highlands',
+    id: 'darknut_knight', name: 'Ironclad Dreadnought', biome: 'highlands',
     hp: 820, def: 14, xp: 195, speed: 2.6, size: 19, color: '#475569', accent: '#eab308',
     frontShield: true, // Takes reduced frontal damage unless flanked, parried, or bombed!
     ai: 'chase_shoot', fireRate: 1.25,
@@ -1460,7 +1578,7 @@ const ENEMIES = {
   },
 
   wizzrobe_fire: {
-    id: 'wizzrobe_fire', name: 'Crimson Wizzrobe', biome: 'highlands',
+    id: 'wizzrobe_fire', name: 'Crimson Pyromage', biome: 'highlands',
     hp: 640, def: 8, xp: 175, speed: 2.8, size: 17, color: '#ef4444', accent: '#fde047',
     ai: 'teleport_cast', fireRate: 1.35,
     patterns: [
@@ -1477,10 +1595,10 @@ const ENEMIES = {
   },
 
   // --------------------------------------------------------------------------
-  // BIOME 4: THE DARK WORLD GODLANDS (Level 20 Endgame Bullet-Hell!)
+  // BIOME 4: THE BLIGHTLANDS / GODLANDS (Level 20 Endgame Bullet-Hell!)
   // --------------------------------------------------------------------------
   medusa_gorgon: {
-    id: 'medusa_gorgon', name: 'Medusa of the Gorgon Marsh', biome: 'godlands', isGod: true,
+    id: 'medusa_gorgon', name: 'Serpent Empress of the Blight', biome: 'godlands', isGod: true,
     hp: 1650, def: 16, xp: 380, speed: 3.1, size: 21, color: '#10b981', accent: '#ef4444',
     ai: 'strafe_shoot', fireRate: 1.15,
     portalDrop: { dungeonId: 'deku_temple', chance: 0.28 },
@@ -1489,17 +1607,17 @@ const ENEMIES = {
       { type: 'grenade', count: 1, speed: 6.5, dmg: 110, color: '#ef4444', size: 9, range: 8.0 }
     ],
     drops: [
-      { id: 'pot_spd',      chance: 0.32 },
-      { id: 'pot_atk',      chance: 0.18 },
-      { id: 'wep_bow_t3',   chance: 0.14 },
-      { id: 'wep_sword_t4', chance: 0.12 },
+      { id: 'pot_spd',        chance: 0.32 },
+      { id: 'pot_atk',        chance: 0.18 },
+      { id: 'wep_bow_t3',     chance: 0.14 },
+      { id: 'wep_sword_t4',   chance: 0.12 },
       { id: 'arm_leather_t3', chance: 0.14 },
-      { id: 'rng_para_hp',  chance: 0.12 }
+      { id: 'rng_para_hp',    chance: 0.12 }
     ]
   },
 
   beholder_eye: {
-    id: 'beholder_eye', name: 'Beholder of the Shadow Eye', biome: 'godlands', isGod: true,
+    id: 'beholder_eye', name: 'All-Seeing Eye of Bane', biome: 'godlands', isGod: true,
     hp: 1750, def: 18, xp: 400, speed: 2.8, size: 22, color: '#f8fafc', accent: '#ec4899',
     ai: 'chase_shoot', fireRate: 1.2,
     portalDrop: { dungeonId: 'sprite_world', chance: 0.32 },
@@ -1508,17 +1626,17 @@ const ENEMIES = {
       { type: 'aimed', count: 1, speed: 9.2, dmg: 95, color: '#f43f5e', size: 8, range: 10.0 }
     ],
     drops: [
-      { id: 'pot_def',      chance: 0.32 },
-      { id: 'pot_dex',      chance: 0.22 },
-      { id: 'wep_rod_t3',   chance: 0.14 },
-      { id: 'wep_dagger_t3',chance: 0.14 },
-      { id: 'arm_heavy_t3', chance: 0.14 },
-      { id: 'rel_wand_t2',  chance: 0.12 }
+      { id: 'pot_def',       chance: 0.32 },
+      { id: 'pot_dex',       chance: 0.22 },
+      { id: 'wep_rod_t3',    chance: 0.14 },
+      { id: 'wep_dagger_t3', chance: 0.14 },
+      { id: 'arm_heavy_t3',  chance: 0.14 },
+      { id: 'rel_wand_t2',   chance: 0.12 }
     ]
   },
 
   sprite_archmage: {
-    id: 'sprite_archmage', name: 'Twilight Sprite Archon', biome: 'godlands', isGod: true,
+    id: 'sprite_archmage', name: 'Astral Conduit Archon', biome: 'godlands', isGod: true,
     hp: 1500, def: 14, xp: 370, speed: 3.3, size: 20, color: '#38bdf8', accent: '#fde047',
     ai: 'strafe_shoot', fireRate: 1.1,
     portalDrop: { dungeonId: 'sprite_world', chance: 0.40 },
@@ -1527,16 +1645,16 @@ const ENEMIES = {
       { type: 'aimed', count: 1, speed: 9.5, dmg: 65, color: '#eab308', size: 7, range: 9.8 }
     ],
     drops: [
-      { id: 'pot_dex',      chance: 0.35 },
-      { id: 'pot_wis',      chance: 0.22 },
-      { id: 'wep_rod_t4',   chance: 0.08 },
-      { id: 'arm_robe_t3',  chance: 0.15 },
-      { id: 'rel_hook_t2',  chance: 0.14 }
+      { id: 'pot_dex',     chance: 0.35 },
+      { id: 'pot_wis',     chance: 0.22 },
+      { id: 'wep_rod_t4',  chance: 0.08 },
+      { id: 'arm_robe_t3', chance: 0.15 },
+      { id: 'rel_hook_t2', chance: 0.14 }
     ]
   },
 
   phantom_reaper: {
-    id: 'phantom_reaper', name: 'Poe Wraith Sovereign', biome: 'godlands', isGod: true,
+    id: 'phantom_reaper', name: 'Soul-Reaper Sovereign', biome: 'godlands', isGod: true,
     hp: 1700, def: 15, xp: 390, speed: 3.4, size: 21, color: '#60a5fa', accent: '#e2e8f0',
     ai: 'chase_shoot', fireRate: 1.25,
     portalDrop: { dungeonId: 'undead_lair', chance: 0.35 },
@@ -1544,16 +1662,16 @@ const ENEMIES = {
       { type: 'spread', count: 7, spreadDeg: 65, speed: 8.4, dmg: 80, color: '#93c5fd', size: 7, range: 9.2 }
     ],
     drops: [
-      { id: 'pot_wis',      chance: 0.35 },
-      { id: 'pot_spd',      chance: 0.22 },
-      { id: 'wep_dagger_t4',chance: 0.08 },
-      { id: 'wep_bow_t4',   chance: 0.08 },
+      { id: 'pot_wis',        chance: 0.35 },
+      { id: 'pot_spd',        chance: 0.22 },
+      { id: 'wep_dagger_t4',  chance: 0.08 },
+      { id: 'wep_bow_t4',     chance: 0.08 },
       { id: 'rng_exalted_hp', chance: 0.09 }
     ]
   },
 
   magma_titan: {
-    id: 'magma_titan', name: 'Eldritch Dodongo Behemoth', biome: 'godlands', isGod: true,
+    id: 'magma_titan', name: 'Abyssal Cinder Behemoth', biome: 'godlands', isGod: true,
     hp: 2100, def: 20, xp: 450, speed: 2.7, size: 23, color: '#ef4444', accent: '#facc15',
     ai: 'chase_shoot', fireRate: 1.05,
     portalDrop: { dungeonId: 'abyss_mountain', chance: 0.38 },
@@ -1574,27 +1692,27 @@ const ENEMIES = {
   // REALM EVENT BOSSES (Spawn in Overworld, Tracked on Quest Compass!)
   // --------------------------------------------------------------------------
   event_skull_lord: {
-    id: 'event_skull_lord', name: 'Stalblind the Skull Shrine', biome: 'event', isEvent: true, isBoss: true,
+    id: 'event_skull_lord', name: 'Ossuary Skull Shrine', biome: 'event', isEvent: true, isBoss: true,
     hp: 6800, def: 22, xp: 1600, speed: 2.0, size: 28, color: '#f43f5e', accent: '#fde047',
     ai: 'boss_orbit', fireRate: 0.85,
     portalDrop: { dungeonId: 'undead_lair', chance: 1.0 },
     patterns: [
       { type: 'spiral', count: 6, speed: 7.8, dmg: 92, color: '#fb7185', size: 8, range: 11.0 },
-      { type: 'spread', count: 5, spreadDeg: 45, speed: 9.0, dmg: 105, color: '#fef08a', size: 8, range: 10.5 }
+      { type: 'spread', count: 5, spreadDeg: 45, speed: 9.0, dmg: 105, color: '#fef04a', size: 8, range: 10.5 }
     ],
     drops: [
-      { id: 'pot_def',        chance: 1.0 },
-      { id: 'pot_atk',        chance: 0.85 },
-      { id: 'pot_wis',        chance: 0.75 },
-      { id: 'wep_sword_t5',   chance: 0.35 },
-      { id: 'arm_heavy_t4',   chance: 0.35 },
-      { id: 'rel_boom_ut',    chance: 0.28 }, // WHITE BAG!
-      { id: 'rng_ut_pyra',    chance: 0.22 }  // WHITE BAG!
+      { id: 'pot_def',      chance: 1.0 },
+      { id: 'pot_atk',      chance: 0.85 },
+      { id: 'pot_wis',      chance: 0.75 },
+      { id: 'wep_sword_t5', chance: 0.35 },
+      { id: 'arm_heavy_t4', chance: 0.35 },
+      { id: 'rel_boom_ut',  chance: 0.28 },
+      { id: 'rng_ut_pyra',  chance: 0.22 }
     ]
   },
 
   event_cube_overseer: {
-    id: 'event_cube_overseer', name: 'Gelatinous Cube God of Nayru', biome: 'event', isEvent: true, isBoss: true,
+    id: 'event_cube_overseer', name: 'Astral Cube Overseer', biome: 'event', isEvent: true, isBoss: true,
     hp: 7200, def: 20, xp: 1750, speed: 2.3, size: 28, color: '#22d3ee', accent: '#f97316',
     ai: 'boss_strafe', fireRate: 0.8,
     portalDrop: { dungeonId: 'sprite_world', chance: 1.0 },
@@ -1603,17 +1721,17 @@ const ENEMIES = {
       { type: 'radial', count: 10, speed: 7.2, dmg: 95, color: '#f97316', size: 8, range: 10.0 }
     ],
     drops: [
-      { id: 'pot_dex',             chance: 1.0 },
-      { id: 'pot_spd',             chance: 0.85 },
-      { id: 'pot_def',             chance: 0.75 },
-      { id: 'wep_dagger_ut_fierce',chance: 0.28 }, // WHITE BAG!
-      { id: 'rel_hook_ut',         chance: 0.25 }, // WHITE BAG!
-      { id: 'arm_leather_t4',      chance: 0.35 }
+      { id: 'pot_dex',              chance: 1.0 },
+      { id: 'pot_spd',              chance: 0.85 },
+      { id: 'pot_def',              chance: 0.75 },
+      { id: 'wep_dagger_ut_fierce', chance: 0.28 },
+      { id: 'rel_hook_ut',          chance: 0.25 },
+      { id: 'arm_leather_t4',       chance: 0.35 }
     ]
   },
 
-  event_goron_colossus: {
-    id: 'event_goron_colossus', name: 'Volvagia the Molten Titan', biome: 'event', isEvent: true, isBoss: true,
+  event_molten_colossus: {
+    id: 'event_molten_colossus', name: 'Pyroclast the Molten Colossus', biome: 'event', isEvent: true, isBoss: true,
     hp: 8000, def: 25, xp: 2000, speed: 2.5, size: 30, color: '#ef4444', accent: '#facc15',
     ai: 'boss_chase', fireRate: 0.9,
     portalDrop: { dungeonId: 'abyss_mountain', chance: 1.0 },
@@ -1625,17 +1743,18 @@ const ENEMIES = {
       { id: 'pot_vit',            chance: 1.0 },
       { id: 'pot_def',            chance: 0.90 },
       { id: 'pot_life',           chance: 0.45 },
-      { id: 'wep_sword_ut_demon', chance: 0.28 }, // WHITE BAG!
-      { id: 'rel_bomb_ut',        chance: 0.26 }, // WHITE BAG!
+      { id: 'wep_sword_ut_demon', chance: 0.28 },
+      { id: 'rel_bomb_ut',        chance: 0.26 },
       { id: 'rng_exalted_hp',     chance: 0.40 }
     ]
   },
 
   // --------------------------------------------------------------------------
-  // DUNGEON BOSSES (Zelda Mechanics + Bullet-Hell Spectacle)
+  // DUNGEON GUARDIAN BOSSES (Each drops one of the 5 Sacred Crest Shards!)
   // --------------------------------------------------------------------------
   boss_dread_octorok: {
-    id: 'boss_dread_octorok', name: 'Dread Captain Octorok', biome: 'dungeon', isBoss: true,
+    id: 'boss_dread_octorok', name: 'Dread Captain Vorath', biome: 'dungeon', isBoss: true,
+    crestShardIndex: 0,
     hp: 2600, def: 8, xp: 650, speed: 2.5, size: 26, color: '#dc2626', accent: '#fde047',
     ai: 'boss_strafe', fireRate: 1.0,
     patterns: [
@@ -1643,6 +1762,7 @@ const ENEMIES = {
       { type: 'radial', count: 8, speed: 6.2, dmg: 42, color: '#38bdf8', size: 7, range: 8.5 }
     ],
     drops: [
+      { id: 'shard_tide',   chance: 1.0 }, // SACRED CREST SHARD I!
       { id: 'pot_spd',      chance: 1.0 },
       { id: 'pot_dex',      chance: 0.80 },
       { id: 'wep_sword_t3', chance: 0.45 },
@@ -1652,7 +1772,8 @@ const ENEMIES = {
   },
 
   boss_queen_gohma: {
-    id: 'boss_queen_gohma', name: 'Queen Gohma of the Deku Sanctum', biome: 'dungeon', isBoss: true,
+    id: 'boss_queen_gohma', name: 'Arachne the Blightweaver', biome: 'dungeon', isBoss: true,
+    crestShardIndex: 1,
     hp: 4500, def: 14, xp: 1100, speed: 2.8, size: 28, color: '#059669', accent: '#ef4444',
     ai: 'boss_orbit', fireRate: 0.9,
     patterns: [
@@ -1660,16 +1781,18 @@ const ENEMIES = {
       { type: 'spiral', count: 6, speed: 7.0, dmg: 64, color: '#ef4444', size: 8, range: 9.5 }
     ],
     drops: [
+      { id: 'shard_wilds',  chance: 1.0 }, // SACRED CREST SHARD II!
       { id: 'pot_dex',      chance: 1.0 },
       { id: 'pot_atk',      chance: 0.85 },
       { id: 'wep_bow_t3',   chance: 0.45 },
-      { id: 'rel_hook_ut',  chance: 0.28 }, // WHITE BAG!
+      { id: 'rel_hook_ut',  chance: 0.28 },
       { id: 'rng_para_hp',  chance: 0.45 }
     ]
   },
 
   boss_limon_sprite: {
-    id: 'boss_limon_sprite', name: 'Limon the Twilight Sprite', biome: 'dungeon', isBoss: true,
+    id: 'boss_limon_sprite', name: 'Aetherion the Astral Archon', biome: 'dungeon', isBoss: true,
+    crestShardIndex: 2,
     hp: 5200, def: 16, xp: 1350, speed: 3.3, size: 27, color: '#38bdf8', accent: '#f8fafc',
     ai: 'boss_strafe', fireRate: 0.82,
     patterns: [
@@ -1677,16 +1800,18 @@ const ENEMIES = {
       { type: 'spread', count: 4, spreadDeg: 28, speed: 9.2, dmg: 80, color: '#fde047', size: 7, range: 10.5 }
     ],
     drops: [
+      { id: 'shard_astral',       chance: 1.0 }, // SACRED CREST SHARD III!
       { id: 'pot_dex',            chance: 1.0 },
       { id: 'pot_def',            chance: 0.85 },
-      { id: 'wep_rod_ut_seasons', chance: 0.30 }, // WHITE BAG!
+      { id: 'wep_rod_ut_seasons', chance: 0.30 },
       { id: 'rel_wand_t2',        chance: 0.45 },
       { id: 'arm_robe_t3',        chance: 0.45 }
     ]
   },
 
   boss_septavius_lich: {
-    id: 'boss_septavius_lich', name: 'Septavius the Stalfos Archlich', biome: 'dungeon', isBoss: true,
+    id: 'boss_septavius_lich', name: 'Mordecai the Undying Lich', biome: 'dungeon', isBoss: true,
+    crestShardIndex: 3,
     hp: 6200, def: 18, xp: 1600, speed: 2.6, size: 28, color: '#e2e8f0', accent: '#60a5fa',
     ai: 'boss_orbit', fireRate: 0.85,
     patterns: [
@@ -1694,16 +1819,18 @@ const ENEMIES = {
       { type: 'spread', count: 5, spreadDeg: 40, speed: 8.8, dmg: 92, color: '#f8fafc', size: 8, range: 10.5 }
     ],
     drops: [
+      { id: 'shard_ossuary',    chance: 1.0 }, // SACRED CREST SHARD IV!
       { id: 'pot_wis',          chance: 1.0 },
       { id: 'pot_atk',          chance: 0.85 },
-      { id: 'wep_bow_ut_light', chance: 0.30 }, // WHITE BAG!
+      { id: 'wep_bow_ut_light', chance: 0.30 },
       { id: 'wep_dagger_t4',    chance: 0.40 },
       { id: 'rng_exalted_hp',   chance: 0.40 }
     ]
   },
 
   boss_king_dodongo: {
-    id: 'boss_king_dodongo', name: 'Archdemon Dodongo of the Abyss', biome: 'dungeon', isBoss: true,
+    id: 'boss_king_dodongo', name: 'Ignis the Magma Overlord', biome: 'dungeon', isBoss: true,
+    crestShardIndex: 4,
     hp: 7500, def: 24, xp: 1950, speed: 2.7, size: 30, color: '#ef4444', accent: '#fde047',
     ai: 'boss_chase', fireRate: 0.88,
     patterns: [
@@ -1711,20 +1838,21 @@ const ENEMIES = {
       { type: 'radial', count: 10, speed: 7.0, dmg: 88, color: '#ef4444', size: 8, range: 9.5 }
     ],
     drops: [
+      { id: 'shard_flame',        chance: 1.0 }, // SACRED CREST SHARD V!
       { id: 'pot_def',            chance: 1.0 },
       { id: 'pot_vit',            chance: 1.0 },
       { id: 'pot_life',           chance: 0.45 },
-      { id: 'wep_sword_ut_demon', chance: 0.32 }, // WHITE BAG!
-      { id: 'rel_bomb_ut',        chance: 0.28 }, // WHITE BAG!
+      { id: 'wep_sword_ut_demon', chance: 0.32 },
+      { id: 'rel_bomb_ut',        chance: 0.28 },
       { id: 'arm_heavy_t4',       chance: 0.45 }
     ]
   },
 
   // --------------------------------------------------------------------------
-  // FINAL RAID BOSS: ALDEROTH THE CALAMITY KING (Oryx + Ganon Fusion!)
+  // FINAL RAID BOSS: MALAKOR, THE EVIL BANE
   // --------------------------------------------------------------------------
   boss_alderoth_mad_king: {
-    id: 'boss_alderoth_mad_king', name: 'Alderoth, Mad King of the Shattered Crest', biome: 'sanctum', isBoss: true, isFinalBoss: true,
+    id: 'boss_alderoth_mad_king', name: 'Malakor, the Evil Bane', biome: 'sanctum', isBoss: true, isFinalBoss: true,
     hp: 15000, def: 26, xp: 5000, speed: 2.9, size: 34, color: '#facc15', accent: '#ef4444',
     ai: 'mad_king_phases', fireRate: 0.72,
     patterns: [
@@ -1733,17 +1861,17 @@ const ENEMIES = {
       { type: 'radial', count: 12, speed: 7.8, dmg: 105, color: '#38bdf8', size: 8, range: 11.5 }
     ],
     drops: [
-      { id: 'pot_life',             chance: 1.0 },
-      { id: 'pot_mana',             chance: 1.0 },
-      { id: 'pot_omni',             chance: 0.55 }, // WHITE BAG!
-      { id: 'wep_sword_ut_master',  chance: 0.42 }, // WHITE BAG!
-      { id: 'rng_ut_crown',         chance: 0.40 }, // WHITE BAG!
-      { id: 'arm_ut_magic_armor',   chance: 0.38 }, // WHITE BAG!
-      { id: 'rel_ocarina_ut',       chance: 0.35 }, // WHITE BAG!
-      { id: 'rel_wand_ut',          chance: 0.35 }, // WHITE BAG!
-      { id: 'wep_sword_t5',         chance: 0.65 },
-      { id: 'wep_bow_t4',           chance: 0.65 },
-      { id: 'wep_rod_t4',           chance: 0.65 }
+      { id: 'pot_life',            chance: 1.0 },
+      { id: 'pot_mana',            chance: 1.0 },
+      { id: 'pot_omni',            chance: 0.55 },
+      { id: 'wep_sword_ut_master', chance: 0.42 },
+      { id: 'rng_ut_crown',        chance: 0.40 },
+      { id: 'arm_ut_magic_armor',  chance: 0.38 },
+      { id: 'rel_ocarina_ut',      chance: 0.35 },
+      { id: 'rel_wand_ut',         chance: 0.35 },
+      { id: 'wep_sword_t5',        chance: 0.65 },
+      { id: 'wep_bow_t4',          chance: 0.65 },
+      { id: 'wep_rod_t4',          chance: 0.65 }
     ]
   }
 };
@@ -1751,69 +1879,68 @@ const ENEMIES = {
 
 // --- MODULE: src/data/worldgen.js ---
 // ============================================================================
-// REALM OF THE SHATTERED CREST — WORLD, NEXUS & ZELDA DUNGEON GENERATOR
+// REALM OF THE SHATTERED CREST — WORLD, SANCTUARY HUB & DUNGEON GENERATOR
 // ============================================================================
 const TILES = {
   VOID: 0,
-  WATER: 1,         // Deep water (impassable except Hookshot grapple flight)
-  SAND: 2,          // Beach sand
-  GRASS: 3,         // Hyrule Lowlands emerald grass
-  FOREST_FLOOR: 4,  // Lost Woods moss floor
-  HIGHLAND_ROCK: 5, // Death Mountain ochre floor
-  GODLANDS_ASH: 6,  // Dark World obsidian ash floor
+  WATER: 1,         // Deep water (impassable except Chain Grapple flight)
+  SAND: 2,          // Sunlit Shoals sand
+  GRASS: 3,         // Lowlands emerald grass
+  FOREST_FLOOR: 4,  // Whispering Wilds moss floor
+  HIGHLAND_ROCK: 5, // Shattered Crags ochre floor
+  GODLANDS_ASH: 6,  // Blightlands obsidian ash floor
   LAVA: 7,          // Deals magma damage unless dashing/grappling
-  MARBLE: 8,        // Nexus white/blue sanctuary floor
-  MARBLE_GOLD: 9,   // Nexus / Sanctum ornate trim floor
+  MARBLE: 8,        // Sanctuary white/blue floor
+  MARBLE_GOLD: 9,   // Sanctuary / Sanctum ornate trim floor
   WOOD_BRIDGE: 10,  // Walkable bridge over water/lava
   DUNGEON_FLOOR: 11,// Stone dungeon floor
   WALL_STONE: 12,   // Solid stone wall
   WALL_TREE: 13,    // Dense forest tree wall
-  WALL_OBSIDIAN: 14,// Dark World / Sanctum wall
-  WALL_CRACKED: 15, // Zelda Bombable Cracked Wall! (Destroyed by Bombs -> reveals secret!)
-  BARRIER_RED: 16,  // Lowered when Crystal Switch is BLUE
-  BARRIER_BLUE: 17, // Lowered when Crystal Switch is RED
-  HEAL_SPRING: 18   // Fairy healing fountain tile
+  WALL_OBSIDIAN: 14,// Blightlands / Sanctum wall
+  WALL_CRACKED: 15, // Cracked Wall! (Destroyed by Brimstone Charges -> reveals secret!)
+  BARRIER_RED: 16,  // Lowered when Runic Switch is BLUE
+  BARRIER_BLUE: 17, // Lowered when Runic Switch is RED
+  HEAL_SPRING: 18   // Lumina healing fountain tile
 };
 const DUNGEON_META = {
   pirate_cove: {
-    id: 'pirate_cove', name: 'Pirate Cove Grotto', difficulty: 1,
+    id: 'pirate_cove', name: 'Sunken Corsair Grotto', difficulty: 1, shardIndex: 0,
     bossId: 'boss_dread_octorok', minionIds: ['octorok', 'pirate_moblin'],
     floorTile: TILES.SAND, wallTile: TILES.WALL_STONE, liquidTile: TILES.WATER,
-    color: '#f59e0b', desc: 'Smuggler caverns teeming with Corsair Moblins and Dread Captain Octorok.'
+    color: '#f59e0b', desc: 'Smuggler caverns where Dread Captain Vorath guards Crest Shard I: Silver Tide.'
   },
   deku_temple: {
-    id: 'deku_temple', name: 'Forbidden Deku Temple', difficulty: 2,
+    id: 'deku_temple', name: 'Blighted Sylvan Temple', difficulty: 2, shardIndex: 1,
     bossId: 'boss_queen_gohma', minionIds: ['deku_scrub', 'stalfos_scout', 'lizalfos_spear'],
     floorTile: TILES.FOREST_FLOOR, wallTile: TILES.WALL_TREE, liquidTile: TILES.WATER,
-    color: '#10b981', desc: 'Overgrown ancient shrine with Crystal Switches, Cracked Walls, and Queen Gohma.'
+    color: '#10b981', desc: 'Overgrown ancient shrine where Arachne the Blightweaver guards Crest Shard II: Sylvan Root.'
   },
   sprite_world: {
-    id: 'sprite_world', name: 'Sprite World of Twilight', difficulty: 3,
+    id: 'sprite_world', name: 'The Astral Conduit', difficulty: 3, shardIndex: 2,
     bossId: 'boss_limon_sprite', minionIds: ['sprite_archmage', 'beholder_eye'],
     floorTile: TILES.MARBLE, wallTile: TILES.WALL_OBSIDIAN, liquidTile: TILES.VOID,
-    color: '#38bdf8', desc: 'Astral plane of floating platforms, Grapple Chasms, and Limon the Twilight Sprite.'
+    color: '#38bdf8', desc: 'Floating star-spires where Aetherion the Astral Archon guards Crest Shard III: Astral Wind.'
   },
   undead_lair: {
-    id: 'undead_lair', name: 'Undead Lair Catacombs', difficulty: 4,
+    id: 'undead_lair', name: 'Sunken Catacombs', difficulty: 4, shardIndex: 3,
     bossId: 'boss_septavius_lich', minionIds: ['stalfos_scout', 'phantom_reaper', 'darknut_knight'],
     floorTile: TILES.DUNGEON_FLOOR, wallTile: TILES.WALL_STONE, liquidTile: TILES.WATER,
-    color: '#a855f7', desc: 'Haunted crypts guarded by Stalfos legions and Septavius the Archlich.'
+    color: '#a855f7', desc: 'Haunted crypts where Mordecai the Undying Lich guards Crest Shard IV: Dawn Vigil.'
   },
   abyss_mountain: {
-    id: 'abyss_mountain', name: 'Abyss of Death Mountain', difficulty: 5,
+    id: 'abyss_mountain', name: 'Caldera of the Abyss', difficulty: 5, shardIndex: 4,
     bossId: 'boss_king_dodongo', minionIds: ['darknut_knight', 'wizzrobe_fire', 'magma_titan'],
     floorTile: TILES.GODLANDS_ASH, wallTile: TILES.WALL_OBSIDIAN, liquidTile: TILES.LAVA,
-    color: '#ef4444', desc: 'Volcanic caldera of rivers of magma, Grapple Pillars, and Archdemon Dodongo.'
+    color: '#ef4444', desc: 'Volcanic caldera where Ignis the Magma Overlord guards Crest Shard V: Primordial Flame.'
   },
   mad_sanctum: {
-    id: 'mad_sanctum', name: 'Sanctum of the Mad Calamity', difficulty: 5,
+    id: 'mad_sanctum', name: 'Sanctum of the Evil Bane', difficulty: 5,
     bossId: 'boss_alderoth_mad_king', minionIds: ['darknut_knight', 'medusa_gorgon', 'beholder_eye', 'magma_titan'],
     floorTile: TILES.MARBLE_GOLD, wallTile: TILES.WALL_OBSIDIAN, liquidTile: TILES.LAVA,
-    color: '#facc15', desc: 'The throne room of Alderoth, Mad King of the Shattered Crest!'
+    color: '#facc15', desc: 'The dark throne room of Malakor, the Evil Bane, who shattered the Holy Crest!'
   }
 };
 
-// Deterministic pseudo-random helper for reproducible world generation
 function seededRandom(seed) {
   let s = seed % 2147483647;
   if (s <= 0) s += 2147483646;
@@ -1824,20 +1951,19 @@ function seededRandom(seed) {
 }
 
 // ============================================================================
-// 1. GENERATE THE NEXUS SANCTUARY (Safe Hub + Training Grounds + Portals)
+// 1. GENERATE THE RADIANT SANCTUARY HUB (With High Elder Vaelen & Crest Altar)
 // ============================================================================
 function generateNexusMap() {
   const width = 48;
   const height = 48;
   const tiles = new Uint8Array(width * height);
-  const props = [];   // Bushes, Pots, Grapple Posts, Crystal Switches, Chests, Anvil, Vault
-  const portals = []; // Realm & Dungeon Portals
+  const props = [];
+  const portals = [];
 
   const setTile = (x, y, t) => {
     if (x >= 0 && x < width && y >= 0 && y < height) tiles[y * width + x] = t;
   };
 
-  // Fill outer water moat
   tiles.fill(TILES.WATER);
 
   // Main Sanctuary Plaza (10..38, 8..40)
@@ -1854,7 +1980,7 @@ function generateNexusMap() {
     }
   }
 
-  // Central Fairy Healing Fountains (24, 24)
+  // Central Lumina Healing Fountains (24, 24)
   for (let dy = -2; dy <= 2; dy++) {
     for (let dx = -2; dx <= 2; dx++) {
       if (Math.abs(dx) + Math.abs(dy) <= 2) {
@@ -1865,13 +1991,21 @@ function generateNexusMap() {
     }
   }
 
-  // West Wing: Zelda Courtyard (Bushes, Pots, Crystal Switch, Grapple Canal, Cracked Wall)
+  // HIGH ELDER VAELEN & THE ALTAR OF THE SHATTERED CREST (Center Plaza, North of Fountain)
+  props.push({
+    id: 'nexus_elder_vaelen',
+    type: 'elder_npc',
+    x: 24.0,
+    y: 19.5,
+    name: 'High Elder Vaelen (Keeper of the Holy Crest)'
+  });
+
+  // West Wing: Warden Training Courtyard (Bushes, Urns, Runic Switch, Grapple Canal, Cracked Wall)
   for (let y = 18; y <= 30; y++) {
     for (let x = 10; x <= 17; x++) {
       setTile(x, y, TILES.GRASS);
     }
   }
-  // Small canal with Grapple Post across it
   for (let y = 20; y <= 25; y++) {
     setTile(13, y, TILES.WATER);
   }
@@ -1879,16 +2013,15 @@ function generateNexusMap() {
   props.push({ id: 'n_grapple_1', type: 'grapple_post', x: 11.5, y: 22.5 });
   props.push({ id: 'n_grapple_2', type: 'grapple_post', x: 15.5, y: 22.5 });
 
-  // Cuttable Zelda Bushes & Smashable Pots in West Wing
   for (let y = 19; y <= 29; y += 2) {
     props.push({ id: `n_bush_${y}`, type: 'bush', x: 10.5, y: y + 0.5, hp: 1 });
     props.push({ id: `n_pot_${y}`,  type: 'pot',  x: 16.5, y: y + 0.5, hp: 1 });
   }
   props.push({ id: 'n_switch_1', type: 'crystal_switch', x: 15.5, y: 18.5, state: 'red' });
 
-  // Secret Bombable Nook in North-West Corner of Nexus!
+  // Secret Brimstone-Breachable Vault Nook in North-West Corner of Sanctuary!
   setTile(11, 9, TILES.WALL_STONE);
-  setTile(12, 9, TILES.WALL_CRACKED); // Bomb this wall!
+  setTile(12, 9, TILES.WALL_CRACKED);
   setTile(13, 9, TILES.WALL_STONE);
   setTile(12, 8, TILES.MARBLE_GOLD);
   props.push({
@@ -1900,84 +2033,93 @@ function generateNexusMap() {
     loot: ['pot_spd', 'pot_dex', 'con_fairy']
   });
 
-  // East Wing: Account Vault Chest & Goron Relic Forge Anvil
+  // East Wing: Account Vault Chest & Relic Forge Anvil
   props.push({ id: 'nexus_vault_chest', type: 'vault_chest', x: 33.5, y: 23.5, name: 'Account Vault & Potion Storage' });
-  props.push({ id: 'nexus_forge_anvil', type: 'forge_anvil', x: 33.5, y: 26.5, name: 'Goron Relic & UT Forge' });
+  props.push({ id: 'nexus_forge_anvil', type: 'forge_anvil', x: 33.5, y: 26.5, name: 'Sanctuary Relic & UT Forge' });
 
-  // North Wing: Realm & Dungeon Portals!
+  // North Wing: Realm & Dungeon Portals (Where the 5 Crest Shards are hidden!)
   portals.push({
     id: 'portal_realm_beach',
-    name: 'Realm of Hyrule (Kokiri Shore)',
+    name: 'Aethelgard Realm (Sunlit Shoals)',
     targetMap: 'realm',
     targetZone: 'beach',
     x: 24.0,
-    y: 13.5,
+    y: 14.0,
     color: '#22c55e',
     playersCount: 24
   });
 
   portals.push({
     id: 'portal_realm_godlands',
-    name: 'Dark World Godlands Rift (Lvl 20)',
+    name: 'The Blightlands Rift (Lvl 20)',
     targetMap: 'realm',
     targetZone: 'godlands',
-    x: 20.0,
-    y: 13.5,
+    x: 19.5,
+    y: 14.0,
     color: '#a855f7',
     playersCount: 14
   });
 
   portals.push({
     id: 'portal_sanctum_direct',
-    name: 'Sanctum of the Mad Calamity (Raid)',
+    name: 'Sanctum of the Evil Bane (Raid)',
     targetMap: 'dungeon',
     dungeonId: 'mad_sanctum',
-    x: 28.0,
-    y: 13.5,
+    x: 28.5,
+    y: 14.0,
     color: '#facc15'
   });
 
-  // Dungeon Trial Portals row along North Alcove (y = 10.5)
+  // 5 Shard Dungeon Trial Portals row along North Alcove (y = 10.5)
+  portals.push({
+    id: 'portal_cove_direct',
+    name: 'I. Sunken Corsair Grotto (Shard I)',
+    targetMap: 'dungeon',
+    dungeonId: 'pirate_cove',
+    x: 15.5,
+    y: 10.8,
+    color: '#f59e0b'
+  });
   portals.push({
     id: 'portal_deku_direct',
-    name: 'Forbidden Deku Temple (2★)',
+    name: 'II. Blighted Sylvan Temple (Shard II)',
     targetMap: 'dungeon',
     dungeonId: 'deku_temple',
-    x: 17.5,
-    y: 11.0,
+    x: 19.8,
+    y: 10.8,
     color: '#10b981'
   });
   portals.push({
     id: 'portal_sprite_direct',
-    name: 'Sprite World of Twilight (3★)',
+    name: 'III. The Astral Conduit (Shard III)',
     targetMap: 'dungeon',
     dungeonId: 'sprite_world',
-    x: 21.5,
-    y: 11.0,
+    x: 24.0,
+    y: 10.8,
     color: '#38bdf8'
   });
   portals.push({
     id: 'portal_udl_direct',
-    name: 'Undead Lair Catacombs (4★)',
+    name: 'IV. Sunken Catacombs (Shard IV)',
     targetMap: 'dungeon',
     dungeonId: 'undead_lair',
-    x: 26.5,
-    y: 11.0,
+    x: 28.2,
+    y: 10.8,
     color: '#c084fc'
   });
   portals.push({
     id: 'portal_abyss_direct',
-    name: 'Abyss of Death Mountain (5★)',
+    name: 'V. Caldera of the Abyss (Shard V)',
     targetMap: 'dungeon',
     dungeonId: 'abyss_mountain',
-    x: 30.5,
-    y: 11.0,
+    x: 32.5,
+    y: 10.8,
     color: '#ef4444'
   });
 
   return {
     id: 'nexus',
-    name: 'The Sacred Nexus Sanctuary',
+    name: 'The Radiant Sanctuary Hub',
     width,
     height,
     tiles,
@@ -1990,7 +2132,7 @@ function generateNexusMap() {
 }
 
 // ============================================================================
-// 2. GENERATE THE OVERWORLD REALM (Concentric Biomes + Zelda Landmarks)
+// 2. GENERATE THE OVERWORLD REALM (Concentric Biomes + Landmarks)
 // ============================================================================
 function generateRealmMap(seed = 1337) {
   const rng = seededRandom(seed);
@@ -2024,16 +2166,12 @@ function generateRealmMap(seed = 1337) {
       if (r > maxR) {
         setTile(x, y, TILES.WATER);
       } else if (r > maxR - 9) {
-        // Biome 1: Kokiri Shore & Golden Beach
         setTile(x, y, TILES.SAND);
       } else if (r > maxR - 26) {
-        // Biome 2: Lost Woods & Hyrule Lowlands
         setTile(x, y, (x + y) % 7 === 0 ? TILES.FOREST_FLOOR : TILES.GRASS);
       } else if (r > 21) {
-        // Biome 3: Death Mountain Highlands
         setTile(x, y, TILES.HIGHLAND_ROCK);
       } else {
-        // Biome 4: Central Dark World Godlands Crater!
         if (rng() < 0.035 && dist > 5) {
           setTile(x, y, TILES.LAVA);
         } else {
@@ -2043,7 +2181,6 @@ function generateRealmMap(seed = 1337) {
     }
   }
 
-  // Carve 4 Cardinal Highways & Bridges from Shore to Godlands so navigation is smooth
   for (let i = -maxR + 4; i <= maxR - 4; i++) {
     setTile(Math.floor(cx + i), Math.floor(cy), TILES.MARBLE_GOLD);
     setTile(Math.floor(cx + i), Math.floor(cy + 1), TILES.WOOD_BRIDGE);
@@ -2051,7 +2188,6 @@ function generateRealmMap(seed = 1337) {
     setTile(Math.floor(cx + 1), Math.floor(cy + i), TILES.WOOD_BRIDGE);
   }
 
-  // Add Fairy Healing Springs at each cardinal Lowland/Highland border
   const springCoords = [
     [cx, cy + 36],
     [cx, cy - 36],
@@ -2067,7 +2203,6 @@ function generateRealmMap(seed = 1337) {
     props.push({ id: `realm_grapple_s_${idx}`, type: 'grapple_post', x: sx + 3.5, y: sy + 0.5 });
   });
 
-  // Add Zelda Interactive Props (Cuttable Bush Patches, Ceramic Pots, Grapple Posts, Bomb Grottos)
   let propCounter = 0;
   for (let y = 10; y < height - 10; y += 3) {
     for (let x = 10; x < width - 10; x += 3) {
@@ -2078,7 +2213,6 @@ function generateRealmMap(seed = 1337) {
       if (t === TILES.GRASS || t === TILES.FOREST_FLOOR) {
         const roll = rng();
         if (roll < 0.18) {
-          // 2x2 Zelda Bush Cluster!
           props.push({ id: `r_bush_${propCounter++}`, type: 'bush', x: x + 0.5, y: y + 0.5, hp: 1 });
           if (rng() < 0.7) props.push({ id: `r_bush_${propCounter++}`, type: 'bush', x: x + 1.5, y: y + 0.5, hp: 1 });
         } else if (roll < 0.22) {
@@ -2091,7 +2225,6 @@ function generateRealmMap(seed = 1337) {
         if (roll < 0.08) {
           props.push({ id: `r_pot_${propCounter++}`, type: 'pot', x: x + 0.5, y: y + 0.5, hp: 1 });
         } else if (roll < 0.10) {
-          // Mini Bombable Secret Chest Alcove in Highlands!
           setTile(x, y, TILES.WALL_CRACKED);
           props.push({
             id: `r_chest_${propCounter++}`,
@@ -2113,12 +2246,11 @@ function generateRealmMap(seed = 1337) {
     }
   }
 
-  // Return Portal to Nexus at South Beach Spawn & Godlands Outpost
   const southSpawnX = cx;
   const southSpawnY = cy + maxR - 5;
   portals.push({
     id: 'portal_back_nexus_beach',
-    name: 'Return to Nexus Sanctuary',
+    name: 'Return to Radiant Sanctuary',
     targetMap: 'nexus',
     x: southSpawnX + 2.5,
     y: southSpawnY,
@@ -2129,7 +2261,7 @@ function generateRealmMap(seed = 1337) {
   const godlandsOutpostY = cy + 20;
   portals.push({
     id: 'portal_back_nexus_glands',
-    name: 'Nexus Warp Pillar',
+    name: 'Sanctuary Warp Pillar',
     targetMap: 'nexus',
     x: godlandsOutpostX - 2.5,
     y: godlandsOutpostY,
@@ -2155,7 +2287,7 @@ function generateRealmMap(seed = 1337) {
 }
 
 // ============================================================================
-// 3. GENERATE MULTI-ROOM ZELDA + ROTMG DUNGEONS
+// 3. GENERATE MULTI-ROOM DUNGEONS (Where the 5 Crest Shards are Guarded)
 // ============================================================================
 function generateDungeonMap(dungeonId = 'deku_temple') {
   const meta = DUNGEON_META[dungeonId] || DUNGEON_META.deku_temple;
@@ -2184,7 +2316,7 @@ function generateDungeonMap(dungeonId = 'deku_temple') {
   setTile(22, 53, TILES.HEAL_SPRING);
   portals.push({
     id: 'dungeon_exit_nexus',
-    name: 'Escape to Nexus',
+    name: 'Return to Sanctuary',
     targetMap: 'nexus',
     x: 22.0,
     y: 56.5,
@@ -2194,15 +2326,13 @@ function generateDungeonMap(dungeonId = 'deku_temple') {
   // Corridor 1 -> Room 2
   carveRect(20, 42, 24, 48);
 
-  // Room 2 (Zelda Puzzle & Combat Hall: y = 28..42, x = 12..32)
+  // Room 2 (Runic Puzzle & Combat Hall: y = 28..42, x = 12..32)
   carveRect(12, 28, 32, 42);
 
-  // Chasm / Liquid hazard across middle of Room 2 with Grapple Posts & Bridge controlled by Crystal Switch!
   for (let x = 12; x <= 32; x++) {
     setTile(x, 34, meta.liquidTile);
     setTile(x, 35, meta.liquidTile);
   }
-  // Central bridge blocked by Red Barrier (hit the Crystal Switch to lower it, or Hookshot across!)
   setTile(21, 34, TILES.WOOD_BRIDGE);
   setTile(22, 34, TILES.WOOD_BRIDGE);
   setTile(23, 34, TILES.WOOD_BRIDGE);
@@ -2213,14 +2343,13 @@ function generateDungeonMap(dungeonId = 'deku_temple') {
   setTile(22, 33, TILES.BARRIER_RED);
   setTile(23, 33, TILES.BARRIER_RED);
 
-  // Crystal Switch on South side of chasm + Grapple Pillars on North side!
   props.push({ id: 'd_switch_1', type: 'crystal_switch', x: 18.5, y: 37.5, state: 'red' });
   props.push({ id: 'd_grapple_n1', type: 'grapple_post', x: 15.5, y: 31.5 });
   props.push({ id: 'd_grapple_n2', type: 'grapple_post', x: 28.5, y: 31.5 });
   props.push({ id: 'd_grapple_s1', type: 'grapple_post', x: 15.5, y: 37.5 });
   props.push({ id: 'd_grapple_s2', type: 'grapple_post', x: 28.5, y: 37.5 });
 
-  // Secret Bombable Treasure Room off East Wall of Room 2 (x = 33..39, y = 30..36)
+  // Secret Brimstone-Breachable Treasure Room off East Wall of Room 2
   carveRect(34, 30, 39, 35, TILES.MARBLE_GOLD);
   setTile(33, 32, TILES.WALL_CRACKED);
   setTile(33, 33, TILES.WALL_CRACKED);
@@ -2233,7 +2362,6 @@ function generateDungeonMap(dungeonId = 'deku_temple') {
     loot: ['pot_def', 'pot_atk', 'pot_wis', 'con_fairy']
   });
 
-  // Bushes & Pots in Room 2
   for (let x = 14; x <= 30; x += 4) {
     props.push({ id: `d_bush_${x}`, type: 'bush', x: x + 0.5, y: 39.5, hp: 1 });
     props.push({ id: `d_pot_${x}`,  type: 'pot',  x: x + 0.5, y: 29.5, hp: 1 });
@@ -2244,13 +2372,11 @@ function generateDungeonMap(dungeonId = 'deku_temple') {
 
   // Room 3: BOSS SANCTUM (y = 6..22, x = 10..34)
   carveRect(10, 6, 34, 22, dungeonId === 'mad_sanctum' ? TILES.MARBLE_GOLD : meta.floorTile);
-  // 4 Grapple Pillars around Boss Arena corners for dodging bullet-hell waves!
   props.push({ id: 'boss_pillar_nw', type: 'grapple_post', x: 13.5, y: 9.5 });
   props.push({ id: 'boss_pillar_ne', type: 'grapple_post', x: 30.5, y: 9.5 });
   props.push({ id: 'boss_pillar_sw', type: 'grapple_post', x: 13.5, y: 19.5 });
   props.push({ id: 'boss_pillar_se', type: 'grapple_post', x: 30.5, y: 19.5 });
 
-  // Pots with emergency hearts along arena edges
   for (let y = 10; y <= 18; y += 4) {
     props.push({ id: `boss_pot_l_${y}`, type: 'pot', x: 11.5, y: y + 0.5, hp: 1 });
     props.push({ id: `boss_pot_r_${y}`, type: 'pot', x: 32.5, y: y + 0.5, hp: 1 });
@@ -2277,7 +2403,7 @@ function generateDungeonMap(dungeonId = 'deku_temple') {
 
 // --- MODULE: src/audio/sound.js ---
 // ============================================================================
-// REALM OF THE SHATTERED CREST — WEBAUDIO 16-BIT ZELDA & ROTMG SOUND ENGINE
+// REALM OF THE SHATTERED CREST — WEBAUDIO 16-BIT CHIPTUNE SOUND ENGINE
 // ============================================================================
 
 class SoundEngine {
@@ -2370,13 +2496,13 @@ class SoundEngine {
         this.playTone(75, 'square', 0.32, 0.02, 0.4, 24);
         break;
       case 'ocarina':
-        // Sacred Ocarina Triad (D5 - F#5 - A5 - D6)
+        // Sacred Warhorn Triad (D5 - F#5 - A5 - D6)
         [587.33, 739.99, 880.0, 1174.66].forEach((f, idx) => {
           this.playTone(f, 'sine', 0.22, idx * 0.08, 0.32);
         });
         break;
       case 'secret':
-        // Iconic 8-note Zelda Secret Discovered Jingle!
+        // 8-note Secret Passage Discovered Jingle!
         [783.99, 739.99, 622.25, 440.0, 415.3, 659.25, 830.61, 1046.5].forEach((f, idx) => {
           this.playTone(f, 'triangle', 0.13, idx * 0.10, 0.34);
         });
@@ -2442,8 +2568,6 @@ const TILE_SIZE = 36; // World tile size in pixels
 
 const tileCache = new Map();
 const itemIconCache = new Map();
-
-// Generate cached 36x36 tile canvases for blazing-fast 60fps map rendering
 function getTileCanvas(tileType, animFrame = 0, switchState = 'red') {
   const key = `${tileType}_${animFrame}_${switchState}`;
   if (tileCache.has(key)) return tileCache.get(key);
@@ -2480,7 +2604,6 @@ function getTileCanvas(tileType, animFrame = 0, switchState = 'red') {
       ctx.fillRect(0, 0, s, s);
       ctx.fillStyle = '#16a34a';
       ctx.fillRect(1, 1, s - 2, s - 2);
-      // Zelda-style grass blade tufts
       ctx.fillStyle = '#22c55e';
       ctx.fillRect(6, 8, 2, 5);
       ctx.fillRect(9, 6, 2, 7);
@@ -2543,7 +2666,7 @@ function getTileCanvas(tileType, animFrame = 0, switchState = 'red') {
       ctx.fillRect(0, 0, s, s);
       ctx.fillStyle = '#fef9c3';
       ctx.fillRect(2, 2, s - 4, s - 4);
-      // Triforce / Crest diamond in center
+      // Holy Crest diamond inlay in center
       ctx.fillStyle = '#eab308';
       ctx.beginPath();
       ctx.moveTo(s / 2, 7);
@@ -2608,7 +2731,6 @@ function getTileCanvas(tileType, animFrame = 0, switchState = 'red') {
       break;
     }
     case TILES.WALL_CRACKED: {
-      // Bombable Zelda Wall! Distinct golden-orange fissure lines so players spot secrets!
       ctx.fillStyle = '#1e293b';
       ctx.fillRect(0, 0, s, s);
       ctx.fillStyle = '#64748b';
@@ -2661,7 +2783,7 @@ function getTileCanvas(tileType, animFrame = 0, switchState = 'red') {
       ctx.fillRect(0, 0, s, s);
       ctx.fillStyle = '#38bdf8';
       ctx.fillRect(3, 3, s - 6, s - 6);
-      ctx.fillStyle = '#f472b6'; // Fairy pink shimmer
+      ctx.fillStyle = '#f472b6';
       ctx.beginPath();
       ctx.arc(s / 2, s / 2, 6 + (animFrame % 2) * 2, 0, Math.PI * 2);
       ctx.fill();
@@ -2678,15 +2800,88 @@ function getTileCanvas(tileType, animFrame = 0, switchState = 'red') {
 }
 
 // ============================================================================
-// RENDER ZELDA INTERACTIVE PROPS (Bushes, Pots, Grapple Posts, Switches, Chests)
+// RENDER INTERACTIVE PROPS & HIGH ELDER VAELEN IN THE SANCTUARY HUB
 // ============================================================================
 function drawProp(ctx, prop, screenX, screenY, time) {
   ctx.save();
   ctx.translate(screenX, screenY);
 
   switch (prop.type) {
+    case 'elder_npc': {
+      // Radiant Pedestal Aura of the Holy Crest
+      const grad = ctx.createRadialGradient(0, 0, 4, 0, 0, 34);
+      grad.addColorStop(0, 'rgba(250, 204, 21, 0.45)');
+      grad.addColorStop(1, 'rgba(250, 204, 21, 0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(0, 0, 34, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Golden Crest Seal on the Sanctuary floor beneath Elder Vaelen
+      ctx.strokeStyle = '#facc15';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, 4, 20, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // High Elder Vaelen's Robes (White & Gold Astral Vestments)
+      ctx.fillStyle = '#1e3a8a';
+      ctx.strokeStyle = '#facc15';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.roundRect(-11, -7, 22, 20, 6);
+      ctx.fill();
+      ctx.stroke();
+
+      // Elder Head & Flowing Silver Beard
+      ctx.fillStyle = '#fed7aa';
+      ctx.beginPath();
+      ctx.arc(0, -10, 8.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Silver Beard
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath();
+      ctx.moveTo(-6, -6);
+      ctx.lineTo(6, -6);
+      ctx.lineTo(0, 7);
+      ctx.closePath();
+      ctx.fill();
+
+      // Golden Elder Circlet Crown
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(-7, -17, 14, 4);
+
+      // Astral Crozier Staff in Right Hand with Floating Crest Gem
+      ctx.strokeStyle = '#eab308';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(14, 12);
+      ctx.lineTo(14, -16);
+      ctx.stroke();
+
+      const bob = Math.sin(time * 4) * 2.5;
+      ctx.fillStyle = '#38bdf8';
+      ctx.beginPath();
+      ctx.arc(14, -20 + bob, 5.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#fde047';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Overhead Nameplate & Lore Prompt
+      ctx.fillStyle = '#fde047';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('📜 HIGH ELDER VAELEN [E]', 0, -30);
+      ctx.fillStyle = '#93c5fd';
+      ctx.font = 'bold 9.5px sans-serif';
+      ctx.fillText('Lore & Holy Crest Shards', 0, -19);
+      break;
+    }
+
     case 'bush': {
-      // Classic A Link to the Past round leafy bush
       ctx.fillStyle = 'rgba(0,0,0,0.35)';
       ctx.beginPath();
       ctx.ellipse(0, 8, 13, 6, 0, 0, Math.PI * 2);
@@ -2710,7 +2905,6 @@ function drawProp(ctx, prop, screenX, screenY, time) {
     }
 
     case 'pot': {
-      // Zelda Ceramic Pot (smashable or throwable with F!)
       ctx.fillStyle = 'rgba(0,0,0,0.35)';
       ctx.beginPath();
       ctx.ellipse(0, 8, 11, 5, 0, 0, Math.PI * 2);
@@ -2726,7 +2920,6 @@ function drawProp(ctx, prop, screenX, screenY, time) {
       ctx.arc(-2, -1, 8, 0, Math.PI * 2);
       ctx.fill();
 
-      // Pot rim
       ctx.fillStyle = '#431407';
       ctx.beginPath();
       ctx.ellipse(0, -6, 7, 3.5, 0, 0, Math.PI * 2);
@@ -2738,12 +2931,10 @@ function drawProp(ctx, prop, screenX, screenY, time) {
     }
 
     case 'grapple_post': {
-      // Hookshot Grapple Anchor Pillar
       ctx.fillStyle = '#334155';
       ctx.fillRect(-10, -12, 20, 24);
       ctx.fillStyle = '#64748b';
       ctx.fillRect(-8, -10, 16, 20);
-      // Golden hook target ring
       ctx.strokeStyle = '#facc15';
       ctx.lineWidth = 2.5;
       ctx.beginPath();
@@ -2753,7 +2944,6 @@ function drawProp(ctx, prop, screenX, screenY, time) {
     }
 
     case 'crystal_switch': {
-      // Zelda Crystal Orb Switch (Red / Blue)
       ctx.fillStyle = '#475569';
       ctx.fillRect(-11, 2, 22, 10);
       const isRed = prop.state === 'red';
@@ -2777,7 +2967,6 @@ function drawProp(ctx, prop, screenX, screenY, time) {
       ctx.strokeStyle = '#facc15';
       ctx.lineWidth = 2.5;
       ctx.strokeRect(-14, -10, 28, 20);
-      // Lock clasp
       ctx.fillStyle = '#fde047';
       ctx.fillRect(-3, -2, 6, 6);
       if (isVault) {
@@ -2808,7 +2997,7 @@ function drawProp(ctx, prop, screenX, screenY, time) {
 }
 
 // ============================================================================
-// RENDER ROTMG LOOT BAGS (Including Iconic White Bag with Cyan Ribbon!)
+// RENDER LOOT BAGS (Including White Bag with Cyan Ribbon!)
 // ============================================================================
 function drawLootBag(ctx, bag, screenX, screenY, time) {
   const meta = BAG_TYPES[bag.bagType] || BAG_TYPES[0];
@@ -2817,7 +3006,6 @@ function drawLootBag(ctx, bag, screenX, screenY, time) {
   ctx.save();
   ctx.translate(screenX, screenY + bob);
 
-  // White Bag & Blue Bag Heavenly Aura!
   if (bag.bagType >= 4) {
     const grad = ctx.createRadialGradient(0, 0, 2, 0, 0, bag.bagType === 6 ? 32 : 22);
     grad.addColorStop(0, meta.glow);
@@ -2828,13 +3016,11 @@ function drawLootBag(ctx, bag, screenX, screenY, time) {
     ctx.fill();
 
     if (bag.bagType === 6) {
-      // White Bag vertical light beam
       ctx.fillStyle = 'rgba(56, 189, 248, 0.22)';
       ctx.fillRect(-10, -48, 20, 48);
     }
   }
 
-  // Bag pouch body
   ctx.fillStyle = meta.color;
   ctx.strokeStyle = '#0f172a';
   ctx.lineWidth = 2;
@@ -2843,7 +3029,6 @@ function drawLootBag(ctx, bag, screenX, screenY, time) {
   ctx.fill();
   ctx.stroke();
 
-  // Top tied neck of bag
   ctx.fillStyle = meta.color;
   ctx.beginPath();
   ctx.moveTo(-6, -10);
@@ -2854,7 +3039,6 @@ function drawLootBag(ctx, bag, screenX, screenY, time) {
   ctx.fill();
   ctx.stroke();
 
-  // Iconic Ribbon Tie (Cyan on White Bag, Silver on Blue Bag, Gold on Purple/Orange)
   ctx.fillStyle = meta.ribbon;
   ctx.fillRect(-6, -5, 12, 3.5);
 
@@ -2874,7 +3058,7 @@ function drawLootBag(ctx, bag, screenX, screenY, time) {
 }
 
 // ============================================================================
-// RENDER HERO / MMO PLAYER (Zelda Tunic + Pointed Cap + Shield + Sword Arc)
+// RENDER WARDEN HERO / MMO PLAYER (Tunic + Hood + Bulwark Shield + Blade Arc)
 // ============================================================================
 function drawHero(ctx, entity, screenX, screenY, time, isSelf = false) {
   ctx.save();
@@ -2888,13 +3072,11 @@ function drawHero(ctx, entity, screenX, screenY, time, isSelf = false) {
     shield: '#3b82f6'
   };
 
-  // Shadow
   ctx.fillStyle = 'rgba(0,0,0,0.4)';
   ctx.beginPath();
   ctx.ellipse(0, 12, 12, 5, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Spin Attack Charge Ring!
   if (entity.chargeTime && entity.chargeTime > 0.15) {
     const ready = entity.chargeTime >= 0.55;
     ctx.strokeStyle = ready ? '#facc15' : '#38bdf8';
@@ -2904,7 +3086,6 @@ function drawHero(ctx, entity, screenX, screenY, time, isSelf = false) {
     ctx.stroke();
   }
 
-  // Active Ocarina / Invulnerability Buff Aura
   if (entity.invulnTimer > 0 || (entity.buffs && entity.buffs.armored > 0)) {
     ctx.strokeStyle = entity.invulnTimer > 0 ? '#38bdf8' : '#fde047';
     ctx.lineWidth = 2;
@@ -2913,7 +3094,6 @@ function drawHero(ctx, entity, screenX, screenY, time, isSelf = false) {
     ctx.stroke();
   }
 
-  // Body Tunic
   ctx.fillStyle = pal.tunic;
   ctx.strokeStyle = '#0f172a';
   ctx.lineWidth = 2;
@@ -2922,18 +3102,15 @@ function drawHero(ctx, entity, screenX, screenY, time, isSelf = false) {
   ctx.fill();
   ctx.stroke();
 
-  // Golden Triforce Belt
   ctx.fillStyle = pal.trim;
   ctx.fillRect(-10, 3, 20, 3);
 
-  // Head
   ctx.fillStyle = pal.skin;
   ctx.beginPath();
   ctx.arc(0, -8, 8.5, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // Classic Pointed Zelda Hero Cap trailing behind facing angle
   const angle = entity.aimAngle || 0;
   ctx.fillStyle = pal.cap;
   ctx.beginPath();
@@ -2943,14 +3120,13 @@ function drawHero(ctx, entity, screenX, screenY, time, isSelf = false) {
   ctx.fill();
   ctx.stroke();
 
-  // Eyes facing aim direction
   const ex = Math.cos(angle) * 3.5;
   const ey = Math.sin(angle) * 2.5 - 7.5;
   ctx.fillStyle = '#0f172a';
   ctx.fillRect(ex - 3, ey - 1, 2, 2.5);
   ctx.fillRect(ex + 1, ey - 1, 2, 2.5);
 
-  // Hylian Shield (Raised in front when blocking, or at side when idle)
+  // Runic Bulwark Shield
   const shieldDist = entity.shielding ? 13 : 9;
   const shieldAngle = entity.shielding ? angle : angle + 1.1;
   const sx = Math.cos(shieldAngle) * shieldDist;
@@ -2965,17 +3141,17 @@ function drawHero(ctx, entity, screenX, screenY, time, isSelf = false) {
   ctx.roundRect(-6, -7, 12, 14, 3);
   ctx.fill();
   ctx.stroke();
-  // Triforce crest on shield
+  // Holy Crest diamond on shield
   ctx.fillStyle = '#facc15';
   ctx.beginPath();
   ctx.moveTo(0, -4);
-  ctx.lineTo(3.5, 2);
-  ctx.lineTo(-3.5, 2);
+  ctx.lineTo(3.5, 0);
+  ctx.lineTo(0, 4);
+  ctx.lineTo(-3.5, 0);
   ctx.closePath();
   ctx.fill();
   ctx.restore();
 
-  // Active Sword Slash / Hurricane Spin Visual Arc!
   if (entity.slashTimer > 0) {
     const progress = 1 - entity.slashTimer / entity.slashDuration;
     const isSpin = entity.isSpinSlash;
@@ -2984,14 +3160,12 @@ function drawHero(ctx, entity, screenX, screenY, time, isSelf = false) {
     const currentA = startA + arcSpan * progress;
     const radius = entity.slashRadiusPx || 44;
 
-    // Glowing crescent trail
     ctx.strokeStyle = entity.bladeColor || '#67e8f9';
     ctx.lineWidth = isSpin ? 8 : 6;
     ctx.beginPath();
     ctx.arc(0, 0, radius * 0.82, startA, currentA);
     ctx.stroke();
 
-    // Physical Sword Blade
     ctx.save();
     ctx.rotate(currentA);
     ctx.fillStyle = '#f8fafc';
@@ -3002,12 +3176,11 @@ function drawHero(ctx, entity, screenX, screenY, time, isSelf = false) {
     ctx.restore();
   }
 
-  // If carrying a Pot over head (Zelda lift & throw!)
   if (entity.carriedPot) {
     drawProp(ctx, { type: 'pot' }, 0, -24, time);
   }
 
-  // Orbiting Navi / Fairy Pet Companion!
+  // Orbiting Lumina Wisp Companion
   if (entity.hasFairy !== false) {
     const fx = Math.cos(time * 3.5 + (entity.id ? entity.id.length : 0)) * 22;
     const fy = Math.sin(time * 5.0) * 10 - 14;
@@ -3022,7 +3195,6 @@ function drawHero(ctx, entity, screenX, screenY, time, isSelf = false) {
     ctx.fill();
   }
 
-  // Overhead Nameplate & 8/8 Badge for Players
   if (entity.name) {
     ctx.font = 'bold 10px sans-serif';
     ctx.textAlign = 'center';
@@ -3043,13 +3215,11 @@ function drawEnemy(ctx, enemy, screenX, screenY, time) {
 
   const r = enemy.size || 16;
 
-  // Shadow
   ctx.fillStyle = 'rgba(0,0,0,0.42)';
   ctx.beginPath();
   ctx.ellipse(0, r * 0.75, r * 0.85, r * 0.35, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Boss / Event Aura
   if (enemy.isBoss || enemy.isGod) {
     ctx.strokeStyle = enemy.isBoss ? 'rgba(250, 204, 21, 0.5)' : 'rgba(168, 85, 247, 0.35)';
     ctx.lineWidth = enemy.isBoss ? 3 : 2;
@@ -3058,7 +3228,6 @@ function drawEnemy(ctx, enemy, screenX, screenY, time) {
     ctx.stroke();
   }
 
-  // Main Body
   ctx.fillStyle = enemy.hitFlash > 0 ? '#ffffff' : enemy.color;
   ctx.strokeStyle = '#090d16';
   ctx.lineWidth = 2.5;
@@ -3071,16 +3240,13 @@ function drawEnemy(ctx, enemy, screenX, screenY, time) {
   ctx.fill();
   ctx.stroke();
 
-  // Inner Armor / Crest detail
   ctx.fillStyle = enemy.accent || '#fde047';
   ctx.beginPath();
   ctx.arc(0, -2, r * 0.45, 0, Math.PI * 2);
   ctx.fill();
 
-  // Glaring Eye(s)
   ctx.fillStyle = '#090d16';
   if (enemy.id.includes('beholder') || enemy.id.includes('gohma')) {
-    // Cyclops Eye
     ctx.beginPath();
     ctx.arc(0, -2, r * 0.22, 0, Math.PI * 2);
     ctx.fill();
@@ -3089,7 +3255,6 @@ function drawEnemy(ctx, enemy, screenX, screenY, time) {
     ctx.fillRect(r * 0.15, -4, 3.5, 4);
   }
 
-  // Darknut Directional Front Shield!
   if (enemy.frontShield) {
     const fa = enemy.facingAngle || 0;
     ctx.save();
@@ -3102,7 +3267,7 @@ function drawEnemy(ctx, enemy, screenX, screenY, time) {
     ctx.restore();
   }
 
-  // Final Boss Crown (Alderoth the Mad King)
+  // Final Boss Crown (Malakor, the Evil Bane)
   if (enemy.isFinalBoss) {
     ctx.fillStyle = '#facc15';
     ctx.strokeStyle = '#090d16';
@@ -3120,7 +3285,6 @@ function drawEnemy(ctx, enemy, screenX, screenY, time) {
     ctx.stroke();
   }
 
-  // Status Effect Badges (Stunned / Slowed / Armor Broken)
   if (enemy.stunTimer > 0) {
     ctx.fillStyle = '#facc15';
     ctx.font = 'bold 10px monospace';
@@ -3133,7 +3297,6 @@ function drawEnemy(ctx, enemy, screenX, screenY, time) {
     ctx.fillText('ARMOR BROKEN', 0, -r - 14);
   }
 
-  // Health Bar
   if (enemy.hp < enemy.maxHp || enemy.isBoss) {
     const bw = Math.max(32, r * 2);
     const bh = enemy.isBoss ? 6 : 4;
@@ -3160,7 +3323,6 @@ function getItemIconDataUrl(itemId) {
   c.height = 40;
   const ctx = c.getContext('2d');
 
-  // Subtle glow backdrop for UT / High-tier
   if (item.tier === 'UT') {
     const grad = ctx.createRadialGradient(20, 20, 2, 20, 20, 18);
     grad.addColorStop(0, 'rgba(56, 189, 248, 0.45)');
@@ -3172,9 +3334,22 @@ function getItemIconDataUrl(itemId) {
   ctx.save();
   ctx.translate(20, 20);
 
-  if (item.subType === 'sword' || item.subType === 'dagger') {
+  if (item.subType === 'crest_shard') {
+    // Radiant 5-Pointed Holy Crest Fragment!
+    ctx.fillStyle = item.color || '#facc15';
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, -14);
+    ctx.lineTo(10, -3);
+    ctx.lineTo(6, 13);
+    ctx.lineTo(-6, 13);
+    ctx.lineTo(-10, -3);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  } else if (item.subType === 'sword' || item.subType === 'dagger') {
     ctx.rotate(-Math.PI / 4);
-    // Blade
     ctx.fillStyle = item.bladeColor || item.color;
     ctx.strokeStyle = '#090d16';
     ctx.lineWidth = 2;
@@ -3188,7 +3363,6 @@ function getItemIconDataUrl(itemId) {
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
-    // Crossguard & Hilt
     ctx.fillStyle = '#eab308';
     ctx.fillRect(-7, 5, 14, 3);
     ctx.fillStyle = item.color;
@@ -3199,7 +3373,6 @@ function getItemIconDataUrl(itemId) {
     ctx.beginPath();
     ctx.arc(-4, 0, 13, -1.1, 1.1);
     ctx.stroke();
-    // Bowstring & Arrow
     ctx.strokeStyle = '#e2e8f0';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
@@ -3289,7 +3462,6 @@ function getItemIconDataUrl(itemId) {
     ctx.arc(0, -7, 4.5, 0, Math.PI * 2);
     ctx.fill();
   } else if (item.subType === 'stat_pot' || item.subType === 'stat_omni' || item.subType === 'heal') {
-    // Classic RotMG Potion Flask!
     ctx.fillStyle = item.color;
     ctx.strokeStyle = '#090d16';
     ctx.lineWidth = 2;
@@ -3312,7 +3484,7 @@ function getItemIconDataUrl(itemId) {
 
 // --- MODULE: src/engine/game.js ---
 // ============================================================================
-// REALM OF THE SHATTERED CREST — CORE 60FPS ZELDA + ROTMG MMO ENGINE
+// REALM OF THE SHATTERED CREST — CORE 60FPS TOP-DOWN ACTION-ADVENTURE MMO ENGINE
 // ============================================================================
 
 
@@ -3320,21 +3492,21 @@ function getItemIconDataUrl(itemId) {
 
 
 
-const STORAGE_KEY = 'rotsc_account_save_v1';
+const STORAGE_KEY = 'rotsc_account_save_v2';
 
 const BOT_NAMES = [
-  { name: 'LinkOfHyrule', classId: 'knight',     maxed: 8, stars: 25 },
-  { name: 'ZeldaWisdom',  classId: 'paladin',    maxed: 8, stars: 22 },
-  { name: 'WhiteBagPls',  classId: 'ranger',     maxed: 6, stars: 16 },
-  { name: 'PPE_Knight',   classId: 'knight',     maxed: 4, stars: 12 },
-  { name: 'GoronBomber',  classId: 'pyromancer', maxed: 7, stars: 19 },
-  { name: 'SheikShadow',  classId: 'assassin',   maxed: 8, stars: 24 },
-  { name: 'KokiriBow',    classId: 'ranger',     maxed: 3, stars: 8  },
-  { name: 'OryxSlayer',   classId: 'paladin',    maxed: 6, stars: 15 },
-  { name: 'DodongoHunter',classId: 'pyromancer', maxed: 5, stars: 11 },
-  { name: 'BlueStarWiz',  classId: 'pyromancer', maxed: 1, stars: 3  },
-  { name: 'HylianParry',  classId: 'knight',     maxed: 8, stars: 21 },
-  { name: 'MidnaTwilight',classId: 'assassin',   maxed: 6, stars: 17 }
+  { name: 'VaelenGuard',   classId: 'knight',     maxed: 8, stars: 25 },
+  { name: 'SolarTemplar',  classId: 'paladin',    maxed: 8, stars: 22 },
+  { name: 'WhiteBagPls',   classId: 'ranger',     maxed: 6, stars: 16 },
+  { name: 'PPE_Vanguard',  classId: 'knight',     maxed: 4, stars: 12 },
+  { name: 'CinderPyro',    classId: 'pyromancer', maxed: 7, stars: 19 },
+  { name: 'NightStalker',  classId: 'assassin',   maxed: 8, stars: 24 },
+  { name: 'SylvanArrow',   classId: 'ranger',     maxed: 3, stars: 8  },
+  { name: 'BaneSlayer',    classId: 'paladin',    maxed: 6, stars: 15 },
+  { name: 'CalderaHunter', classId: 'pyromancer', maxed: 5, stars: 11 },
+  { name: 'BlueStarWiz',   classId: 'pyromancer', maxed: 1, stars: 3  },
+  { name: 'BulwarkParry',  classId: 'knight',     maxed: 8, stars: 21 },
+  { name: 'DuskShadow',    classId: 'assassin',   maxed: 6, stars: 17 }
 ];
 class GameEngine {
   constructor(canvas, uiCallbacks) {
@@ -3360,14 +3532,14 @@ class GameEngine {
     this.boomerangs = [];
     this.bombs = [];
     this.lootBags = [];
-    this.groundDrops = []; // Hearts, Magic Jars, Rupees dropped from bushes/pots
+    this.groundDrops = []; // Hearts, Mana Vials, Sunshards dropped from bushes/urns
     this.particles = [];
     this.floatingTexts = [];
     this.gravestones = [];
     this.aiPlayers = [];
     this.remotePlayers = new Map();
 
-    // Realm Event Progress (Defeat 4 Realm Events to close Realm & trigger Mad King Sanctum!)
+    // Realm Event Progress (Defeat 3 Blight Heralds to unseal the Citadel of Evil Bane!)
     this.realmEventsRemaining = 3;
     this.activeQuestEnemy = null;
 
@@ -3390,13 +3562,14 @@ class GameEngine {
   }
 
   // ==========================================================================
-  // ACCOUNT PERSISTENCE (Vault, Rupees, Account Fame, Class Stars, Graveyard)
+  // ACCOUNT PERSISTENCE (Vault, Sunshards, Holy Crest Shards, Fame, Graveyard)
   // ==========================================================================
   loadAccount() {
     const fallback = {
       accountFame: 250,
-      rupees: 150,
+      sunshards: 150,
       lastClassId: 'knight',
+      crestShards: [false, false, false, false, false],
       classBestFame: { knight: 25, ranger: 20, pyromancer: 0, paladin: 0, assassin: 0 },
       vault: [
         'wep_sword_ut_master',
@@ -3414,7 +3587,14 @@ class GameEngine {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return fallback;
       const parsed = JSON.parse(raw);
-      return { ...fallback, ...parsed, classBestFame: { ...fallback.classBestFame, ...(parsed.classBestFame || {}) } };
+      return {
+        ...fallback,
+        ...parsed,
+        crestShards: Array.isArray(parsed.crestShards) && parsed.crestShards.length === 5
+          ? parsed.crestShards
+          : [...fallback.crestShards],
+        classBestFame: { ...fallback.classBestFame, ...(parsed.classBestFame || {}) }
+      };
     } catch (e) {
       return fallback;
     }
@@ -3424,6 +3604,50 @@ class GameEngine {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(this.account));
     } catch (e) {}
+  }
+
+  getRestoredShardsCount() {
+    if (!this.account || !Array.isArray(this.account.crestShards)) return 0;
+    return this.account.crestShards.filter(Boolean).length;
+  }
+
+  attuneCrestShard(shardIndex) {
+    if (shardIndex === undefined || shardIndex < 0 || shardIndex >= CREST_SHARDS.length) return false;
+    const shardMeta = CREST_SHARDS[shardIndex];
+    const wasAlreadyAttuned = !!this.account.crestShards[shardIndex];
+    this.account.crestShards[shardIndex] = true;
+    this.account.accountFame += wasAlreadyAttuned ? 25 : 100;
+    this.saveAccount();
+    this.recalcPlayerStats(false);
+
+    const count = this.getRestoredShardsCount();
+    sound.playSfx('white_bag');
+    this.cameraShake = 0.45;
+    if (this.player) {
+      this.spawnBurstParticles(this.player.x, this.player.y, shardMeta.color, 34);
+      this.spawnFloatingText(
+        this.player.x,
+        this.player.y - 1.1,
+        `★ ${shardMeta.name.toUpperCase()} RESTORED! (${count}/5) ★`,
+        shardMeta.color,
+        15
+      );
+    }
+    this.addChatMessage(
+      'HIGH ELDER VAELEN',
+      `"You have reclaimed the ${shardMeta.name} (${count}/5 Holy Crest Shards)! Permanent Blessing unlocked: ${shardMeta.blessing}!"`,
+      '#fde047'
+    );
+
+    if (count === 5) {
+      this.addChatMessage(
+        'HOLY CREST REFORGED',
+        '★ ALL 5 SHARDS OF THE HOLY CREST ARE REUNITED! The barrier of Aethelgard blazes with sovereign power — storm the Citadel of Evil Bane and vanquish Malakor! ★',
+        '#22d3ee'
+      );
+    }
+    if (this.ui && this.ui.onStatsChanged) this.ui.onStatsChanged();
+    return true;
   }
 
   getTotalStars() {
@@ -3438,7 +3662,7 @@ class GameEngine {
   }
 
   // ==========================================================================
-  // HERO CREATION & STAT CALCULATION (0/8 to 8/8 Maxing!)
+  // HERO CREATION & STAT CALCULATION (0/8 to 8/8 Maxing + Crest Blessings!)
   // ==========================================================================
   spawnNewHero(classId = 'knight') {
     const cls = CLASSES[classId] || CLASSES.knight;
@@ -3455,7 +3679,7 @@ class GameEngine {
 
     this.player = {
       id: 'hero_' + Math.random().toString(36).slice(2, 8),
-      name: 'HeroOfTime',
+      name: 'Crestbearer',
       classId: cls.id,
       className: cls.name,
       palette: { ...cls.palette },
@@ -3508,7 +3732,7 @@ class GameEngine {
     this.recalcPlayerStats(true);
     this.warpToMap('nexus');
     this.addChatMessage('SYSTEM', `Welcome to Realm of the Shattered Crest! Playing as ${cls.name}.`, '#fde047');
-    this.addChatMessage('TIP', 'WASD to Move | Left-Click to Slash/Shoot (Hold for 360° Spin!) | Right-Click to Shield Parry | Q for Zelda Relic | R for Instant Nexus!', '#38bdf8');
+    this.addChatMessage('HIGH ELDER VAELEN', 'Approach me in the center of the Sanctuary Hub and press [E] to learn how the Holy Crest was shattered across the realms!', '#38bdf8');
   }
 
   recalcPlayerStats(healToFull = false) {
@@ -3525,6 +3749,24 @@ class GameEngine {
           totals[st] = (totals[st] || 0) + val;
         }
       }
+    }
+
+    // Apply permanent blessings from each restored Holy Crest Shard!
+    const shardBonuses = [
+      { hp: 25, spd: 2 }, // Shard 0: Tide-Crest Shard
+      { hp: 25, dex: 2 }, // Shard 1: Wild-Crest Shard
+      { mp: 20, wis: 2 }, // Shard 2: Astral-Crest Shard
+      { atk: 2, vit: 2 }, // Shard 3: Ossuary-Crest Shard
+      { hp: 25, def: 3 }  // Shard 4: Flame-Crest Shard
+    ];
+    if (this.account && Array.isArray(this.account.crestShards)) {
+      this.account.crestShards.forEach((unlocked, idx) => {
+        if (unlocked && shardBonuses[idx]) {
+          for (const [st, val] of Object.entries(shardBonuses[idx])) {
+            totals[st] = (totals[st] || 0) + val;
+          }
+        }
+      });
     }
 
     p.stats = totals;
@@ -3580,13 +3822,13 @@ class GameEngine {
       this.spawnFloatingText(p.x, p.y - 0.8, `LEVEL ${p.level}!`, '#fde047', 16);
       this.spawnBurstParticles(p.x, p.y, '#fde047', 22);
       if (p.level === 20) {
-        this.addChatMessage('SYSTEM', '★ LEVEL 20 REACHED! Now hunt Gods & Dungeon Bosses for Blue Bag Stat Potions to reach 8/8 Maxed!', '#22c55e');
+        this.addChatMessage('SYSTEM', '★ LEVEL 20 REACHED! Now hunt Blight Gods & Dungeon Guardians for Stat Potions (8/8) and the 5 Holy Crest Shards!', '#22c55e');
       }
     }
   }
 
   // ==========================================================================
-  // MAP SWITCHING (Nexus <-> Overworld Realm <-> 6 Zelda/RotMG Dungeons)
+  // MAP SWITCHING (Sanctuary Hub <-> Overworld Realm <-> 6 Shard Dungeons)
   // ==========================================================================
   warpToMap(targetType, options = {}) {
     const p = this.player;
@@ -3607,11 +3849,11 @@ class GameEngine {
       if (options.zone === 'godlands') {
         p.x = this.realmMap.godlandsSpawnX;
         p.y = this.realmMap.godlandsSpawnY;
-        this.addChatMessage('REALM', 'Entered The Dark World Godlands (Level 20 Endgame Zone)! Watch out for Medusa & Beholder volleys!', '#c084fc');
+        this.addChatMessage('REALM', 'Entered The Blighted Godlands (Level 20 Endgame Zone)! Defeat Blight Gods for Stat Potions and Dungeon Portals!', '#c084fc');
       } else {
         p.x = this.realmMap.spawnX;
         p.y = this.realmMap.spawnY;
-        this.addChatMessage('REALM', 'Entered Realm of the Shattered Crest! Head North toward the center for Highlands & Godlands!', '#22c55e');
+        this.addChatMessage('REALM', 'Entered The Shattered Realm! Push inland toward the center for Highlands & The Blighted Godlands!', '#22c55e');
       }
     } else if (targetType === 'dungeon') {
       const dungeonId = options.dungeonId || 'deku_temple';
@@ -3633,8 +3875,8 @@ class GameEngine {
     this.activeQuestEnemy = null;
 
     if (this.currentMap.id === 'nexus') {
-      // Spawn 2 friendly Training Target Dummies in Nexus West Courtyard
-      this.spawnEnemy('octorok', 12.5, 28.0, { isDummy: true, name: 'Hylian Training Dummy' });
+      // Spawn 2 friendly Training Target Dummies in the West Courtyard
+      this.spawnEnemy('octorok', 12.5, 28.0, { isDummy: true, name: 'Vanguard Combat Dummy' });
       this.spawnEnemy('darknut_knight', 15.0, 28.0, { isDummy: true, name: 'Armored Parry Dummy' });
       return;
     }
@@ -3696,7 +3938,7 @@ class GameEngine {
 
   spawnRealmEventBoss() {
     if (this.currentMap.id !== 'realm') return;
-    const events = ['event_skull_lord', 'event_cube_overseer', 'event_goron_colossus'];
+    const events = ['event_skull_lord', 'event_cube_overseer', 'event_molten_colossus'];
     const pick = events[Math.max(0, 3 - this.realmEventsRemaining) % events.length];
     const cx = this.currentMap.cx;
     const cy = this.currentMap.cy;
@@ -3704,7 +3946,7 @@ class GameEngine {
     const ey = cy - 8;
     const boss = this.spawnEnemy(pick, ex, ey);
     this.activeQuestEnemy = boss;
-    this.addChatMessage('ALDEROTH THE MAD KING', `"My ${boss.name} shall crush you insects! (${this.realmEventsRemaining} Realm Events until the Sanctum opens!)"`, '#ef4444');
+    this.addChatMessage('MALAKOR THE EVIL BANE', `"My ${boss.name} shall grind the remnants of your Holy Crest to dust! (${this.realmEventsRemaining} Blight Events until the Citadel opens!)"`, '#ef4444');
   }
 
   spawnEnemy(enemyId, x, y, overrides = {}) {
@@ -3719,6 +3961,7 @@ class GameEngine {
       isBoss: !!tpl.isBoss,
       isEvent: !!tpl.isEvent,
       isFinalBoss: !!tpl.isFinalBoss,
+      crestShardIndex: tpl.crestShardIndex,
       isDummy: !!overrides.isDummy,
       frontShield: !!tpl.frontShield,
       x,
@@ -3816,7 +4059,7 @@ class GameEngine {
   }
 
   // ==========================================================================
-  // ZELDA PRIMARY WEAPON ATTACK, SPIN ATTACK & SHIELD PARRY
+  // PRIMARY WEAPON ATTACK, SPIN ATTACK & SHIELD PARRY
   // ==========================================================================
   performPrimaryAttack(isSpin = false) {
     const p = this.player;
@@ -3825,7 +4068,7 @@ class GameEngine {
     const wep = ITEMS[p.equipment.weapon] || ITEMS.wep_sword_t1;
     const angle = p.aimAngle;
 
-    // 1. Trigger Zelda Melee Arc Slash! (Every weapon has a close-range slash that cuts grass/pots/switches and cleaves adjacent foes!)
+    // 1. Trigger Melee Arc Slash! (Every weapon has a close-range slash that cuts grass/urns/switches and cleaves adjacent foes!)
     p.slashDuration = isSpin ? 0.30 : 0.16;
     p.slashTimer = p.slashDuration;
     p.isSpinSlash = isSpin;
@@ -3855,7 +4098,7 @@ class GameEngine {
       }
     }
 
-    // Check Melee Arc against Zelda Interactive Props (Bushes, Pots, Crystal Switches!)
+    // Check Melee Arc against Interactive Props (Bushes, Urns, Crystal Switches!)
     this.hitPropsInRadius(p.x, p.y, meleeTiles, angle, isSpin ? Math.PI * 2 : p.slashArcRad);
 
     // If Hurricane Spin Attack: deflect nearby enemy projectiles!
@@ -3872,7 +4115,7 @@ class GameEngine {
       }
     }
 
-    // 2. Spawn Ranged Projectiles (Sword Beams / Piercing Arrows / Twin Spellbolts / Kunai)
+    // 2. Spawn Ranged Projectiles (Sword Beams / Piercing Arrows / Twin Spellbolts / Daggers)
     const shouldFireBeam =
       wep.subType !== 'sword' ||
       wep.alwaysBeam ||
@@ -3920,9 +4163,9 @@ class GameEngine {
   }
 
   // ==========================================================================
-  // ZELDA RELIC ABILITIES (Slot 2 — Q Key: Boomerang, Hookshot, Bomb, Ocarina, Wand)
+  // SACRED RELIC ABILITIES (Slot 2 — Q Key: Chakram, Grapple, Bomb, Warhorn, Scepter)
   // ==========================================================================
-  useZeldaRelic() {
+  useRelicAbility() {
     const p = this.player;
     if (!p || p.dead) return;
     const relic = ITEMS[p.equipment.relic];
@@ -3957,7 +4200,7 @@ class GameEngine {
             hitSet: new Set()
           });
         }
-        // UT Mirror Shield & Cyclone Crest reflects nearby bullets on cast!
+        // UT Aegis Mirror & Cyclone Glaive reflects nearby bullets on cast!
         if (relic.reflectNova) {
           sound.playSfx('parry');
           this.spawnBurstParticles(p.x, p.y, '#facc15', 24);
@@ -3980,7 +4223,7 @@ class GameEngine {
         let bestTarget = null;
         let bestDist = maxRange;
 
-        // 1. Check for Zelda Grapple Pillars along aim ray!
+        // 1. Check for Grapple Anchor Pillars along aim ray!
         for (const prop of this.currentMap.props) {
           if (prop.type !== 'grapple_post') continue;
           const dx = prop.x - p.x;
@@ -4011,7 +4254,7 @@ class GameEngine {
           if (bestTarget.type === 'pillar') {
             p.hookTarget = { x: bestTarget.x, y: bestTarget.y, shockwave: !!relic.shockwave, dmg: (relic.dmg || 200) * wisBonus };
             p.invulnTimer = Math.max(p.invulnTimer, 0.65);
-            this.spawnFloatingText(p.x, p.y - 0.7, 'HOOKSHOT!', '#facc15', 13);
+            this.spawnFloatingText(p.x, p.y - 0.7, 'CHAIN-GRAPPLE!', '#facc15', 13);
           } else if (bestTarget.type === 'enemy') {
             const e = bestTarget.enemy;
             this.damageEnemy(e, (relic.dmg || 180) * wisBonus, angle, true);
@@ -4023,7 +4266,7 @@ class GameEngine {
             }
           }
         } else {
-          // Fire a piercing hook-bolt even if no anchor was locked
+          // Fire a piercing grapple-bolt even if no anchor was locked
           this.projectiles.push({
             x: p.x, y: p.y,
             vx: Math.cos(angle) * 15, vy: Math.sin(angle) * 15,
@@ -4074,7 +4317,7 @@ class GameEngine {
           p.debuffs.armorBroken = 0;
         }
         this.spawnBurstParticles(p.x, p.y, '#fde047', 28);
-        this.spawnFloatingText(p.x, p.y - 0.9, `+${healAmt} HP [OCARINA HYMN!]`, '#4ade80', 14);
+        this.spawnFloatingText(p.x, p.y - 0.9, `+${healAmt} HP [SOLAR ANTHEM!]`, '#4ade80', 14);
         break;
       }
 
@@ -4107,7 +4350,7 @@ class GameEngine {
   }
 
   // ==========================================================================
-  // ZELDA WORLD INTERACTIONS: BUSHES, POTS, CRACKED WALLS, CRYSTAL SWITCHES
+  // WORLD INTERACTIONS: BUSHES, URNS, CRACKED WALLS, CRYSTAL SWITCHES
   // ==========================================================================
   hitPropsInRadius(cx, cy, radius, aimAngle = 0, arcRad = Math.PI * 2) {
     const props = this.currentMap.props;
@@ -4126,13 +4369,13 @@ class GameEngine {
       if (prop.type === 'bush') {
         sound.playSfx('bush');
         this.spawnBurstParticles(prop.x, prop.y, '#22c55e', 10);
-        this.rollZeldaPropDrop(prop.x, prop.y);
+        this.rollPropDrop(prop.x, prop.y);
         props.splice(i, 1);
       } else if (prop.type === 'pot') {
         sound.playSfx('pot');
         this.player.potsSmashed++;
         this.spawnBurstParticles(prop.x, prop.y, '#ea580c', 12);
-        this.rollZeldaPropDrop(prop.x, prop.y, true);
+        this.rollPropDrop(prop.x, prop.y, true);
         props.splice(i, 1);
       } else if (prop.type === 'crystal_switch') {
         prop.state = prop.state === 'red' ? 'blue' : 'red';
@@ -4151,7 +4394,7 @@ class GameEngine {
     if (!p || p.dead) return;
 
     if (p.carriedPot) {
-      // Hurl carried pot toward cursor!
+      // Hurl carried urn toward cursor!
       p.carriedPot = false;
       sound.playSfx('slash');
       const angle = p.aimAngle;
@@ -4177,7 +4420,7 @@ class GameEngine {
       return;
     }
 
-    // Find adjacent pot to lift
+    // Find adjacent urn to lift
     const props = this.currentMap.props;
     for (let i = props.length - 1; i >= 0; i--) {
       const prop = props[i];
@@ -4185,24 +4428,24 @@ class GameEngine {
         props.splice(i, 1);
         p.carriedPot = true;
         sound.playSfx('dash');
-        this.spawnFloatingText(p.x, p.y - 0.8, 'POT LIFTED! [F to Throw]', '#fdba74', 12);
+        this.spawnFloatingText(p.x, p.y - 0.8, 'URN LIFTED! [F to Throw]', '#fdba74', 12);
         return;
       }
     }
   }
 
-  rollZeldaPropDrop(x, y, isPot = false) {
+  rollPropDrop(x, y, isPot = false) {
     const r = Math.random();
     if (r < 0.38) {
-      // Green / Blue / Red Zelda Rupee!
+      // Green / Blue / Red Sunshard Crystal!
       const val = isPot ? (Math.random() < 0.35 ? 20 : 5) : (Math.random() < 0.25 ? 5 : 1);
       const color = val >= 20 ? '#ef4444' : val >= 5 ? '#3b82f6' : '#22c55e';
-      this.groundDrops.push({ type: 'rupee', x, y, amount: val, color, timer: 18 });
+      this.groundDrops.push({ type: 'sunshard', x, y, amount: val, color, timer: 18 });
     } else if (r < 0.65) {
       // Recovery Heart!
       this.groundDrops.push({ type: 'heart', x, y, amount: 45, color: '#f43f5e', timer: 18 });
     } else if (r < 0.82) {
-      // Magic Jar!
+      // Mana Vial!
       this.groundDrops.push({ type: 'magic', x, y, amount: 35, color: '#22c55e', timer: 18 });
     }
   }
@@ -4212,10 +4455,10 @@ class GameEngine {
     prop.opened = true;
     sound.playSfx('secret');
     this.player.secretsFound++;
-    this.account.rupees += 50;
+    this.account.sunshards += 50;
     this.saveAccount();
     this.spawnLootBag(prop.x, prop.y + 0.6, prop.loot || ['pot_def', 'pot_spd']);
-    this.spawnFloatingText(prop.x, prop.y - 0.8, 'TREASURE CHEST OPENED! (+50 Rupees)', '#facc15', 14);
+    this.spawnFloatingText(prop.x, prop.y - 0.8, 'TREASURE CHEST OPENED! (+50 Sunshards)', '#facc15', 14);
   }
 
   // ==========================================================================
@@ -4226,9 +4469,8 @@ class GameEngine {
 
     let dmg = rawDmg;
 
-    // Zelda Darknut Directional Front Shield Check!
+    // Ironclad Dreadnought Directional Front Shield Check!
     if (enemy.frontShield && !ignoreArmor && enemy.stunTimer <= 0 && enemy.armorBreakTimer <= 0) {
-      // Attack coming from front of Darknut?
       const incomingAngle = this.normalizeAngle(hitAngle + Math.PI);
       const diff = Math.abs(this.normalizeAngle(incomingAngle - (enemy.facingAngle || 0)));
       if (diff < 1.05) {
@@ -4269,10 +4511,15 @@ class GameEngine {
     this.gainXp(enemy.xp || 30);
     this.spawnBurstParticles(enemy.x, enemy.y, enemy.color, enemy.isBoss ? 36 : 16);
 
-    // Always drop Rupees / Hearts around defeated enemy
-    this.rollZeldaPropDrop(enemy.x + 0.3, enemy.y);
+    // Always drop Sunshards / Hearts around defeated enemy
+    this.rollPropDrop(enemy.x + 0.3, enemy.y);
     if (enemy.isBoss || enemy.isGod) {
-      this.groundDrops.push({ type: 'rupee', x: enemy.x - 0.4, y: enemy.y, amount: 25, color: '#ef4444', timer: 25 });
+      this.groundDrops.push({ type: 'sunshard', x: enemy.x - 0.4, y: enemy.y, amount: 25, color: '#ef4444', timer: 25 });
+    }
+
+    // If this Boss guards one of the 5 Holy Crest Shards, attune it automatically!
+    if (enemy.crestShardIndex !== undefined) {
+      this.attuneCrestShard(enemy.crestShardIndex);
     }
 
     // Roll RotMG Loot Table -> Spawn Physical Colored Loot Bag!
@@ -4313,11 +4560,11 @@ class GameEngine {
     if (enemy.isEvent) {
       this.realmEventsRemaining = Math.max(0, this.realmEventsRemaining - 1);
       if (this.realmEventsRemaining === 0) {
-        this.addChatMessage('ALDEROTH THE MAD KING', '"NO! YOU HAVE SLAIN MY REALM GUARDIANS! COME FACE ME IN THE SANCTUM OF THE MAD CALAMITY!"', '#facc15');
+        this.addChatMessage('MALAKOR THE EVIL BANE', '"IMPOSSIBLE! YOU HAVE SLAIN MY BLIGHT HERALDS! COME FACE ME IN THE CITADEL OF EVIL BANE!"', '#facc15');
         this.cameraShake = 0.8;
         this.currentMap.portals.push({
           id: 'portal_mad_sanctum_event',
-          name: '★ SANCTUM OF THE MAD CALAMITY ★',
+          name: '★ CITADEL OF EVIL BANE ★',
           targetMap: 'dungeon',
           dungeonId: 'mad_sanctum',
           x: enemy.x,
@@ -4329,20 +4576,28 @@ class GameEngine {
       }
     }
 
-    // If Dungeon Boss died -> Spawn Return to Realm/Nexus Portal!
+    // If Dungeon Boss died -> Spawn Return to Sanctuary Portal!
     if (enemy.isBoss && this.currentMap.id.startsWith('dungeon_')) {
       p.dungeonsCompleted++;
       this.account.accountFame += 40;
       this.saveAccount();
       this.currentMap.portals.push({
         id: 'portal_boss_victory',
-        name: 'Victory Return to Nexus',
+        name: 'Victory Return to Sanctuary Hub',
         targetMap: 'nexus',
         x: enemy.x,
         y: enemy.y - 1.5,
         color: '#22c55e'
       });
-      this.addChatMessage('VICTORY', `★ ${enemy.name} DEFEATED! Collect your Blue & White Bag loot and enter the Victory Portal!`, '#fde047');
+      if (enemy.isFinalBoss) {
+        this.addChatMessage(
+          'HIGH ELDER VAELEN',
+          '"★ MALAKOR, THE EVIL BANE HAS FALLEN! With the Holy Crest reforged, the Blight recedes and Aethelgard is saved! ★"',
+          '#22d3ee'
+        );
+      } else {
+        this.addChatMessage('VICTORY', `★ ${enemy.name} DEFEATED! Collect your Blue & White Bag loot and return to High Elder Vaelen in the Sanctuary!`, '#fde047');
+      }
     }
   }
 
@@ -4378,7 +4633,7 @@ class GameEngine {
   }
 
   // ==========================================================================
-  // INVENTORY, DRINKING STAT POTIONS & EQUIPPING ITEMS
+  // INVENTORY, DRINKING STAT POTIONS, ATTUNING CREST SHARDS & EQUIPPING ITEMS
   // ==========================================================================
   useOrEquipItem(sourceType, slotIndex, bagObj = null) {
     const p = this.player;
@@ -4390,14 +4645,16 @@ class GameEngine {
     const item = ITEMS[itemId];
     if (!item) return false;
 
-    // 1. Consumable Stat Potion / Bottled Fairy
+    // 1. Consumable Stat Potion / Lumina Wisp / Holy Crest Shard
     if (item.slot === 'consumable') {
-      if (item.subType === 'stat_pot') {
+      if (item.subType === 'crest_shard') {
+        this.attuneCrestShard(item.shardIndex);
+      } else if (item.subType === 'stat_pot') {
         const cls = CLASSES[p.classId];
         const st = item.stat;
         if (p.baseStats[st] >= cls.maxStats[st]) {
           this.spawnFloatingText(p.x, p.y - 0.8, `${st.toUpperCase()} ALREADY MAXED!`, '#fde047', 13);
-          this.addChatMessage('SYSTEM', `Your ${st.toUpperCase()} is already maxed! Store extra potions in your Nexus Vault.`, '#fde047');
+          this.addChatMessage('SYSTEM', `Your ${st.toUpperCase()} is already maxed! Store extra potions in your Sanctuary Vault.`, '#fde047');
           return false;
         }
         p.baseStats[st] = Math.min(cls.maxStats[st], p.baseStats[st] + item.amount);
@@ -4420,7 +4677,7 @@ class GameEngine {
         p.hp = Math.min(p.stats.hp, p.hp + (item.healHp || 250));
         p.mp = Math.min(p.stats.mp, p.mp + (item.healMp || 100));
         sound.playSfx('heart');
-        this.spawnFloatingText(p.x, p.y - 0.8, 'FAIRY HEAL!', '#f472b6', 14);
+        this.spawnFloatingText(p.x, p.y - 0.8, 'LUMINA WISP HEAL!', '#f472b6', 14);
       }
 
       if (sourceType === 'bag' && bagObj) {
@@ -4442,7 +4699,6 @@ class GameEngine {
         const prevEquipped = p.equipment[item.slot];
         p.equipment[item.slot] = itemId;
         if (prevEquipped) {
-          // Put old equipped item into inventory if space, else back in bag
           const emptyIdx = p.inventory.findIndex(x => !x);
           if (emptyIdx !== -1) {
             p.inventory[emptyIdx] = prevEquipped;
@@ -4487,13 +4743,13 @@ class GameEngine {
   }
 
   // ==========================================================================
-  // PLAYER HIT, PERFECT SHIELD PARRY & PERMADEATH / FAIRY REVIVAL
+  // PLAYER HIT, PERFECT SHIELD PARRY & PERMADEATH / LUMINA WISP REVIVAL
   // ==========================================================================
   damagePlayer(rawDmg, proj = null, killerName = 'Realm Monster') {
     const p = this.player;
     if (!p || p.dead) return;
 
-    // Check Hylian Shield Block & Perfect Parry!
+    // Check Bulwark Shield Block & Perfect Parry!
     if (p.shielding && proj) {
       const incomingAngle = Math.atan2(p.y - proj.y, p.x - proj.x);
       const shieldFacing = this.normalizeAngle(p.aimAngle + Math.PI);
@@ -4502,7 +4758,7 @@ class GameEngine {
       if (diff <= 1.2) {
         const timeSinceRaised = this.time - p.shieldRaiseTime;
         if (timeSinceRaised <= 0.25) {
-          // ★ PERFECT ZELDA SHIELD PARRY! ★
+          // ★ PERFECT BULWARK SHIELD PARRY! ★
           p.parries++;
           p.mp = Math.min(p.stats.mp, p.mp + 18);
           proj.fromEnemy = false;
@@ -4544,7 +4800,7 @@ class GameEngine {
       p.debuffs.slowed = 2.5;
     }
 
-    // Check Fatal Damage -> Bottled Fairy Auto-Revive OR RotMG Permadeath!
+    // Check Fatal Damage -> Bottled Lumina Wisp Auto-Revive OR RotMG Permadeath!
     if (p.hp <= 0) {
       const fairyIdx = p.inventory.indexOf('con_fairy');
       if (fairyIdx !== -1) {
@@ -4554,8 +4810,8 @@ class GameEngine {
         p.invulnTimer = 2.2;
         sound.playSfx('secret');
         this.spawnBurstParticles(p.x, p.y, '#f472b6', 32);
-        this.spawnFloatingText(p.x, p.y - 1.1, '★ BOTTLED FAIRY REVIVED YOU! ★', '#f472b6', 16);
-        this.addChatMessage('FAIRY', 'Your Bottled Fairy burst out and saved you from Permadeath!', '#f472b6');
+        this.spawnFloatingText(p.x, p.y - 1.1, '★ LUMINA WISP REVIVED YOU! ★', '#f472b6', 16);
+        this.addChatMessage('SANCTUARY', 'Your Bottled Lumina Wisp burst free and saved you from Permadeath!', '#f472b6');
         if (this.ui && this.ui.onStatsChanged) this.ui.onStatsChanged();
         return;
       }
@@ -4574,11 +4830,13 @@ class GameEngine {
     // Calculate RotMG Fame Bonuses
     const baseFame = Math.max(5, Math.floor(p.fame));
     const bonuses = [];
-    if (p.godKills > 0) bonuses.push({ name: 'Slayer of the Gods', amount: p.godKills * 15 });
-    if (p.dungeonsCompleted > 0) bonuses.push({ name: 'Tunnel Rat', amount: p.dungeonsCompleted * 25 });
-    if (p.parries > 0) bonuses.push({ name: 'Hylian Parry Master', amount: p.parries * 12 });
+    if (p.godKills > 0) bonuses.push({ name: 'Slayer of Blight Gods', amount: p.godKills * 15 });
+    if (p.dungeonsCompleted > 0) bonuses.push({ name: 'Sanctum Conqueror', amount: p.dungeonsCompleted * 25 });
+    if (p.parries > 0) bonuses.push({ name: 'Bulwark Parry Master', amount: p.parries * 12 });
     if (p.secretsFound > 0) bonuses.push({ name: 'Seeker of Secrets', amount: p.secretsFound * 20 });
     if (p.maxedCount > 0) bonuses.push({ name: `${p.maxedCount}/8 Maxed Hero`, amount: p.maxedCount * 30 });
+    const shardsRestored = this.getRestoredShardsCount();
+    if (shardsRestored > 0) bonuses.push({ name: `Rebuilder of the Holy Crest (${shardsRestored}/5)`, amount: shardsRestored * 35 });
 
     let gearFame = 0;
     for (const slot of ['weapon', 'relic', 'armor', 'ring']) {
@@ -4670,7 +4928,7 @@ class GameEngine {
       p.stamina = Math.min(p.maxStamina, p.stamina + 28 * dt);
     }
 
-    // Orbiting Fairy Companion Heal & Zap!
+    // Orbiting Lumina Wisp Companion Heal!
     p.fairyTimer += dt;
     if (p.fairyTimer >= 2.8) {
       p.fairyTimer = 0;
@@ -4680,7 +4938,7 @@ class GameEngine {
       }
     }
 
-    // Hookshot Flight Override!
+    // Chain-Grapple Flight Override!
     if (p.hookTarget) {
       const dx = p.hookTarget.x - p.x;
       const dy = p.hookTarget.y - p.y;
@@ -4737,7 +4995,7 @@ class GameEngine {
     if (this.isWalkable(nx, p.y)) p.x = nx;
     if (this.isWalkable(p.x, ny)) p.y = ny;
 
-    // Tile Effects under Player (Fairy Healing Spring vs Magma Lava)
+    // Tile Effects under Player (Sanctuary Healing Spring vs Magma Lava)
     const underTile = this.getTileAt(Math.floor(p.x), Math.floor(p.y));
     if (underTile === TILES.HEAL_SPRING) {
       p.hp = Math.min(p.stats.hp, p.hp + 95 * dt);
@@ -4767,7 +5025,7 @@ class GameEngine {
       }
     } else if (p.chargeTime > 0) {
       if (p.chargeTime >= 0.55) {
-        this.performPrimaryAttack(true); // 360° Zelda Hurricane Spin!
+        this.performPrimaryAttack(true); // 360° Hurricane Spin!
         p.attackCooldown = cooldownDur * 1.1;
       }
       p.chargeTime = 0;
@@ -4838,9 +5096,9 @@ class GameEngine {
           bot.chatCooldown = 28 + Math.random() * 25;
           const phrases = [
             `Fighting ${nearest.name}! Click my name to TP!`,
-            `Godlands train rolling! TP to ${bot.name}!`,
+            `Blighted Godlands train rolling! TP to ${bot.name}!`,
             `Watch the radial shotgun on ${nearest.name}!`,
-            `Need Paladin Ocarina buff here!`
+            `Need Solar Templar Warhorn buff here!`
           ];
           this.addChatMessage(bot.name, phrases[Math.floor(Math.random() * phrases.length)], '#93c5fd', bot);
         }
@@ -4985,7 +5243,7 @@ class GameEngine {
   }
 
   // ==========================================================================
-  // PROJECTILES, BOOMERANGS, BOMBS & DROPS UPDATE
+  // PROJECTILES, CHAKRAMS, BOMBS & DROPS UPDATE
   // ==========================================================================
   updateProjectiles(dt) {
     const p = this.player;
@@ -5025,12 +5283,10 @@ class GameEngine {
       if (pr.fromEnemy) {
         if (p && !p.dead && Math.hypot(pr.x - p.x, pr.y - p.y) <= 0.48) {
           this.damagePlayer(pr.dmg, pr, pr.ownerName);
-          // If projectile was reflected by a Perfect Parry, don't delete it!
           if (!pr.fromEnemy) continue;
           this.projectiles.splice(i, 1);
         }
       } else {
-        // Player / Reflected Projectile hitting Enemies & Props
         if (!pr.fromBot) {
           this.hitPropsInRadius(pr.x, pr.y, 0.55);
         }
@@ -5084,7 +5340,7 @@ class GameEngine {
         b.y += (dy / d) * step;
       }
 
-      // Boomerang cuts bushes, flips switches, stuns enemies, AND pulls Loot Bags & Hearts!
+      // Chakram cuts bushes, flips switches, stuns enemies, AND pulls Loot Bags & Hearts!
       this.hitPropsInRadius(b.x, b.y, 0.85);
 
       for (const e of this.enemies) {
@@ -5096,7 +5352,7 @@ class GameEngine {
         }
       }
 
-      // Zelda Gale Boomerang Loot Magnet! Pull nearby Loot Bags & Drops to Player!
+      // Tempest Chakram Loot Magnet! Pull nearby Loot Bags & Drops to Player!
       if (p) {
         for (const bag of this.lootBags) {
           if (Math.hypot(bag.x - b.x, bag.y - b.y) <= 2.2) {
@@ -5148,7 +5404,7 @@ class GameEngine {
     // 2. Smash Props in Blast Radius
     this.hitPropsInRadius(bm.x, bm.y, bm.radius);
 
-    // 3. ZELDA SECRET MECHANIC: Blow open Cracked Dungeon/Realm Walls (`TILES.WALL_CRACKED`)!
+    // 3. SECRET MECHANIC: Blow open Cracked Dungeon/Sanctuary Walls (`TILES.WALL_CRACKED`)!
     const m = this.currentMap;
     const minX = Math.max(0, Math.floor(bm.x - bm.radius));
     const maxX = Math.min(m.width - 1, Math.ceil(bm.x + bm.radius));
@@ -5169,7 +5425,7 @@ class GameEngine {
       sound.playSfx('secret');
       this.player.secretsFound++;
       this.spawnFloatingText(bm.x, bm.y - 1.0, '★ SECRET PASSAGE DISCOVERED! ★', '#facc15', 16);
-      this.addChatMessage('SECRET', 'You blasted open a Cracked Wall and discovered a hidden treasure room!', '#facc15');
+      this.addChatMessage('SECRET', 'You blasted open a Cracked Wall and discovered a hidden treasure chamber!', '#facc15');
     }
   }
 
@@ -5189,11 +5445,11 @@ class GameEngine {
           dr.y += (p.y - dr.y) * 9 * dt;
         }
         if (d < 0.65) {
-          if (dr.type === 'rupee') {
-            this.account.rupees += dr.amount;
+          if (dr.type === 'sunshard') {
+            this.account.sunshards += dr.amount;
             this.saveAccount();
             sound.playSfx('rupee');
-            this.spawnFloatingText(p.x, p.y - 0.6, `+${dr.amount} Rupee`, dr.color, 11);
+            this.spawnFloatingText(p.x, p.y - 0.6, `+${dr.amount} Sunshard`, dr.color, 11);
           } else if (dr.type === 'heart') {
             p.hp = Math.min(p.stats.hp, p.hp + dr.amount);
             sound.playSfx('heart');
@@ -5288,9 +5544,16 @@ class GameEngine {
       }
     }
     for (const prop of this.currentMap.props) {
-      if (Math.hypot(prop.x - p.x, prop.y - p.y) <= 1.8) {
+      if (Math.hypot(prop.x - p.x, prop.y - p.y) <= 2.1) {
+        if (prop.type === 'elder_npc') {
+          return {
+            kind: 'elder',
+            obj: prop,
+            label: `Speak with High Elder Vaelen — Lore & Holy Crest (${this.getRestoredShardsCount()}/5 Shards) [E]`
+          };
+        }
         if (prop.type === 'vault_chest') return { kind: 'vault', obj: prop, label: 'Open Account Vault [E]' };
-        if (prop.type === 'forge_anvil') return { kind: 'forge', obj: prop, label: 'Open Goron Relic Forge [E]' };
+        if (prop.type === 'forge_anvil') return { kind: 'forge', obj: prop, label: 'Open Relic Forge [E]' };
         if (prop.type === 'chest' && !prop.opened) return { kind: 'chest', obj: prop, label: 'Open Treasure Chest [E]' };
       }
     }
@@ -5303,6 +5566,11 @@ class GameEngine {
     if (target.kind === 'portal') {
       const pt = target.obj;
       this.warpToMap(pt.targetMap, { zone: pt.targetZone, dungeonId: pt.dungeonId });
+      return true;
+    }
+    if (target.kind === 'elder' && this.ui && this.ui.onOpenModal) {
+      sound.playSfx('secret');
+      this.ui.onOpenModal('elder');
       return true;
     }
     if (target.kind === 'vault' && this.ui && this.ui.onOpenModal) {
@@ -5386,7 +5654,7 @@ class GameEngine {
       ctx.restore();
     }
 
-    // 3. Draw Zelda Interactive Props
+    // 3. Draw Interactive Props (including High Elder Vaelen in the Sanctuary Hub!)
     for (const prop of m.props) {
       const sx = prop.x * TILE_SIZE - camX;
       const sy = prop.y * TILE_SIZE - camY;
@@ -5394,14 +5662,14 @@ class GameEngine {
       drawProp(ctx, prop, sx, sy, this.time);
     }
 
-    // 4. Draw Ground Drops (Rupees, Hearts, Magic Jars)
+    // 4. Draw Ground Drops (Sunshards, Hearts, Mana Vials)
     for (const dr of this.groundDrops) {
       const sx = dr.x * TILE_SIZE - camX;
       const sy = dr.y * TILE_SIZE - camY + Math.sin(this.time * 6 + dr.x) * 2;
       ctx.save();
       ctx.translate(sx, sy);
-      if (dr.type === 'rupee') {
-        // Classic Hexagonal Zelda Rupee Gem!
+      if (dr.type === 'sunshard') {
+        // Hexagonal Sunshard Crystal!
         ctx.fillStyle = dr.color;
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 1.2;
@@ -5696,7 +5964,7 @@ class GameEngine {
 
 // --- MODULE: src/ui/hud.js ---
 // ============================================================================
-// REALM OF THE SHATTERED CREST — HUD, MINIMAP, VAULT, FORGE & MODAL CONTROLLER
+// REALM OF THE SHATTERED CREST — HUD, MINIMAP, ELDER LORE, VAULT & FORGE UI
 // ============================================================================
 class HudController {
   constructor(game) {
@@ -5742,21 +6010,24 @@ class HudController {
 
       if (e.code === 'KeyQ') {
         e.preventDefault();
-        this.game.useZeldaRelic();
+        this.game.useRelicAbility();
       } else if (e.code === 'KeyE') {
         e.preventDefault();
         if (!this.game.interactWithNearest()) {
-          this.game.useZeldaRelic();
+          this.game.useRelicAbility();
         }
       } else if (e.code === 'KeyF') {
         e.preventDefault();
         this.game.liftOrThrowPot();
+      } else if (e.code === 'KeyL') {
+        e.preventDefault();
+        this.openModal('elder');
       } else if (e.code === 'KeyR') {
         e.preventDefault();
-        // RotMG Instant Nexus Escape Hotkey!
+        // RotMG Instant Sanctuary Escape Hotkey!
         sound.playSfx('beam');
         this.game.warpToMap('nexus');
-        this.game.addChatMessage('NEXUS', 'Warped safely to the Nexus Sanctuary! [R]', '#38bdf8');
+        this.game.addChatMessage('SANCTUARY', 'Warped safely to the Radiant Sanctuary Hub! [R]', '#38bdf8');
       } else if (e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'KeyC') {
         e.preventDefault();
         if (p.dashCooldown <= 0 && p.stamina >= 22) {
@@ -5801,11 +6072,11 @@ class HudController {
         }
       } else if (e.button === 1) {
         e.preventDefault();
-        this.game.useZeldaRelic();
+        this.game.useRelicAbility();
       }
     });
 
-    window.addEventListener('mouseup', (e) => {
+    canvas.addEventListener('mouseup', (e) => {
       if (e.button === 0) {
         this.game.mouse.leftDown = false;
       } else if (e.button === 2) {
@@ -5866,6 +6137,18 @@ class HudController {
       sound.playSfx('secret');
       this.game.warpToMap('dungeon', { dungeonId: 'mad_sanctum' });
     });
+    const elderBtn = document.getElementById('btn-open-elder');
+    if (elderBtn) {
+      elderBtn.addEventListener('click', () => {
+        this.openModal('elder');
+      });
+    }
+    const crestBadge = document.getElementById('hud-crest-badge');
+    if (crestBadge) {
+      crestBadge.addEventListener('click', () => {
+        this.openModal('elder');
+      });
+    }
     document.getElementById('btn-open-classes').addEventListener('click', () => {
       this.openModal('classes');
     });
@@ -5888,13 +6171,18 @@ class HudController {
     const p = this.game.player;
     if (!p) return;
 
-    // 1. Update Zone Banner & Rupees / Account Fame Header
+    // 1. Update Zone Banner, Sunshards, Account Fame & Holy Crest Shards Header
     const zoneEl = document.getElementById('hud-zone-title');
     if (zoneEl) zoneEl.textContent = this.game.currentMap.name;
-    const rupeeEl = document.getElementById('hud-rupees');
-    if (rupeeEl) rupeeEl.textContent = this.game.account.rupees;
+    const sunshardEl = document.getElementById('hud-sunshards');
+    if (sunshardEl) sunshardEl.textContent = this.game.account.sunshards;
     const accFameEl = document.getElementById('hud-account-fame');
     if (accFameEl) accFameEl.textContent = this.game.account.accountFame;
+    const crestEl = document.getElementById('hud-crest-shards');
+    if (crestEl) {
+      const restored = this.game.getRestoredShardsCount();
+      crestEl.textContent = `${restored}/5`;
+    }
 
     const totalStars = this.game.getTotalStars();
     const starInfo = getStarRankColor(totalStars);
@@ -5904,10 +6192,10 @@ class HudController {
       starEl.style.color = starInfo.color;
     }
 
-    // 2. Update Zelda Heart Containers (1 Heart = 50 HP, up to 16 Hearts shown)
-    this.renderZeldaHearts(p.hp, p.stats.hp);
+    // 2. Update Life Heart Containers (1 Heart = 50 HP, up to 16 Hearts shown)
+    this.renderLifeHearts(p.hp, p.stats.hp);
 
-    // 3. Update RotMG Numerical Bars (Level/XP, Fame, HP, MP, Stamina)
+    // 3. Update RotMG Numerical Bars (Level/XP, Fame, HP, MP)
     const lvlFill = document.getElementById('bar-xp-fill');
     const lvlLabel = document.getElementById('bar-xp-label');
     if (p.level < 20) {
@@ -5927,9 +6215,9 @@ class HudController {
 
     const mpPct = Math.max(0, Math.min(100, (p.mp / p.stats.mp) * 100));
     document.getElementById('bar-mp-fill').style.width = `${mpPct}%`;
-    document.getElementById('bar-mp-label').innerHTML = `<span>MP (MAGIC)</span><span>${Math.floor(p.mp)} / ${p.stats.mp}</span>`;
+    document.getElementById('bar-mp-label').innerHTML = `<span>MP (MANA)</span><span>${Math.floor(p.mp)} / ${p.stats.mp}</span>`;
 
-    // 4. Context Interaction Prompt Banner ([E] Enter Portal / Open Vault / Open Chest)
+    // 4. Context Interaction Prompt Banner ([E] Speak with High Elder Vaelen / Enter Portal / Open Vault)
     const target = this.game.getNearestInteractiveTarget();
     const banner = document.getElementById('interact-banner');
     if (target) {
@@ -5942,12 +6230,12 @@ class HudController {
     // 5. Ground Loot Bag Panel (Appears automatically when standing near any Loot Bag!)
     this.updateGroundBagPanel();
 
-    // 6. Render Minimap & Nearby Party List
+    // 6. Render Minimap
     this.renderMinimap();
   }
 
-  renderZeldaHearts(hp, maxHp) {
-    const row = document.getElementById('zelda-hearts-row');
+  renderLifeHearts(hp, maxHp) {
+    const row = document.getElementById('life-hearts-row');
     if (!row) return;
     const totalHearts = Math.min(16, Math.max(4, Math.ceil(maxHp / 50)));
     const filledHearts = (hp / maxHp) * totalHearts;
@@ -5960,7 +6248,7 @@ class HudController {
       const rem = filledHearts - i;
       const color = rem >= 0.75 ? '#ef4444' : rem >= 0.25 ? '#fb7185' : 'rgba(148,163,184,0.22)';
       const stroke = rem > 0.1 ? '#fecdd3' : '#475569';
-      html += `<svg class="zelda-heart" viewBox="0 0 24 24">
+      html += `<svg class="life-heart" viewBox="0 0 24 24">
         <path fill="${color}" stroke="${stroke}" stroke-width="2"
           d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
       </svg>`;
@@ -5996,13 +6284,13 @@ class HudController {
       }).join('');
     }
 
-    // 2. Update 4 Equipment Slots (Weapon, Zelda Relic, Armor, Ring)
+    // 2. Update 4 Equipment Slots (Weapon, Sacred Relic, Armor, Ring)
     const eqContainer = document.getElementById('equipment-grid');
     if (eqContainer) {
       const slots = [
-        { key: 'weapon', label: 'BLADE' },
+        { key: 'weapon', label: 'WEAPON' },
         { key: 'relic',  label: 'RELIC [Q]' },
-        { key: 'armor',  label: 'TUNIC' },
+        { key: 'armor',  label: 'ARMOR' },
         { key: 'ring',   label: 'RING' }
       ];
       eqContainer.innerHTML = slots.map((s) => {
@@ -6033,7 +6321,7 @@ class HudController {
       </div>`;
     }
     const iconUrl = getItemIconDataUrl(itemId);
-    const isUt = item.tier === 'UT';
+    const isUt = item.tier === 'UT' || item.tier === 'SHARD';
     return `<div class="item-slot ${isUt ? 'ut-slot' : ''}" data-group="${group}" data-index="${indexOrKey}" data-item-id="${itemId}">
       <img src="${iconUrl}" alt="${item.name}" />
       <span class="slot-tier-badge ${isUt ? 'ut' : ''}">${item.tier}</span>
@@ -6129,14 +6417,20 @@ class HudController {
       statsHtml += `<div style="color:#4ade80;font-size:11px;margin-top:2px;">Equip Bonus: ${pairs}</div>`;
     }
 
+    const actionText = item.subType === 'crest_shard'
+      ? 'Attune to the Holy Crest'
+      : item.slot === 'consumable'
+        ? 'Drink / Consume'
+        : 'Equip';
+
     this.tooltipEl.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-        <span style="font-weight:800;font-size:12.5px;color:${item.tier === 'UT' ? '#22d3ee' : '#f8fafc'};">${item.name}</span>
+        <span style="font-weight:800;font-size:12.5px;color:${item.tier === 'UT' || item.tier === 'SHARD' ? '#22d3ee' : '#f8fafc'};">${item.name}</span>
         <span style="font-size:10px;font-weight:800;padding:1px 5px;border-radius:3px;background:rgba(255,255,255,0.1);color:${bagMeta.color};">${item.tier}</span>
       </div>
       ${statsHtml}
       <div style="color:#94a3b8;font-size:11px;line-height:1.35;margin-top:5px;">${item.desc}</div>
-      <div style="color:#eab308;font-size:10px;margin-top:6px;font-weight:700;">Click to ${item.slot === 'consumable' ? 'Drink / Consume' : 'Equip'}</div>
+      <div style="color:#eab308;font-size:10px;margin-top:6px;font-weight:700;">Click to ${actionText}</div>
     `;
     this.tooltipEl.style.display = 'block';
     this.moveTooltip(cx, cy);
@@ -6171,7 +6465,6 @@ class HudController {
     const scaleX = w / m.width;
     const scaleY = h / m.height;
 
-    // Sample map tiles cleanly
     const step = m.width > 80 ? 2 : 1;
     for (let y = 0; y < m.height; y += step) {
       for (let x = 0; x < m.width; x += step) {
@@ -6211,7 +6504,7 @@ class HudController {
       ctx.fillRect(bot.x * scaleX - 2, bot.y * scaleY - 2, 4, 4);
     }
 
-    // Local Player (Bright Cyan/White crosshair dot)
+    // Local Player (Bright White crosshair dot)
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
     ctx.arc(p.x * scaleX, p.y * scaleY, 3.5, 0, Math.PI * 2);
@@ -6238,7 +6531,7 @@ class HudController {
   }
 
   // ==========================================================================
-  // MMO CHAT & SLASH COMMANDS (/nexus, /glands, /boss, /max88, /whitebag)
+  // MMO CHAT & SLASH COMMANDS (/nexus, /elder, /glands, /boss, /max88, /whitebag)
   // ==========================================================================
   appendChatMessage({ sender, text, color, botTarget }) {
     const box = document.getElementById('chat-messages');
@@ -6271,11 +6564,13 @@ class HudController {
 
     if (val.startsWith('/')) {
       const cmd = val.toLowerCase();
-      if (cmd === '/nexus') {
+      if (cmd === '/nexus' || cmd === '/sanctuary') {
         this.game.warpToMap('nexus');
+      } else if (cmd === '/elder' || cmd === '/lore' || cmd === '/crest') {
+        this.openModal('elder');
       } else if (cmd === '/glands' || cmd === '/godlands') {
         this.game.warpToMap('realm', { zone: 'godlands' });
-      } else if (cmd === '/boss' || cmd === '/sanctum') {
+      } else if (cmd === '/boss' || cmd === '/citadel' || cmd === '/sanctum') {
         this.game.warpToMap('dungeon', { dungeonId: 'mad_sanctum' });
       } else if (cmd === '/max88') {
         const p = this.game.player;
@@ -6284,12 +6579,12 @@ class HudController {
         p.level = 20;
         this.game.recalcPlayerStats(true);
         sound.playSfx('white_bag');
-        this.game.addChatMessage('CHEAT', 'Hero promoted to Level 20 [8/8 MAXED]!', '#facc15');
+        this.game.addChatMessage('BLESSING', 'Hero promoted to Level 20 [8/8 MAXED]!', '#facc15');
       } else if (cmd === '/whitebag') {
         const p = this.game.player;
         this.game.spawnLootBag(p.x + 0.8, p.y, ['wep_sword_ut_master', 'rng_ut_crown', 'arm_ut_magic_armor', 'rel_boom_ut']);
       } else {
-        this.game.addChatMessage('HELP', 'Commands: /nexus, /glands, /boss, /max88, /whitebag', '#38bdf8');
+        this.game.addChatMessage('HELP', 'Commands: /nexus, /elder, /glands, /boss, /max88, /whitebag', '#38bdf8');
       }
       return;
     }
@@ -6303,7 +6598,7 @@ class HudController {
   }
 
   // ==========================================================================
-  // MODALS: CLASS SELECTOR, ACCOUNT VAULT, GORON RELIC FORGE & PERMADEATH FAME
+  // MODALS: HIGH ELDER VAELEN LORE & HOLY CREST, CLASSES, VAULT, FORGE & DEATH
   // ==========================================================================
   renderStaticModals() {
     document.querySelectorAll('.modal-close-btn').forEach((btn) => {
@@ -6313,7 +6608,11 @@ class HudController {
 
   openModal(modalName) {
     this.closeAllModals();
-    if (modalName === 'classes') {
+    if (modalName === 'elder') {
+      this.populateElderModal();
+      const el = document.getElementById('modal-elder');
+      if (el) el.style.display = 'flex';
+    } else if (modalName === 'classes') {
       this.populateClassesModal();
       document.getElementById('modal-classes').style.display = 'flex';
     } else if (modalName === 'vault') {
@@ -6329,6 +6628,66 @@ class HudController {
     document.querySelectorAll('.modal-backdrop').forEach((m) => {
       m.style.display = 'none';
     });
+  }
+
+  populateElderModal() {
+    const shardsGrid = document.getElementById('elder-shards-grid');
+    const loreContainer = document.getElementById('elder-lore-chapters');
+    const progressBanner = document.getElementById('elder-crest-status');
+    if (!shardsGrid || !loreContainer) return;
+
+    const restoredCount = this.game.getRestoredShardsCount();
+    if (progressBanner) {
+      progressBanner.innerHTML = restoredCount === 5
+        ? `<span style="color:#22d3ee;font-weight:900;">★ THE HOLY CREST IS REFORGED (5/5 SHARDS)! All 5 Sacred Blessings Active — Storm the Citadel of Evil Bane! ★</span>`
+        : `<span style="color:#fde047;font-weight:800;">Holy Crest Reconstruction: ${restoredCount} / 5 Shards Restored</span> <span style="color:#94a3b8;font-size:11px;margin-left:8px;">(Defeat each Sanctum Guardian or click "Enter Sanctum" below to reclaim its shard!)</span>`;
+    }
+
+    shardsGrid.innerHTML = CREST_SHARDS.map((shard) => {
+      const isRestored = !!(this.game.account.crestShards && this.game.account.crestShards[shard.index]);
+      const iconUrl = getItemIconDataUrl(shard.id);
+      return `<div class="class-select-card ${isRestored ? 'active' : ''}" style="border-color:${isRestored ? shard.color : 'rgba(148,163,184,0.28)'};">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <img src="${iconUrl}" alt="${shard.name}" style="width:32px;height:32px;image-rendering:pixelated;" />
+            <div>
+              <div style="font-weight:800;font-size:12.5px;color:${shard.color};">${shard.name}</div>
+              <div style="font-size:10px;color:#cbd5e1;">${shard.dungeonName}</div>
+            </div>
+          </div>
+          <span style="font-size:10px;font-weight:900;padding:2px 6px;border-radius:4px;background:${isRestored ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.18)'};color:${isRestored ? '#4ade80' : '#fca5a5'};">
+            ${isRestored ? '★ RESTORED' : 'SHATTERED'}
+          </span>
+        </div>
+        <div style="font-size:10.5px;color:#94a3b8;line-height:1.35;margin:6px 0;">
+          <strong>Guardian:</strong> ${shard.guardian}<br/>
+          ${shard.lore}
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;gap:6px;">
+          <span style="font-size:10px;font-weight:800;color:#4ade80;">Blessing: ${shard.blessing}</span>
+          <button class="hud-btn elder-warp-btn" data-dungeon-id="${shard.dungeonId}" style="padding:3px 8px;font-size:10px;">
+            ⚔️ Enter Sanctum
+          </button>
+        </div>
+      </div>`;
+    }).join('');
+
+    shardsGrid.querySelectorAll('.elder-warp-btn').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const did = btn.getAttribute('data-dungeon-id');
+        this.closeAllModals();
+        sound.playSfx('beam');
+        this.game.warpToMap('dungeon', { dungeonId: did });
+      });
+    });
+
+    loreContainer.innerHTML = ELDER_LORE_CHAPTERS.map((ch) => `
+      <div style="background:rgba(9,14,23,0.78);border-left:3px solid #facc15;border-radius:6px;padding:10px 14px;margin-bottom:8px;">
+        <div style="font-weight:800;font-size:12.5px;color:#fde047;margin-bottom:4px;">${ch.title}</div>
+        <div style="font-size:11.5px;color:#cbd5e1;line-height:1.45;font-style:italic;">${ch.body}</div>
+      </div>
+    `).join('');
   }
 
   populateClassesModal() {
@@ -6408,30 +6767,30 @@ class HudController {
 
   populateForgeModal() {
     const listEl = document.getElementById('forge-recipes-grid');
-    const balEl = document.getElementById('forge-rupee-balance');
+    const balEl = document.getElementById('forge-sunshard-balance');
     if (!listEl) return;
-    if (balEl) balEl.textContent = `${this.game.account.rupees} Rupees | ${this.game.account.accountFame} Account Fame`;
+    if (balEl) balEl.textContent = `${this.game.account.sunshards} Sunshards | ${this.game.account.accountFame} Account Fame`;
 
     const recipes = [
-      { itemId: 'con_fairy',           costRupees: 20,  costFame: 0   },
-      { itemId: 'pot_def',             costRupees: 25,  costFame: 0   },
-      { itemId: 'pot_atk',             costRupees: 25,  costFame: 0   },
-      { itemId: 'pot_spd',             costRupees: 20,  costFame: 0   },
-      { itemId: 'pot_dex',             costRupees: 20,  costFame: 0   },
-      { itemId: 'pot_life',            costRupees: 45,  costFame: 0   },
-      { itemId: 'wep_sword_ut_master', costRupees: 80,  costFame: 50  },
-      { itemId: 'wep_bow_ut_light',    costRupees: 80,  costFame: 50  },
-      { itemId: 'wep_rod_ut_seasons',  costRupees: 80,  costFame: 50  },
-      { itemId: 'rel_boom_ut',         costRupees: 75,  costFame: 40  },
-      { itemId: 'rel_hook_ut',         costRupees: 75,  costFame: 40  },
-      { itemId: 'rng_ut_crown',        costRupees: 100, costFame: 75  }
+      { itemId: 'con_fairy',           costSunshards: 20,  costFame: 0   },
+      { itemId: 'pot_def',             costSunshards: 25,  costFame: 0   },
+      { itemId: 'pot_atk',             costSunshards: 25,  costFame: 0   },
+      { itemId: 'pot_spd',             costSunshards: 20,  costFame: 0   },
+      { itemId: 'pot_dex',             costSunshards: 20,  costFame: 0   },
+      { itemId: 'pot_life',            costSunshards: 45,  costFame: 0   },
+      { itemId: 'wep_sword_ut_master', costSunshards: 80,  costFame: 50  },
+      { itemId: 'wep_bow_ut_light',    costSunshards: 80,  costFame: 50  },
+      { itemId: 'wep_rod_ut_seasons',  costSunshards: 80,  costFame: 50  },
+      { itemId: 'rel_boom_ut',         costSunshards: 75,  costFame: 40  },
+      { itemId: 'rel_hook_ut',         costSunshards: 75,  costFame: 40  },
+      { itemId: 'rng_ut_crown',        costSunshards: 100, costFame: 75  }
     ];
 
     listEl.innerHTML = recipes.map((r) => {
       const it = ITEMS[r.itemId];
       const icon = getItemIconDataUrl(r.itemId);
-      const costLabel = r.costFame > 0 ? `${r.costRupees} Rupees + ${r.costFame} Fame` : `${r.costRupees} Rupees`;
-      return `<div class="class-select-card" data-craft-id="${r.itemId}" data-rupees="${r.costRupees}" data-fame="${r.costFame}">
+      const costLabel = r.costFame > 0 ? `${r.costSunshards} Sunshards + ${r.costFame} Fame` : `${r.costSunshards} Sunshards`;
+      return `<div class="class-select-card" data-craft-id="${r.itemId}" data-sunshards="${r.costSunshards}" data-fame="${r.costFame}">
         <div style="display:flex;align-items:center;gap:10px;">
           <img src="${icon}" style="width:36px;height:36px;image-rendering:pixelated;" />
           <div>
@@ -6446,10 +6805,10 @@ class HudController {
     listEl.querySelectorAll('.class-select-card').forEach((card) => {
       card.addEventListener('click', () => {
         const itemId = card.getAttribute('data-craft-id');
-        const costR = parseInt(card.getAttribute('data-rupees'), 10);
+        const costS = parseInt(card.getAttribute('data-sunshards'), 10);
         const costF = parseInt(card.getAttribute('data-fame'), 10);
-        if (this.game.account.rupees < costR || this.game.account.accountFame < costF) {
-          this.game.spawnFloatingText(this.game.player.x, this.game.player.y - 0.8, 'NOT ENOUGH RUPEES/FAME!', '#ef4444', 13);
+        if (this.game.account.sunshards < costS || this.game.account.accountFame < costF) {
+          this.game.spawnFloatingText(this.game.player.x, this.game.player.y - 0.8, 'NOT ENOUGH SUNSHARDS/FAME!', '#ef4444', 13);
           return;
         }
         const emptyIdx = this.game.player.inventory.findIndex((x) => !x);
@@ -6457,7 +6816,7 @@ class HudController {
           this.game.spawnFloatingText(this.game.player.x, this.game.player.y - 0.8, 'INVENTORY FULL!', '#ef4444', 13);
           return;
         }
-        this.game.account.rupees -= costR;
+        this.game.account.sunshards -= costS;
         this.game.account.accountFame -= costF;
         this.game.player.inventory[emptyIdx] = itemId;
         this.game.saveAccount();
@@ -6538,10 +6897,10 @@ function bootGame() {
 
   hud = new HudController(game);
 
-  // Flush initial welcome chat messages
-  game.addChatMessage('NEXUS', 'Welcome to Realm of the Shattered Crest! An MMO Action RPG in the spirit of RotMG + Top-Down Zelda.', '#fde047');
-  game.addChatMessage('CONTROLS', 'WASD: Move | Left-Click: Sword Slash & Beam (Hold 0.55s for 360° Spin!) | Right-Click: Shield Block & Perfect Parry | Q: Zelda Relic | F: Lift/Throw Pot | R: Instant Nexus!', '#38bdf8');
-  game.addChatMessage('LinkOfHyrule', 'Medusa & Beholder train active in Dark World Godlands! Click TP next to my name to join!', '#4ade80', game.aiPlayers[0]);
+  // Flush initial welcome chat messages & Elder Vaelen lore callout
+  game.addChatMessage('SANCTUARY', 'Welcome to Realm of the Shattered Crest! A bullet-hell MMO Action RPG of classic top-down exploration and permadeath.', '#fde047');
+  game.addChatMessage('HIGH ELDER VAELEN', '"Hero! Walk up to me in the Sanctuary Hub and press [E] (or click 📜 Elder & Lore) to learn how the Holy Crest that held back Malakor, the Evil Bane was shattered into 5 Shards!"', '#38bdf8');
+  game.addChatMessage('VaelenGuard', 'Blight Gods train active in the Blighted Godlands! Click TP next to my name to join!', '#4ade80', game.aiPlayers[0]);
 
   window.__ROTSC_GAME__ = game;
   window.__ROTSC_HUD__ = hud;

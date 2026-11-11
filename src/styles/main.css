@@ -1,7 +1,7 @@
 /* ==========================================================================
-   REALM OF THE SHATTERED CREST — RETRO-MODERN ZELDA + ROTMG UI STYLESHEET
-   Palette: Deep Obsidian (#090e17), Triforce Gold (#eab308), Hero Emerald (#22c55e),
-   Zora Sapphire (#38bdf8), Crimson Heart (#ef4444)
+   REALM OF THE SHATTERED CREST — RETRO-MODERN TOP-DOWN MMO ARPG STYLESHEET
+   Palette: Deep Obsidian (#090e17), Sovereign Gold (#eab308), Hero Emerald (#22c55e),
+   Astral Sapphire (#38bdf8), Crimson Life (#ef4444)
    ========================================================================== */
 
 :root {
@@ -60,7 +60,7 @@ html, body {
   cursor: crosshair;
 }
 
-/* Top-Left Zelda Heart Containers & Zone Banner */
+/* Top-Left Life Heart Containers & Zone Banner */
 #top-left-hud {
   position: absolute;
   top: 12px;
@@ -80,7 +80,7 @@ html, body {
   pointer-events: auto;
 }
 
-#zelda-hearts-row {
+#life-hearts-row {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -88,7 +88,7 @@ html, body {
   max-width: 280px;
 }
 
-.zelda-heart {
+.life-heart {
   width: 16px;
   height: 16px;
   display: inline-block;
@@ -452,7 +452,7 @@ html, body {
   display: none;
 }
 
-/* Modals (Class Selection, Account Vault, Goron Relic Forge, Permadeath Fame Screen) */
+/* Modals (Elder Lore & Holy Crest, Class Selection, Account Vault, Relic Forge, Permadeath Fame Screen) */
 .modal-backdrop {
   position: fixed;
   inset: 0;

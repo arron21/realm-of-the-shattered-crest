@@ -1,7 +1,7 @@
 {
   "name": "realm-of-the-shattered-crest",
-  "version": "1.0.1",
-  "description": "An MMO Action RPG in the spirit of Realm of the Mad God that plays like a top-down Legend of Zelda game",
+  "version": "1.1.0",
+  "description": "Top-down bullet-hell MMO Action RPG where you rebuild the shattered Holy Crest piece by piece to vanquish Malakor, the Evil Bane",
   "scripts": {
     "build": "node build.js",
     "start": "node scripts/local-server.js",

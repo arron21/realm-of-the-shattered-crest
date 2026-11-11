@@ -1,8 +1,8 @@
 // ============================================================================
-// REALM OF THE SHATTERED CREST — HUD, MINIMAP, VAULT, FORGE & MODAL CONTROLLER
+// REALM OF THE SHATTERED CREST — HUD, MINIMAP, ELDER LORE, VAULT & FORGE UI
 // ============================================================================
 
-import { CLASSES, STAT_NAMES, STAT_LABELS, getStarRankColor } from '../data/classes.js';
+import { CLASSES, STAT_NAMES, STAT_LABELS, getStarRankColor, CREST_SHARDS, ELDER_LORE_CHAPTERS } from '../data/classes.js';
 import { ITEMS, BAG_TYPES } from '../data/items.js';
 import { TILES } from '../data/worldgen.js';
 import { getItemIconDataUrl } from '../graphics/sprites.js';
@@ -52,21 +52,24 @@ export class HudController {
 
       if (e.code === 'KeyQ') {
         e.preventDefault();
-        this.game.useZeldaRelic();
+        this.game.useRelicAbility();
       } else if (e.code === 'KeyE') {
         e.preventDefault();
         if (!this.game.interactWithNearest()) {
-          this.game.useZeldaRelic();
+          this.game.useRelicAbility();
         }
       } else if (e.code === 'KeyF') {
         e.preventDefault();
         this.game.liftOrThrowPot();
+      } else if (e.code === 'KeyL') {
+        e.preventDefault();
+        this.openModal('elder');
       } else if (e.code === 'KeyR') {
         e.preventDefault();
-        // RotMG Instant Nexus Escape Hotkey!
+        // RotMG Instant Sanctuary Escape Hotkey!
         sound.playSfx('beam');
         this.game.warpToMap('nexus');
-        this.game.addChatMessage('NEXUS', 'Warped safely to the Nexus Sanctuary! [R]', '#38bdf8');
+        this.game.addChatMessage('SANCTUARY', 'Warped safely to the Radiant Sanctuary Hub! [R]', '#38bdf8');
       } else if (e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'KeyC') {
         e.preventDefault();
         if (p.dashCooldown <= 0 && p.stamina >= 22) {
@@ -111,11 +114,11 @@ export class HudController {
         }
       } else if (e.button === 1) {
         e.preventDefault();
-        this.game.useZeldaRelic();
+        this.game.useRelicAbility();
       }
     });
 
-    window.addEventListener('mouseup', (e) => {
+    canvas.addEventListener('mouseup', (e) => {
       if (e.button === 0) {
         this.game.mouse.leftDown = false;
       } else if (e.button === 2) {
@@ -176,6 +179,18 @@ export class HudController {
       sound.playSfx('secret');
       this.game.warpToMap('dungeon', { dungeonId: 'mad_sanctum' });
     });
+    const elderBtn = document.getElementById('btn-open-elder');
+    if (elderBtn) {
+      elderBtn.addEventListener('click', () => {
+        this.openModal('elder');
+      });
+    }
+    const crestBadge = document.getElementById('hud-crest-badge');
+    if (crestBadge) {
+      crestBadge.addEventListener('click', () => {
+        this.openModal('elder');
+      });
+    }
     document.getElementById('btn-open-classes').addEventListener('click', () => {
       this.openModal('classes');
     });
@@ -198,13 +213,18 @@ export class HudController {
     const p = this.game.player;
     if (!p) return;
 
-    // 1. Update Zone Banner & Rupees / Account Fame Header
+    // 1. Update Zone Banner, Sunshards, Account Fame & Holy Crest Shards Header
     const zoneEl = document.getElementById('hud-zone-title');
     if (zoneEl) zoneEl.textContent = this.game.currentMap.name;
-    const rupeeEl = document.getElementById('hud-rupees');
-    if (rupeeEl) rupeeEl.textContent = this.game.account.rupees;
+    const sunshardEl = document.getElementById('hud-sunshards');
+    if (sunshardEl) sunshardEl.textContent = this.game.account.sunshards;
     const accFameEl = document.getElementById('hud-account-fame');
     if (accFameEl) accFameEl.textContent = this.game.account.accountFame;
+    const crestEl = document.getElementById('hud-crest-shards');
+    if (crestEl) {
+      const restored = this.game.getRestoredShardsCount();
+      crestEl.textContent = `${restored}/5`;
+    }
 
     const totalStars = this.game.getTotalStars();
     const starInfo = getStarRankColor(totalStars);
@@ -214,10 +234,10 @@ export class HudController {
       starEl.style.color = starInfo.color;
     }
 
-    // 2. Update Zelda Heart Containers (1 Heart = 50 HP, up to 16 Hearts shown)
-    this.renderZeldaHearts(p.hp, p.stats.hp);
+    // 2. Update Life Heart Containers (1 Heart = 50 HP, up to 16 Hearts shown)
+    this.renderLifeHearts(p.hp, p.stats.hp);
 
-    // 3. Update RotMG Numerical Bars (Level/XP, Fame, HP, MP, Stamina)
+    // 3. Update RotMG Numerical Bars (Level/XP, Fame, HP, MP)
     const lvlFill = document.getElementById('bar-xp-fill');
     const lvlLabel = document.getElementById('bar-xp-label');
     if (p.level < 20) {
@@ -237,9 +257,9 @@ export class HudController {
 
     const mpPct = Math.max(0, Math.min(100, (p.mp / p.stats.mp) * 100));
     document.getElementById('bar-mp-fill').style.width = `${mpPct}%`;
-    document.getElementById('bar-mp-label').innerHTML = `<span>MP (MAGIC)</span><span>${Math.floor(p.mp)} / ${p.stats.mp}</span>`;
+    document.getElementById('bar-mp-label').innerHTML = `<span>MP (MANA)</span><span>${Math.floor(p.mp)} / ${p.stats.mp}</span>`;
 
-    // 4. Context Interaction Prompt Banner ([E] Enter Portal / Open Vault / Open Chest)
+    // 4. Context Interaction Prompt Banner ([E] Speak with High Elder Vaelen / Enter Portal / Open Vault)
     const target = this.game.getNearestInteractiveTarget();
     const banner = document.getElementById('interact-banner');
     if (target) {
@@ -252,12 +272,12 @@ export class HudController {
     // 5. Ground Loot Bag Panel (Appears automatically when standing near any Loot Bag!)
     this.updateGroundBagPanel();
 
-    // 6. Render Minimap & Nearby Party List
+    // 6. Render Minimap
     this.renderMinimap();
   }
 
-  renderZeldaHearts(hp, maxHp) {
-    const row = document.getElementById('zelda-hearts-row');
+  renderLifeHearts(hp, maxHp) {
+    const row = document.getElementById('life-hearts-row');
     if (!row) return;
     const totalHearts = Math.min(16, Math.max(4, Math.ceil(maxHp / 50)));
     const filledHearts = (hp / maxHp) * totalHearts;
@@ -270,7 +290,7 @@ export class HudController {
       const rem = filledHearts - i;
       const color = rem >= 0.75 ? '#ef4444' : rem >= 0.25 ? '#fb7185' : 'rgba(148,163,184,0.22)';
       const stroke = rem > 0.1 ? '#fecdd3' : '#475569';
-      html += `<svg class="zelda-heart" viewBox="0 0 24 24">
+      html += `<svg class="life-heart" viewBox="0 0 24 24">
         <path fill="${color}" stroke="${stroke}" stroke-width="2"
           d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
       </svg>`;
@@ -306,13 +326,13 @@ export class HudController {
       }).join('');
     }
 
-    // 2. Update 4 Equipment Slots (Weapon, Zelda Relic, Armor, Ring)
+    // 2. Update 4 Equipment Slots (Weapon, Sacred Relic, Armor, Ring)
     const eqContainer = document.getElementById('equipment-grid');
     if (eqContainer) {
       const slots = [
-        { key: 'weapon', label: 'BLADE' },
+        { key: 'weapon', label: 'WEAPON' },
         { key: 'relic',  label: 'RELIC [Q]' },
-        { key: 'armor',  label: 'TUNIC' },
+        { key: 'armor',  label: 'ARMOR' },
         { key: 'ring',   label: 'RING' }
       ];
       eqContainer.innerHTML = slots.map((s) => {
@@ -343,7 +363,7 @@ export class HudController {
       </div>`;
     }
     const iconUrl = getItemIconDataUrl(itemId);
-    const isUt = item.tier === 'UT';
+    const isUt = item.tier === 'UT' || item.tier === 'SHARD';
     return `<div class="item-slot ${isUt ? 'ut-slot' : ''}" data-group="${group}" data-index="${indexOrKey}" data-item-id="${itemId}">
       <img src="${iconUrl}" alt="${item.name}" />
       <span class="slot-tier-badge ${isUt ? 'ut' : ''}">${item.tier}</span>
@@ -439,14 +459,20 @@ export class HudController {
       statsHtml += `<div style="color:#4ade80;font-size:11px;margin-top:2px;">Equip Bonus: ${pairs}</div>`;
     }
 
+    const actionText = item.subType === 'crest_shard'
+      ? 'Attune to the Holy Crest'
+      : item.slot === 'consumable'
+        ? 'Drink / Consume'
+        : 'Equip';
+
     this.tooltipEl.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-        <span style="font-weight:800;font-size:12.5px;color:${item.tier === 'UT' ? '#22d3ee' : '#f8fafc'};">${item.name}</span>
+        <span style="font-weight:800;font-size:12.5px;color:${item.tier === 'UT' || item.tier === 'SHARD' ? '#22d3ee' : '#f8fafc'};">${item.name}</span>
         <span style="font-size:10px;font-weight:800;padding:1px 5px;border-radius:3px;background:rgba(255,255,255,0.1);color:${bagMeta.color};">${item.tier}</span>
       </div>
       ${statsHtml}
       <div style="color:#94a3b8;font-size:11px;line-height:1.35;margin-top:5px;">${item.desc}</div>
-      <div style="color:#eab308;font-size:10px;margin-top:6px;font-weight:700;">Click to ${item.slot === 'consumable' ? 'Drink / Consume' : 'Equip'}</div>
+      <div style="color:#eab308;font-size:10px;margin-top:6px;font-weight:700;">Click to ${actionText}</div>
     `;
     this.tooltipEl.style.display = 'block';
     this.moveTooltip(cx, cy);
@@ -481,7 +507,6 @@ export class HudController {
     const scaleX = w / m.width;
     const scaleY = h / m.height;
 
-    // Sample map tiles cleanly
     const step = m.width > 80 ? 2 : 1;
     for (let y = 0; y < m.height; y += step) {
       for (let x = 0; x < m.width; x += step) {
@@ -521,7 +546,7 @@ export class HudController {
       ctx.fillRect(bot.x * scaleX - 2, bot.y * scaleY - 2, 4, 4);
     }
 
-    // Local Player (Bright Cyan/White crosshair dot)
+    // Local Player (Bright White crosshair dot)
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
     ctx.arc(p.x * scaleX, p.y * scaleY, 3.5, 0, Math.PI * 2);
@@ -548,7 +573,7 @@ export class HudController {
   }
 
   // ==========================================================================
-  // MMO CHAT & SLASH COMMANDS (/nexus, /glands, /boss, /max88, /whitebag)
+  // MMO CHAT & SLASH COMMANDS (/nexus, /elder, /glands, /boss, /max88, /whitebag)
   // ==========================================================================
   appendChatMessage({ sender, text, color, botTarget }) {
     const box = document.getElementById('chat-messages');
@@ -581,11 +606,13 @@ export class HudController {
 
     if (val.startsWith('/')) {
       const cmd = val.toLowerCase();
-      if (cmd === '/nexus') {
+      if (cmd === '/nexus' || cmd === '/sanctuary') {
         this.game.warpToMap('nexus');
+      } else if (cmd === '/elder' || cmd === '/lore' || cmd === '/crest') {
+        this.openModal('elder');
       } else if (cmd === '/glands' || cmd === '/godlands') {
         this.game.warpToMap('realm', { zone: 'godlands' });
-      } else if (cmd === '/boss' || cmd === '/sanctum') {
+      } else if (cmd === '/boss' || cmd === '/citadel' || cmd === '/sanctum') {
         this.game.warpToMap('dungeon', { dungeonId: 'mad_sanctum' });
       } else if (cmd === '/max88') {
         const p = this.game.player;
@@ -594,12 +621,12 @@ export class HudController {
         p.level = 20;
         this.game.recalcPlayerStats(true);
         sound.playSfx('white_bag');
-        this.game.addChatMessage('CHEAT', 'Hero promoted to Level 20 [8/8 MAXED]!', '#facc15');
+        this.game.addChatMessage('BLESSING', 'Hero promoted to Level 20 [8/8 MAXED]!', '#facc15');
       } else if (cmd === '/whitebag') {
         const p = this.game.player;
         this.game.spawnLootBag(p.x + 0.8, p.y, ['wep_sword_ut_master', 'rng_ut_crown', 'arm_ut_magic_armor', 'rel_boom_ut']);
       } else {
-        this.game.addChatMessage('HELP', 'Commands: /nexus, /glands, /boss, /max88, /whitebag', '#38bdf8');
+        this.game.addChatMessage('HELP', 'Commands: /nexus, /elder, /glands, /boss, /max88, /whitebag', '#38bdf8');
       }
       return;
     }
@@ -613,7 +640,7 @@ export class HudController {
   }
 
   // ==========================================================================
-  // MODALS: CLASS SELECTOR, ACCOUNT VAULT, GORON RELIC FORGE & PERMADEATH FAME
+  // MODALS: HIGH ELDER VAELEN LORE & HOLY CREST, CLASSES, VAULT, FORGE & DEATH
   // ==========================================================================
   renderStaticModals() {
     document.querySelectorAll('.modal-close-btn').forEach((btn) => {
@@ -623,7 +650,11 @@ export class HudController {
 
   openModal(modalName) {
     this.closeAllModals();
-    if (modalName === 'classes') {
+    if (modalName === 'elder') {
+      this.populateElderModal();
+      const el = document.getElementById('modal-elder');
+      if (el) el.style.display = 'flex';
+    } else if (modalName === 'classes') {
       this.populateClassesModal();
       document.getElementById('modal-classes').style.display = 'flex';
     } else if (modalName === 'vault') {
@@ -639,6 +670,66 @@ export class HudController {
     document.querySelectorAll('.modal-backdrop').forEach((m) => {
       m.style.display = 'none';
     });
+  }
+
+  populateElderModal() {
+    const shardsGrid = document.getElementById('elder-shards-grid');
+    const loreContainer = document.getElementById('elder-lore-chapters');
+    const progressBanner = document.getElementById('elder-crest-status');
+    if (!shardsGrid || !loreContainer) return;
+
+    const restoredCount = this.game.getRestoredShardsCount();
+    if (progressBanner) {
+      progressBanner.innerHTML = restoredCount === 5
+        ? `<span style="color:#22d3ee;font-weight:900;">★ THE HOLY CREST IS REFORGED (5/5 SHARDS)! All 5 Sacred Blessings Active — Storm the Citadel of Evil Bane! ★</span>`
+        : `<span style="color:#fde047;font-weight:800;">Holy Crest Reconstruction: ${restoredCount} / 5 Shards Restored</span> <span style="color:#94a3b8;font-size:11px;margin-left:8px;">(Defeat each Sanctum Guardian or click "Enter Sanctum" below to reclaim its shard!)</span>`;
+    }
+
+    shardsGrid.innerHTML = CREST_SHARDS.map((shard) => {
+      const isRestored = !!(this.game.account.crestShards && this.game.account.crestShards[shard.index]);
+      const iconUrl = getItemIconDataUrl(shard.id);
+      return `<div class="class-select-card ${isRestored ? 'active' : ''}" style="border-color:${isRestored ? shard.color : 'rgba(148,163,184,0.28)'};">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <img src="${iconUrl}" alt="${shard.name}" style="width:32px;height:32px;image-rendering:pixelated;" />
+            <div>
+              <div style="font-weight:800;font-size:12.5px;color:${shard.color};">${shard.name}</div>
+              <div style="font-size:10px;color:#cbd5e1;">${shard.dungeonName}</div>
+            </div>
+          </div>
+          <span style="font-size:10px;font-weight:900;padding:2px 6px;border-radius:4px;background:${isRestored ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.18)'};color:${isRestored ? '#4ade80' : '#fca5a5'};">
+            ${isRestored ? '★ RESTORED' : 'SHATTERED'}
+          </span>
+        </div>
+        <div style="font-size:10.5px;color:#94a3b8;line-height:1.35;margin:6px 0;">
+          <strong>Guardian:</strong> ${shard.guardian}<br/>
+          ${shard.lore}
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;gap:6px;">
+          <span style="font-size:10px;font-weight:800;color:#4ade80;">Blessing: ${shard.blessing}</span>
+          <button class="hud-btn elder-warp-btn" data-dungeon-id="${shard.dungeonId}" style="padding:3px 8px;font-size:10px;">
+            ⚔️ Enter Sanctum
+          </button>
+        </div>
+      </div>`;
+    }).join('');
+
+    shardsGrid.querySelectorAll('.elder-warp-btn').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const did = btn.getAttribute('data-dungeon-id');
+        this.closeAllModals();
+        sound.playSfx('beam');
+        this.game.warpToMap('dungeon', { dungeonId: did });
+      });
+    });
+
+    loreContainer.innerHTML = ELDER_LORE_CHAPTERS.map((ch) => `
+      <div style="background:rgba(9,14,23,0.78);border-left:3px solid #facc15;border-radius:6px;padding:10px 14px;margin-bottom:8px;">
+        <div style="font-weight:800;font-size:12.5px;color:#fde047;margin-bottom:4px;">${ch.title}</div>
+        <div style="font-size:11.5px;color:#cbd5e1;line-height:1.45;font-style:italic;">${ch.body}</div>
+      </div>
+    `).join('');
   }
 
   populateClassesModal() {
@@ -718,30 +809,30 @@ export class HudController {
 
   populateForgeModal() {
     const listEl = document.getElementById('forge-recipes-grid');
-    const balEl = document.getElementById('forge-rupee-balance');
+    const balEl = document.getElementById('forge-sunshard-balance');
     if (!listEl) return;
-    if (balEl) balEl.textContent = `${this.game.account.rupees} Rupees | ${this.game.account.accountFame} Account Fame`;
+    if (balEl) balEl.textContent = `${this.game.account.sunshards} Sunshards | ${this.game.account.accountFame} Account Fame`;
 
     const recipes = [
-      { itemId: 'con_fairy',           costRupees: 20,  costFame: 0   },
-      { itemId: 'pot_def',             costRupees: 25,  costFame: 0   },
-      { itemId: 'pot_atk',             costRupees: 25,  costFame: 0   },
-      { itemId: 'pot_spd',             costRupees: 20,  costFame: 0   },
-      { itemId: 'pot_dex',             costRupees: 20,  costFame: 0   },
-      { itemId: 'pot_life',            costRupees: 45,  costFame: 0   },
-      { itemId: 'wep_sword_ut_master', costRupees: 80,  costFame: 50  },
-      { itemId: 'wep_bow_ut_light',    costRupees: 80,  costFame: 50  },
-      { itemId: 'wep_rod_ut_seasons',  costRupees: 80,  costFame: 50  },
-      { itemId: 'rel_boom_ut',         costRupees: 75,  costFame: 40  },
-      { itemId: 'rel_hook_ut',         costRupees: 75,  costFame: 40  },
-      { itemId: 'rng_ut_crown',        costRupees: 100, costFame: 75  }
+      { itemId: 'con_fairy',           costSunshards: 20,  costFame: 0   },
+      { itemId: 'pot_def',             costSunshards: 25,  costFame: 0   },
+      { itemId: 'pot_atk',             costSunshards: 25,  costFame: 0   },
+      { itemId: 'pot_spd',             costSunshards: 20,  costFame: 0   },
+      { itemId: 'pot_dex',             costSunshards: 20,  costFame: 0   },
+      { itemId: 'pot_life',            costSunshards: 45,  costFame: 0   },
+      { itemId: 'wep_sword_ut_master', costSunshards: 80,  costFame: 50  },
+      { itemId: 'wep_bow_ut_light',    costSunshards: 80,  costFame: 50  },
+      { itemId: 'wep_rod_ut_seasons',  costSunshards: 80,  costFame: 50  },
+      { itemId: 'rel_boom_ut',         costSunshards: 75,  costFame: 40  },
+      { itemId: 'rel_hook_ut',         costSunshards: 75,  costFame: 40  },
+      { itemId: 'rng_ut_crown',        costSunshards: 100, costFame: 75  }
     ];
 
     listEl.innerHTML = recipes.map((r) => {
       const it = ITEMS[r.itemId];
       const icon = getItemIconDataUrl(r.itemId);
-      const costLabel = r.costFame > 0 ? `${r.costRupees} Rupees + ${r.costFame} Fame` : `${r.costRupees} Rupees`;
-      return `<div class="class-select-card" data-craft-id="${r.itemId}" data-rupees="${r.costRupees}" data-fame="${r.costFame}">
+      const costLabel = r.costFame > 0 ? `${r.costSunshards} Sunshards + ${r.costFame} Fame` : `${r.costSunshards} Sunshards`;
+      return `<div class="class-select-card" data-craft-id="${r.itemId}" data-sunshards="${r.costSunshards}" data-fame="${r.costFame}">
         <div style="display:flex;align-items:center;gap:10px;">
           <img src="${icon}" style="width:36px;height:36px;image-rendering:pixelated;" />
           <div>
@@ -756,10 +847,10 @@ export class HudController {
     listEl.querySelectorAll('.class-select-card').forEach((card) => {
       card.addEventListener('click', () => {
         const itemId = card.getAttribute('data-craft-id');
-        const costR = parseInt(card.getAttribute('data-rupees'), 10);
+        const costS = parseInt(card.getAttribute('data-sunshards'), 10);
         const costF = parseInt(card.getAttribute('data-fame'), 10);
-        if (this.game.account.rupees < costR || this.game.account.accountFame < costF) {
-          this.game.spawnFloatingText(this.game.player.x, this.game.player.y - 0.8, 'NOT ENOUGH RUPEES/FAME!', '#ef4444', 13);
+        if (this.game.account.sunshards < costS || this.game.account.accountFame < costF) {
+          this.game.spawnFloatingText(this.game.player.x, this.game.player.y - 0.8, 'NOT ENOUGH SUNSHARDS/FAME!', '#ef4444', 13);
           return;
         }
         const emptyIdx = this.game.player.inventory.findIndex((x) => !x);
@@ -767,7 +858,7 @@ export class HudController {
           this.game.spawnFloatingText(this.game.player.x, this.game.player.y - 0.8, 'INVENTORY FULL!', '#ef4444', 13);
           return;
         }
-        this.game.account.rupees -= costR;
+        this.game.account.sunshards -= costS;
         this.game.account.accountFame -= costF;
         this.game.player.inventory[emptyIdx] = itemId;
         this.game.saveAccount();
