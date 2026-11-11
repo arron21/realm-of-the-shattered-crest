@@ -7,7 +7,7 @@ const http = require('http');
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
-const { buildHtmlBundle } = require('./build.js');
+const { buildHtmlBundle } = require('../build.js');
 
 const PORT = process.env.PORT || 4000;
 
@@ -73,7 +73,7 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  const indexPath = path.join(__dirname, 'public/index.html');
+  const indexPath = path.join(__dirname, '../public/index.html');
   fs.readFile(indexPath, (err, content) => {
     if (err) {
       res.writeHead(500);
