@@ -72,14 +72,7 @@ export class HudController {
         this.game.addChatMessage('SANCTUARY', 'Warped safely to the Radiant Sanctuary Hub! [R]', '#38bdf8');
       } else if (e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'KeyC') {
         e.preventDefault();
-        if (p.dashCooldown <= 0 && p.stamina >= 22) {
-          p.stamina -= 22;
-          p.dashTimer = 0.24;
-          p.dashCooldown = 0.55;
-          p.invulnTimer = Math.max(p.invulnTimer, 0.26);
-          sound.playSfx('dash');
-          this.game.spawnBurstParticles(p.x, p.y, '#e2e8f0', 10);
-        }
+        this.game.triggerDash();
       } else if (e.code === 'KeyI') {
         this.game.autoFire = !this.game.autoFire;
         this.game.spawnFloatingText(p.x, p.y - 0.8, `AUTO-FIRE: ${this.game.autoFire ? 'ON' : 'OFF'}`, '#fde047', 12);
@@ -100,6 +93,7 @@ export class HudController {
       const rect = canvas.getBoundingClientRect();
       this.game.mouse.x = e.clientX - rect.left;
       this.game.mouse.y = e.clientY - rect.top;
+      this.game.mouse.hasMoved = true;
     });
 
     canvas.addEventListener('mousedown', (e) => {
@@ -173,9 +167,282 @@ export class HudController {
         }
       });
     }
+
+    this.bindTouchControls();
+  }
+
+  bindTouchControls() {
+    // 1. Left Thumb Virtual Analog Movement Joystick
+    const moveZone = document.getElementById('touch-joystick-zone');
+    const joyBase = document.getElementById('joystick-base');
+    const joyKnob = document.getElementById('joystick-knob');
+
+    if (moveZone && joyBase && joyKnob) {
+      let moveTouchId = null;
+      let moveMouseDown = false;
+      const maxRadius = 36;
+
+      const updateMoveStick = (clientX, clientY) => {
+        const rect = joyBase.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const dx = clientX - cx;
+        const dy = clientY - cy;
+        const dist = Math.hypot(dx, dy);
+        const clamped = Math.min(maxRadius, dist);
+        const angle = Math.atan2(dy, dx);
+        const kx = dist > 3 ? Math.cos(angle) * clamped : 0;
+        const ky = dist > 3 ? Math.sin(angle) * clamped : 0;
+
+        joyKnob.style.transform = `translate(${Math.round(kx)}px, ${Math.round(ky)}px)`;
+        this.game.touch.active = true;
+        this.game.touch.moveX = dist > 4 ? kx / maxRadius : 0;
+        this.game.touch.moveY = dist > 4 ? ky / maxRadius : 0;
+      };
+
+      const resetMoveStick = () => {
+        moveTouchId = null;
+        moveMouseDown = false;
+        joyKnob.style.transform = 'translate(0px, 0px)';
+        this.game.touch.moveX = 0;
+        this.game.touch.moveY = 0;
+      };
+
+      moveZone.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        sound.init();
+        const t = e.changedTouches[0];
+        if (t) {
+          moveTouchId = t.identifier;
+          updateMoveStick(t.clientX, t.clientY);
+        }
+      });
+
+      moveZone.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          const t = e.changedTouches[i];
+          if (t.identifier === moveTouchId) {
+            updateMoveStick(t.clientX, t.clientY);
+            break;
+          }
+        }
+      });
+
+      moveZone.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          if (e.changedTouches[i].identifier === moveTouchId) {
+            resetMoveStick();
+            break;
+          }
+        }
+      });
+
+      moveZone.addEventListener('touchcancel', () => resetMoveStick());
+
+      // Also support mouse drag on the virtual joystick for responsive testing
+      moveZone.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        sound.init();
+        moveMouseDown = true;
+        updateMoveStick(e.clientX, e.clientY);
+      });
+      window.addEventListener('mousemove', (e) => {
+        if (moveMouseDown) updateMoveStick(e.clientX, e.clientY);
+      });
+      window.addEventListener('mouseup', () => {
+        if (moveMouseDown) resetMoveStick();
+      });
+    }
+
+    // 2. Right Thumb Twin-Stick Attack & 360° Aim Pad
+    const attackBtn = document.getElementById('btn-touch-attack');
+    const attackKnob = document.getElementById('attack-stick-knob');
+    if (attackBtn && attackKnob) {
+      let aimTouchId = null;
+      let aimMouseDown = false;
+      const maxAimR = 20;
+
+      const updateAimStick = (clientX, clientY) => {
+        const rect = attackBtn.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const dx = clientX - cx;
+        const dy = clientY - cy;
+        const dist = Math.hypot(dx, dy);
+        this.game.touch.active = true;
+        this.game.touch.attacking = true;
+        attackBtn.classList.add('active');
+
+        if (dist > 10) {
+          const angle = Math.atan2(dy, dx);
+          const clamped = Math.min(maxAimR, dist);
+          attackKnob.style.transform = `translate(${Math.round(Math.cos(angle) * clamped)}px, ${Math.round(Math.sin(angle) * clamped)}px)`;
+          this.game.touch.aimActive = true;
+          this.game.touch.aimAngle = angle;
+        } else {
+          attackKnob.style.transform = 'translate(0px, 0px)';
+          this.game.touch.aimActive = false;
+        }
+      };
+
+      const resetAimStick = () => {
+        aimTouchId = null;
+        aimMouseDown = false;
+        attackBtn.classList.remove('active');
+        attackKnob.style.transform = 'translate(0px, 0px)';
+        this.game.touch.attacking = false;
+        this.game.touch.aimActive = false;
+      };
+
+      attackBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        sound.init();
+        const t = e.changedTouches[0];
+        if (t) {
+          aimTouchId = t.identifier;
+          updateAimStick(t.clientX, t.clientY);
+        }
+      });
+
+      attackBtn.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          const t = e.changedTouches[i];
+          if (t.identifier === aimTouchId) {
+            updateAimStick(t.clientX, t.clientY);
+            break;
+          }
+        }
+      });
+
+      attackBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          if (e.changedTouches[i].identifier === aimTouchId) {
+            resetAimStick();
+            break;
+          }
+        }
+      });
+
+      attackBtn.addEventListener('touchcancel', () => resetAimStick());
+
+      attackBtn.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        sound.init();
+        aimMouseDown = true;
+        updateAimStick(e.clientX, e.clientY);
+      });
+      window.addEventListener('mousemove', (e) => {
+        if (aimMouseDown) updateAimStick(e.clientX, e.clientY);
+      });
+      window.addEventListener('mouseup', () => {
+        if (aimMouseDown) resetAimStick();
+      });
+    }
+
+    // 3. Radial Action Buttons (Relic [Q], Parry/Shield, Dash, Urn [F])
+    const relicBtn = document.getElementById('btn-touch-relic');
+    if (relicBtn) {
+      const triggerRelic = (e) => {
+        e.preventDefault();
+        sound.init();
+        this.game.touch.active = true;
+        this.game.useRelicAbility();
+      };
+      relicBtn.addEventListener('touchstart', triggerRelic);
+      relicBtn.addEventListener('click', triggerRelic);
+    }
+
+    const shieldBtn = document.getElementById('btn-touch-shield');
+    if (shieldBtn) {
+      const startShield = (e) => {
+        e.preventDefault();
+        sound.init();
+        this.game.touch.active = true;
+        shieldBtn.classList.add('active');
+        if (this.game.player) {
+          this.game.player.shielding = true;
+          this.game.player.shieldRaiseTime = this.game.time;
+        }
+      };
+      const endShield = (e) => {
+        if (e) e.preventDefault();
+        shieldBtn.classList.remove('active');
+        if (this.game.player) {
+          this.game.player.shielding = false;
+        }
+      };
+      shieldBtn.addEventListener('touchstart', startShield);
+      shieldBtn.addEventListener('touchend', endShield);
+      shieldBtn.addEventListener('touchcancel', endShield);
+      shieldBtn.addEventListener('mousedown', startShield);
+      shieldBtn.addEventListener('mouseup', endShield);
+    }
+
+    const dashBtn = document.getElementById('btn-touch-dash');
+    if (dashBtn) {
+      const onDash = (e) => {
+        e.preventDefault();
+        sound.init();
+        this.game.touch.active = true;
+        this.game.triggerDash();
+      };
+      dashBtn.addEventListener('touchstart', onDash);
+      dashBtn.addEventListener('click', onDash);
+    }
+
+    const potBtn = document.getElementById('btn-touch-pot');
+    if (potBtn) {
+      const onPot = (e) => {
+        e.preventDefault();
+        sound.init();
+        this.game.touch.active = true;
+        this.game.liftOrThrowPot();
+      };
+      potBtn.addEventListener('touchstart', onPot);
+      potBtn.addEventListener('click', onPot);
+    }
+  }
+
+  toggleMobileDrawer(forceOpen = null) {
+    const sidebar = document.getElementById('rotmg-sidebar');
+    const backdrop = document.getElementById('mobile-drawer-backdrop');
+    if (!sidebar) return;
+    const isOpen = forceOpen !== null ? forceOpen : !this.mobileDrawerOpen;
+    this.mobileDrawerOpen = isOpen;
+    sidebar.classList.toggle('drawer-open', isOpen);
+    if (backdrop) backdrop.classList.toggle('open', isOpen);
   }
 
   bindTopBarButtons() {
+    const drawerBtn = document.getElementById('btn-toggle-drawer');
+    if (drawerBtn) {
+      drawerBtn.addEventListener('click', () => {
+        this.toggleMobileDrawer();
+      });
+    }
+    const closeDrawerBtn = document.getElementById('btn-close-drawer');
+    if (closeDrawerBtn) {
+      closeDrawerBtn.addEventListener('click', () => {
+        this.toggleMobileDrawer(false);
+      });
+    }
+    const drawerBackdrop = document.getElementById('mobile-drawer-backdrop');
+    if (drawerBackdrop) {
+      drawerBackdrop.addEventListener('click', () => {
+        this.toggleMobileDrawer(false);
+      });
+    }
+    const chatToggleBtn = document.getElementById('btn-toggle-chat');
+    if (chatToggleBtn) {
+      chatToggleBtn.addEventListener('click', () => {
+        const chatBox = document.getElementById('bottom-left-chat');
+        if (chatBox) chatBox.classList.toggle('chat-open');
+      });
+    }
     const elderBtn = document.getElementById('btn-open-elder');
     if (elderBtn) {
       elderBtn.addEventListener('click', () => {
@@ -210,7 +477,7 @@ export class HudController {
     if (audioBtn) {
       audioBtn.addEventListener('click', (e) => {
         sound.muted = !sound.muted;
-        e.currentTarget.textContent = sound.muted ? '🔇 Muted' : '🔊 Audio';
+        e.currentTarget.textContent = sound.muted ? '🔇' : '🔊';
       });
     }
   }
@@ -246,7 +513,7 @@ export class HudController {
     // 2. Update Life Heart Containers (1 Heart = 50 HP, up to 16 Hearts shown)
     this.renderLifeHearts(p.hp, p.stats.hp);
 
-    // 3. Update RotMG Numerical Bars (Level/XP, Fame, HP, MP)
+    // 3. Update RotMG Numerical Bars (Level/XP, Fame, HP, MP) + Mobile Compact Bars
     const lvlFill = document.getElementById('bar-xp-fill');
     const lvlLabel = document.getElementById('bar-xp-label');
     if (p.level < 20) {
@@ -268,12 +535,25 @@ export class HudController {
     document.getElementById('bar-mp-fill').style.width = `${mpPct}%`;
     document.getElementById('bar-mp-label').innerHTML = `<span>MP (MANA)</span><span>${Math.floor(p.mp)} / ${p.stats.mp}</span>`;
 
+    const mobHpFill = document.getElementById('mobile-hp-fill');
+    const mobHpText = document.getElementById('mobile-hp-text');
+    if (mobHpFill && mobHpText) {
+      mobHpFill.style.width = `${hpPct}%`;
+      mobHpText.textContent = `HP ${Math.ceil(p.hp)}/${p.stats.hp}`;
+    }
+    const mobMpFill = document.getElementById('mobile-mp-fill');
+    const mobMpText = document.getElementById('mobile-mp-text');
+    if (mobMpFill && mobMpText) {
+      mobMpFill.style.width = `${mpPct}%`;
+      mobMpText.textContent = `MP ${Math.floor(p.mp)}/${p.stats.mp}`;
+    }
+
     // 4. Context Interaction Prompt Banner ([E] Speak with High Elder Vaelen / Enter Portal / Open Vault)
     const target = this.game.getNearestInteractiveTarget();
     const banner = document.getElementById('interact-banner');
     if (target) {
       banner.style.display = 'block';
-      banner.textContent = target.label;
+      banner.textContent = `✋ ${target.label}`;
     } else {
       banner.style.display = 'none';
     }
@@ -319,6 +599,11 @@ export class HudController {
       maxedBadge.textContent = `${p.maxedCount}/8 MAXED`;
       maxedBadge.style.color = p.maxedCount === 8 ? '#facc15' : '#93c5fd';
     }
+    const mobileBagBadge = document.getElementById('mobile-bag-badge');
+    if (mobileBagBadge) {
+      mobileBagBadge.textContent = `${p.maxedCount}/8`;
+      mobileBagBadge.style.color = p.maxedCount === 8 ? '#facc15' : '#93c5fd';
+    }
 
     if (statsGrid) {
       statsGrid.innerHTML = STAT_NAMES.map((st) => {
@@ -358,6 +643,15 @@ export class HudController {
         return this.renderSlotHtml(itemId, `${idx + 1}`, 'inventory', idx);
       }).join('');
       this.bindSlotEvents(invContainer, 'inventory');
+    }
+
+    // 3b. Update Mobile 4-Slot Quick-Belt (First 4 backpack slots for 1-tap potions/swaps)
+    const quickBelt = document.getElementById('mobile-quick-belt');
+    if (quickBelt) {
+      quickBelt.innerHTML = p.inventory.slice(0, 4).map((itemId, idx) => {
+        return this.renderSlotHtml(itemId, `${idx + 1}`, 'inventory', idx);
+      }).join('');
+      this.bindSlotEvents(quickBelt, 'inventory');
     }
 
     // 4. Update Nearby Party Roster
@@ -444,8 +738,10 @@ export class HudController {
       const rawLeft = flipLeft ? screenX - popupWidth - 24 : screenX + 24;
       const rawTop = screenY - 48;
 
+      // On mobile screens, keep the floating chest popup above the bottom virtual controls
+      const bottomMargin = cw <= 960 ? 175 : 12;
       const clampedLeft = Math.max(12, Math.min(cw - popupWidth - 12, Math.round(rawLeft)));
-      const clampedTop = Math.max(54, Math.min(ch - popupHeight - 12, Math.round(rawTop)));
+      const clampedTop = Math.max(54, Math.min(ch - popupHeight - bottomMargin, Math.round(rawTop)));
 
       worldPopup.style.display = 'block';
       worldPopup.style.left = `${clampedLeft}px`;

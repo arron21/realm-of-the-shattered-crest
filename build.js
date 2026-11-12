@@ -41,7 +41,7 @@ function buildHtmlBundle() {
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Realm of the Shattered Crest — Top-Down Bullet-Hell MMO Action RPG</title>
   <meta name="description" content="Rebuild the shattered Holy Crest piece by piece across five fallen realms to vanquish Malakor, the Evil Bane in this top-down bullet-hell MMO Action RPG." />
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
@@ -59,33 +59,46 @@ ${css}
 
       <!-- TOP-LEFT LIFE HEARTS, HOLY CREST SHARDS & CURRENCY HUD -->
       <div id="top-left-hud">
-        <div class="hud-card">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:5px;">
+        <div class="hud-card" id="status-hud-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px;">
             <strong id="hud-zone-title" style="font-size:12px;color:#fde047;letter-spacing:0.03em;">The Radiant Sanctuary Hub</strong>
             <span id="hud-star-badge" style="font-size:11.5px;font-weight:900;color:#93c5fd;" title="Class Star Rank">★ 2</span>
           </div>
           <div id="life-hearts-row" title="Life Heart Containers (Each Heart = 50 HP)"></div>
-          <div style="display:flex;align-items:center;gap:12px;margin-top:6px;font-size:11px;font-weight:800;flex-wrap:wrap;">
-            <span id="hud-crest-badge" style="color:#22d3ee;cursor:pointer;" title="Click to inspect the 5 Shards of the Holy Crest & Elder Vaelen's Lore">✨ <span id="hud-crest-shards">0/5</span> Crest Shards</span>
-            <span style="color:#4ade80;" title="Sunshards (Collected from Bushes, Urns & Enemies)">◆ <span id="hud-sunshards">150</span> Sunshards</span>
-            <span style="color:#facc15;" title="Persistent Account Fame">★ <span id="hud-account-fame">250</span> Fame</span>
+          <!-- Compact Mobile HP/MP Live Bars (Shown on Mobile when Drawer is Closed) -->
+          <div id="mobile-status-bars">
+            <div class="mobile-mini-bar">
+              <div id="mobile-hp-fill" class="mobile-mini-fill" style="width:100%;background:linear-gradient(90deg,#dc2626,#ef4444);"></div>
+              <span id="mobile-hp-text" class="mobile-mini-label">HP 200/200</span>
+            </div>
+            <div class="mobile-mini-bar">
+              <div id="mobile-mp-fill" class="mobile-mini-fill" style="width:100%;background:linear-gradient(90deg,#2563eb,#3b82f6);"></div>
+              <span id="mobile-mp-text" class="mobile-mini-label">MP 100/100</span>
+            </div>
+          </div>
+          <div id="hud-currencies-row" style="display:flex;align-items:center;gap:10px;margin-top:5px;font-size:10.5px;font-weight:800;flex-wrap:wrap;">
+            <span id="hud-crest-badge" style="color:#22d3ee;cursor:pointer;" title="Inspect the 5 Shards of the Holy Crest & Elder Vaelen's Lore">✨ <span id="hud-crest-shards">0/5</span> Shards</span>
+            <span style="color:#4ade80;" title="Sunshards (Collected from Bushes, Urns & Enemies)">◆ <span id="hud-sunshards">150</span></span>
+            <span style="color:#facc15;" title="Persistent Account Fame">★ <span id="hud-account-fame">250</span></span>
           </div>
         </div>
 
-        <div class="hud-card" style="padding:6px 10px;font-size:10.5px;color:#cbd5e1;line-height:1.45;">
+        <div class="hud-card desktop-controls-legend" style="padding:6px 10px;font-size:10.5px;color:#cbd5e1;line-height:1.45;">
           <div><strong style="color:#fde047;">L-Click:</strong> Blade Slash + Beam <em>(Hold: 360° Spin!)</em></div>
           <div><strong style="color:#38bdf8;">R-Click:</strong> Shield Block &amp; <strong>Perfect Parry</strong> | <strong style="color:#4ade80;">Shift:</strong> Roll</div>
           <div><strong style="color:#f472b6;">Q:</strong> Sacred Relic | <strong style="color:#22d3ee;">E / L:</strong> Elder &amp; Lore | <strong style="color:#60a5fa;">R:</strong> Sanctuary</div>
         </div>
       </div>
 
-      <!-- TOP-CENTER ACTION BAR (MODALS & AUDIO) -->
+      <!-- TOP-CENTER ACTION BAR (MODALS, DRAWER & AUDIO) -->
       <nav id="top-action-bar" aria-label="Sanctuary Modals and Audio">
-        <button id="btn-open-elder" class="hud-btn primary-gold" title="Speak with High Elder Vaelen — Lore & Holy Crest Shards (Hotkey: L)">📜 Elder &amp; Lore</button>
-        <button id="btn-open-classes" class="hud-btn" title="Switch or Inspect 5 Hero Classes">🛡️ Classes (5)</button>
-        <button id="btn-open-vault" class="hud-btn" title="Open Persistent Account Vault & Potion Storage">📦 Vault</button>
-        <button id="btn-open-forge" class="hud-btn" title="Craft Stat Potions & Legendary UT White Bag Relics">⚒️ Forge</button>
-        <button id="btn-toggle-audio" class="hud-btn" title="Toggle 16-Bit Chiptune Audio">🔊 Audio</button>
+        <button id="btn-toggle-drawer" class="hud-btn mobile-only-btn primary-gold" title="Open Hero Stats, Radar, Gear & Backpack">🎒 <span class="btn-label">Gear</span> <span id="mobile-bag-badge">0/8</span></button>
+        <button id="btn-open-elder" class="hud-btn primary-gold" title="Speak with High Elder Vaelen — Lore & Holy Crest Shards (Hotkey: L)">📜 <span class="btn-label">Lore</span></button>
+        <button id="btn-open-classes" class="hud-btn" title="Switch or Inspect 5 Hero Classes">🛡️ <span class="btn-label">Classes</span></button>
+        <button id="btn-open-vault" class="hud-btn" title="Open Persistent Account Vault & Potion Storage">📦 <span class="btn-label">Vault</span></button>
+        <button id="btn-open-forge" class="hud-btn" title="Craft Stat Potions & Legendary UT White Bag Relics">⚒️ <span class="btn-label">Forge</span></button>
+        <button id="btn-toggle-chat" class="hud-btn mobile-only-btn" title="Toggle Realm Chat">💬</button>
+        <button id="btn-toggle-audio" class="hud-btn" title="Toggle 16-Bit Chiptune Audio">🔊</button>
       </nav>
 
       <!-- INTERACT PROMPT BANNER -->
@@ -98,25 +111,71 @@ ${css}
           <button id="world-loot-take-all" type="button" title="Loot or Drink All Items">Loot All</button>
         </div>
         <div id="world-loot-grid" class="item-grid-4"></div>
-        <div class="world-loot-hint">Click item to loot/drink • Auto-closes when moving away</div>
+        <div class="world-loot-hint">Tap item to loot/drink • Auto-closes when moving away</div>
+      </div>
+
+      <!-- MOBILE QUICK-BELT (First 4 Backpack Slots Accessible with One Tap!) -->
+      <div id="mobile-quick-belt" aria-label="Quick Backpack Belt"></div>
+
+      <!-- MOBILE TWIN-STICK VIRTUAL TOUCH CONTROLS (Left Move Stick + Right Aim/Attack & Skills) -->
+      <div id="mobile-touch-controls" aria-label="Mobile Touch Controls">
+        <!-- Left Thumb: 360° Analog Movement Joystick -->
+        <div id="touch-joystick-zone">
+          <div id="joystick-base">
+            <div id="joystick-knob"></div>
+          </div>
+        </div>
+
+        <!-- Right Thumb: Twin-Stick Attack/Aim Pad + Radial Skill Arc -->
+        <div id="touch-action-cluster">
+          <button id="btn-touch-relic" class="touch-skill-btn relic-btn" type="button" aria-label="Use Sacred Relic">
+            <span class="touch-icon">✨</span>
+            <span class="touch-sub">RELIC</span>
+          </button>
+          <button id="btn-touch-shield" class="touch-skill-btn shield-btn" type="button" aria-label="Raise Shield or Perfect Parry">
+            <span class="touch-icon">🛡️</span>
+            <span class="touch-sub">PARRY</span>
+          </button>
+          <button id="btn-touch-dash" class="touch-skill-btn dash-btn" type="button" aria-label="Dodge Roll">
+            <span class="touch-icon">💨</span>
+            <span class="touch-sub">DASH</span>
+          </button>
+          <button id="btn-touch-pot" class="touch-skill-btn pot-btn" type="button" aria-label="Lift or Throw Urn">
+            <span class="touch-icon">🏺</span>
+            <span class="touch-sub">URN</span>
+          </button>
+          <div id="btn-touch-attack" role="button" aria-label="Hold or Drag to Aim and Attack">
+            <div id="attack-stick-knob">
+              <span class="attack-icon">⚔️</span>
+              <span class="attack-sub">SLASH</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- BOTTOM-LEFT MMO CHAT & CALLOUTS -->
       <aside id="bottom-left-chat" aria-label="MMO Realm Chat">
         <div id="chat-messages"></div>
         <div id="chat-input-row">
-          <input id="chat-input" type="text" placeholder="Press Enter to chat or type /elder, /glands, /boss, /max88, /whitebag..." />
+          <input id="chat-input" type="text" placeholder="Tap to chat or type /elder, /glands, /boss, /max88, /whitebag..." />
         </div>
       </aside>
     </section>
 
-    <!-- RIGHT-SIDE SIDEBAR -->
+    <!-- MOBILE DRAWER BACKDROP SCRIM -->
+    <div id="mobile-drawer-backdrop"></div>
+
+    <!-- RIGHT-SIDE SIDEBAR (SLIDE-OVER DRAWER ON MOBILE PHONES) -->
     <aside id="rotmg-sidebar" aria-label="Character HUD and Inventory">
+      <div id="mobile-drawer-header">
+        <strong style="color:#fde047;font-size:13px;letter-spacing:0.04em;">🎒 HERO, RADAR &amp; BACKPACK</strong>
+        <button id="btn-close-drawer" class="hud-btn" type="button">✕ Close</button>
+      </div>
       <!-- 1. MINIMAP -->
       <div class="sidebar-section">
         <div class="section-header">
           <span>Realm Radar</span>
-          <span style="color:#38bdf8;font-size:9.5px;">Click Green Dot to TP</span>
+          <span style="color:#38bdf8;font-size:9.5px;">Tap Green Dot to TP</span>
         </div>
         <div id="minimap-wrap">
           <canvas id="minimap-canvas" width="268" height="148"></canvas>
@@ -170,7 +229,7 @@ ${css}
       <div class="sidebar-section">
         <div class="section-header">
           <span>Backpack (Keys 1–8)</span>
-          <span style="color:#94a3b8;font-size:9.5px;">Click to Drink/Equip</span>
+          <span style="color:#94a3b8;font-size:9.5px;">Tap to Drink/Equip</span>
         </div>
         <div id="inventory-grid" class="item-grid-4"></div>
       </div>

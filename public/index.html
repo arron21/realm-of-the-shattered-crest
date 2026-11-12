@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Realm of the Shattered Crest — Top-Down Bullet-Hell MMO Action RPG</title>
   <meta name="description" content="Rebuild the shattered Holy Crest piece by piece across five fallen realms to vanquish Malakor, the Evil Bane in this top-down bullet-hell MMO Action RPG." />
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
@@ -48,9 +48,11 @@ html, body {
   position: relative;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   display: grid;
   grid-template-columns: 1fr 296px;
   background: var(--bg-obsidian);
+  overflow: hidden;
 }
 
 /* Main Game Viewport */
@@ -60,6 +62,7 @@ html, body {
   height: 100%;
   overflow: hidden;
   background: #060911;
+  touch-action: none;
 }
 
 #game-canvas {
@@ -67,6 +70,7 @@ html, body {
   width: 100%;
   height: 100%;
   cursor: crosshair;
+  touch-action: none;
 }
 
 /* Top-Left Life Heart Containers & Zone Banner */
@@ -605,15 +609,542 @@ html, body {
   transform: translateY(-2px);
 }
 
-@media (max-width: 820px) {
+/* ==========================================================================
+   MOBILE PHONE & TOUCH-FIRST UI/UX REIMAGINATION
+   (Twin-Stick Joysticks, Radial Skill Arc, Quick-Belt, Slide-Over Drawer)
+   ========================================================================== */
+
+#mobile-status-bars {
+  display: none;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 5px;
+}
+
+.mobile-mini-bar {
+  position: relative;
+  width: 100%;
+  height: 13px;
+  background: #060a12;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.mobile-mini-fill {
+  height: 100%;
+  transition: width 0.08s linear;
+}
+
+.mobile-mini-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 800;
+  color: #f8fafc;
+  text-shadow: 0 1px 2px #000;
+  letter-spacing: 0.03em;
+}
+
+.mobile-only-btn {
+  display: none;
+}
+
+#mobile-bag-badge {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(250, 204, 21, 0.5);
+  color: #fde047;
+  font-size: 9.5px;
+  padding: 0 5px;
+  border-radius: 4px;
+}
+
+#mobile-drawer-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 4px 8px;
+  border-bottom: 1px solid var(--border-gold);
+  margin-bottom: 2px;
+}
+
+#mobile-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 8, 15, 0.68);
+  backdrop-filter: blur(2px);
+  z-index: 48;
+  display: none;
+}
+
+#mobile-drawer-backdrop.open {
+  display: block;
+}
+
+/* Mobile 4-Slot Quick Belt (Bottom-Center of Viewport) */
+#mobile-quick-belt {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: none;
+  align-items: center;
+  gap: 6px;
+  background: rgba(11, 18, 31, 0.88);
+  border: 1.5px solid var(--border-gold);
+  border-radius: 10px;
+  padding: 5px 7px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.75);
+  z-index: 22;
+  backdrop-filter: blur(4px);
+}
+
+#mobile-quick-belt .item-slot {
+  width: 44px;
+  height: 44px;
+  border-radius: 7px;
+}
+
+#mobile-quick-belt .item-slot img {
+  width: 32px;
+  height: 32px;
+}
+
+/* Mobile Twin-Stick Touch Controls Overlay */
+#mobile-touch-controls {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 20;
+  display: none;
+}
+
+/* Left Thumb: Virtual Analog Joystick */
+#touch-joystick-zone {
+  position: absolute;
+  left: 12px;
+  bottom: 14px;
+  width: 148px;
+  height: 148px;
+  pointer-events: auto;
+  touch-action: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#joystick-base {
+  position: relative;
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(30, 41, 59, 0.55) 0%, rgba(9, 14, 23, 0.78) 100%);
+  border: 2px solid rgba(250, 204, 21, 0.42);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.65), inset 0 0 14px rgba(250, 204, 21, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#joystick-knob {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fde047, #ca8a04);
+  border: 2px solid #fef08a;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
+  transform: translate(0px, 0px);
+  transition: transform 0.04s linear;
+}
+
+/* Right Thumb: Twin-Stick Attack Pad + Radial Skill Arc */
+#touch-action-cluster {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  width: 176px;
+  height: 176px;
+  pointer-events: none;
+}
+
+#btn-touch-attack {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  width: 82px;
+  height: 82px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(234, 179, 8, 0.32) 0%, rgba(15, 23, 42, 0.90) 100%);
+  border: 2.5px solid #facc15;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.8), 0 0 16px rgba(250, 204, 21, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  touch-action: none;
+  cursor: pointer;
+}
+
+#btn-touch-attack.active {
+  background: radial-gradient(circle, rgba(250, 204, 21, 0.52) 0%, rgba(23, 37, 84, 0.95) 100%);
+  box-shadow: 0 0 24px rgba(250, 204, 21, 0.65);
+}
+
+#attack-stick-knob {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  transform: translate(0px, 0px);
+}
+
+.attack-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.attack-sub {
+  font-size: 8.5px;
+  font-weight: 900;
+  color: #fde047;
+  letter-spacing: 0.06em;
+  margin-top: 2px;
+}
+
+.touch-skill-btn {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(13, 20, 33, 0.92);
+  border: 2px solid rgba(148, 163, 184, 0.45);
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.75);
+  color: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  touch-action: none;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.1s ease, background 0.12s ease;
+}
+
+.touch-skill-btn:active,
+.touch-skill-btn.active {
+  transform: scale(0.92);
+}
+
+.touch-icon {
+  font-size: 15px;
+  line-height: 1;
+}
+
+.touch-sub {
+  font-size: 7.5px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  margin-top: 1px;
+}
+
+/* Radial arc positions around the bottom-right Attack button */
+#btn-touch-relic {
+  right: 106px;
+  bottom: 12px;
+  border-color: #f472b6;
+  color: #fbcfe8;
+}
+
+#btn-touch-shield {
+  right: 96px;
+  bottom: 68px;
+  border-color: #38bdf8;
+  color: #bae6fd;
+}
+
+#btn-touch-dash {
+  right: 52px;
+  bottom: 106px;
+  border-color: #4ade80;
+  color: #bbf7d0;
+}
+
+#btn-touch-pot {
+  right: 2px;
+  bottom: 104px;
+  border-color: #fb923c;
+  color: #fed7aa;
+  width: 44px;
+  height: 44px;
+}
+
+/* Responsive Mobile & Tablet Layout (<= 960px or Touch Devices) */
+@media (max-width: 960px), (pointer: coarse) {
   #app-root {
-    grid-template-columns: 1fr 240px;
+    grid-template-columns: 1fr;
   }
+
+  .desktop-controls-legend {
+    display: none !important;
+  }
+
+  #mobile-status-bars {
+    display: flex;
+  }
+
+  .mobile-only-btn {
+    display: inline-flex;
+  }
+
+  #mobile-drawer-header {
+    display: flex;
+  }
+
+  #mobile-quick-belt {
+    display: flex;
+  }
+
+  #mobile-touch-controls {
+    display: block;
+  }
+
+  /* Slide-Over Character, Radar, Stats & Backpack Drawer */
   #rotmg-sidebar {
-    width: 240px;
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(320px, 88vw);
+    height: 100dvh;
+    z-index: 55;
+    transform: translateX(105%);
+    transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: -12px 0 36px rgba(0, 0, 0, 0.85);
+    padding-top: max(10px, env(safe-area-inset-top));
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
   }
+
+  #rotmg-sidebar.drawer-open {
+    transform: translateX(0);
+  }
+
+  /* Top HUD adaptation for phone screens */
+  #top-left-hud {
+    top: max(8px, env(safe-area-inset-top));
+    left: max(8px, env(safe-area-inset-left));
+    max-width: calc(100vw - 16px);
+    z-index: 18;
+  }
+
+  #status-hud-card {
+    padding: 6px 9px;
+    max-width: 215px;
+  }
+
+  #hud-zone-title {
+    font-size: 10.5px !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 145px;
+  }
+
+  #life-hearts-row {
+    gap: 2px;
+    max-width: 195px;
+  }
+
+  .life-heart {
+    width: 13px;
+    height: 13px;
+  }
+
+  #top-action-bar {
+    top: max(8px, env(safe-area-inset-top));
+    left: auto;
+    right: max(8px, env(safe-area-inset-right));
+    transform: none;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    max-width: calc(100vw - 235px);
+    padding: 4px 6px;
+    gap: 4px;
+  }
+
+  .hud-btn {
+    padding: 5px 7px;
+    font-size: 10.5px;
+  }
+
+  /* Floating Interact Banner positioned cleanly above Quick-Belt */
+  #interact-banner {
+    bottom: 74px;
+    padding: 8px 14px;
+    font-size: 12px;
+    max-width: calc(100vw - 160px);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Collapsible Chat Overlay on Mobile (Doesn't block left thumb joystick!) */
   #bottom-left-chat {
-    width: 270px;
+    bottom: 172px;
+    left: 10px;
+    width: min(330px, calc(100vw - 20px));
+    display: none;
+    z-index: 28;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.85);
+  }
+
+  #bottom-left-chat.chat-open {
+    display: flex;
+  }
+
+  /* Modals fit mobile phones cleanly */
+  .modal-backdrop {
+    padding: 8px;
+  }
+
+  .modal-card {
+    width: 100% !important;
+    max-width: 96vw;
+    max-height: 90dvh;
+    padding: 14px;
+  }
+}
+
+/* Portrait Mobile Phones (<= 560px width) */
+@media (max-width: 560px) {
+  #top-left-hud {
+    top: max(6px, env(safe-area-inset-top));
+    left: 6px;
+    right: 6px;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  #status-hud-card {
+    max-width: 100%;
+    width: 100%;
+    padding: 5px 8px;
+  }
+
+  #top-action-bar {
+    top: auto;
+    bottom: 168px;
+    right: 6px;
+    left: 6px;
+    max-width: none;
+    justify-content: space-between;
+    background: rgba(11, 18, 31, 0.88);
+    overflow-x: auto;
+  }
+
+  #top-action-bar .btn-label {
+    display: none;
+  }
+
+  #top-action-bar #btn-toggle-drawer .btn-label {
+    display: inline;
+  }
+
+  .hud-btn {
+    padding: 6px 9px;
+    font-size: 11.5px;
+  }
+
+  #mobile-quick-belt {
+    bottom: 10px;
+    padding: 4px 5px;
+    gap: 4px;
+  }
+
+  #mobile-quick-belt .item-slot {
+    width: 38px;
+    height: 38px;
+  }
+
+  #mobile-quick-belt .item-slot img {
+    width: 28px;
+    height: 28px;
+  }
+
+  #touch-joystick-zone {
+    left: 6px;
+    bottom: 8px;
+    width: 122px;
+    height: 122px;
+  }
+
+  #joystick-base {
+    width: 96px;
+    height: 96px;
+  }
+
+  #joystick-knob {
+    width: 40px;
+    height: 40px;
+  }
+
+  #touch-action-cluster {
+    right: 6px;
+    bottom: 8px;
+    width: 152px;
+    height: 152px;
+  }
+
+  #btn-touch-attack {
+    width: 72px;
+    height: 72px;
+    right: 4px;
+    bottom: 4px;
+  }
+
+  #btn-touch-relic {
+    right: 90px;
+    bottom: 8px;
+    width: 44px;
+    height: 44px;
+  }
+
+  #btn-touch-shield {
+    right: 82px;
+    bottom: 58px;
+    width: 44px;
+    height: 44px;
+  }
+
+  #btn-touch-dash {
+    right: 44px;
+    bottom: 92px;
+    width: 44px;
+    height: 44px;
+  }
+
+  #btn-touch-pot {
+    right: 0px;
+    bottom: 90px;
+    width: 40px;
+    height: 40px;
+  }
+
+  #interact-banner {
+    bottom: 214px;
+    max-width: calc(100vw - 24px);
+  }
+
+  #bottom-left-chat {
+    bottom: 214px;
+    left: 6px;
+    right: 6px;
+    width: auto;
   }
 }
 
@@ -629,33 +1160,46 @@ html, body {
 
       <!-- TOP-LEFT LIFE HEARTS, HOLY CREST SHARDS & CURRENCY HUD -->
       <div id="top-left-hud">
-        <div class="hud-card">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:5px;">
+        <div class="hud-card" id="status-hud-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px;">
             <strong id="hud-zone-title" style="font-size:12px;color:#fde047;letter-spacing:0.03em;">The Radiant Sanctuary Hub</strong>
             <span id="hud-star-badge" style="font-size:11.5px;font-weight:900;color:#93c5fd;" title="Class Star Rank">★ 2</span>
           </div>
           <div id="life-hearts-row" title="Life Heart Containers (Each Heart = 50 HP)"></div>
-          <div style="display:flex;align-items:center;gap:12px;margin-top:6px;font-size:11px;font-weight:800;flex-wrap:wrap;">
-            <span id="hud-crest-badge" style="color:#22d3ee;cursor:pointer;" title="Click to inspect the 5 Shards of the Holy Crest & Elder Vaelen's Lore">✨ <span id="hud-crest-shards">0/5</span> Crest Shards</span>
-            <span style="color:#4ade80;" title="Sunshards (Collected from Bushes, Urns & Enemies)">◆ <span id="hud-sunshards">150</span> Sunshards</span>
-            <span style="color:#facc15;" title="Persistent Account Fame">★ <span id="hud-account-fame">250</span> Fame</span>
+          <!-- Compact Mobile HP/MP Live Bars (Shown on Mobile when Drawer is Closed) -->
+          <div id="mobile-status-bars">
+            <div class="mobile-mini-bar">
+              <div id="mobile-hp-fill" class="mobile-mini-fill" style="width:100%;background:linear-gradient(90deg,#dc2626,#ef4444);"></div>
+              <span id="mobile-hp-text" class="mobile-mini-label">HP 200/200</span>
+            </div>
+            <div class="mobile-mini-bar">
+              <div id="mobile-mp-fill" class="mobile-mini-fill" style="width:100%;background:linear-gradient(90deg,#2563eb,#3b82f6);"></div>
+              <span id="mobile-mp-text" class="mobile-mini-label">MP 100/100</span>
+            </div>
+          </div>
+          <div id="hud-currencies-row" style="display:flex;align-items:center;gap:10px;margin-top:5px;font-size:10.5px;font-weight:800;flex-wrap:wrap;">
+            <span id="hud-crest-badge" style="color:#22d3ee;cursor:pointer;" title="Inspect the 5 Shards of the Holy Crest & Elder Vaelen's Lore">✨ <span id="hud-crest-shards">0/5</span> Shards</span>
+            <span style="color:#4ade80;" title="Sunshards (Collected from Bushes, Urns & Enemies)">◆ <span id="hud-sunshards">150</span></span>
+            <span style="color:#facc15;" title="Persistent Account Fame">★ <span id="hud-account-fame">250</span></span>
           </div>
         </div>
 
-        <div class="hud-card" style="padding:6px 10px;font-size:10.5px;color:#cbd5e1;line-height:1.45;">
+        <div class="hud-card desktop-controls-legend" style="padding:6px 10px;font-size:10.5px;color:#cbd5e1;line-height:1.45;">
           <div><strong style="color:#fde047;">L-Click:</strong> Blade Slash + Beam <em>(Hold: 360° Spin!)</em></div>
           <div><strong style="color:#38bdf8;">R-Click:</strong> Shield Block &amp; <strong>Perfect Parry</strong> | <strong style="color:#4ade80;">Shift:</strong> Roll</div>
           <div><strong style="color:#f472b6;">Q:</strong> Sacred Relic | <strong style="color:#22d3ee;">E / L:</strong> Elder &amp; Lore | <strong style="color:#60a5fa;">R:</strong> Sanctuary</div>
         </div>
       </div>
 
-      <!-- TOP-CENTER ACTION BAR (MODALS & AUDIO) -->
+      <!-- TOP-CENTER ACTION BAR (MODALS, DRAWER & AUDIO) -->
       <nav id="top-action-bar" aria-label="Sanctuary Modals and Audio">
-        <button id="btn-open-elder" class="hud-btn primary-gold" title="Speak with High Elder Vaelen — Lore & Holy Crest Shards (Hotkey: L)">📜 Elder &amp; Lore</button>
-        <button id="btn-open-classes" class="hud-btn" title="Switch or Inspect 5 Hero Classes">🛡️ Classes (5)</button>
-        <button id="btn-open-vault" class="hud-btn" title="Open Persistent Account Vault & Potion Storage">📦 Vault</button>
-        <button id="btn-open-forge" class="hud-btn" title="Craft Stat Potions & Legendary UT White Bag Relics">⚒️ Forge</button>
-        <button id="btn-toggle-audio" class="hud-btn" title="Toggle 16-Bit Chiptune Audio">🔊 Audio</button>
+        <button id="btn-toggle-drawer" class="hud-btn mobile-only-btn primary-gold" title="Open Hero Stats, Radar, Gear & Backpack">🎒 <span class="btn-label">Gear</span> <span id="mobile-bag-badge">0/8</span></button>
+        <button id="btn-open-elder" class="hud-btn primary-gold" title="Speak with High Elder Vaelen — Lore & Holy Crest Shards (Hotkey: L)">📜 <span class="btn-label">Lore</span></button>
+        <button id="btn-open-classes" class="hud-btn" title="Switch or Inspect 5 Hero Classes">🛡️ <span class="btn-label">Classes</span></button>
+        <button id="btn-open-vault" class="hud-btn" title="Open Persistent Account Vault & Potion Storage">📦 <span class="btn-label">Vault</span></button>
+        <button id="btn-open-forge" class="hud-btn" title="Craft Stat Potions & Legendary UT White Bag Relics">⚒️ <span class="btn-label">Forge</span></button>
+        <button id="btn-toggle-chat" class="hud-btn mobile-only-btn" title="Toggle Realm Chat">💬</button>
+        <button id="btn-toggle-audio" class="hud-btn" title="Toggle 16-Bit Chiptune Audio">🔊</button>
       </nav>
 
       <!-- INTERACT PROMPT BANNER -->
@@ -668,25 +1212,71 @@ html, body {
           <button id="world-loot-take-all" type="button" title="Loot or Drink All Items">Loot All</button>
         </div>
         <div id="world-loot-grid" class="item-grid-4"></div>
-        <div class="world-loot-hint">Click item to loot/drink • Auto-closes when moving away</div>
+        <div class="world-loot-hint">Tap item to loot/drink • Auto-closes when moving away</div>
+      </div>
+
+      <!-- MOBILE QUICK-BELT (First 4 Backpack Slots Accessible with One Tap!) -->
+      <div id="mobile-quick-belt" aria-label="Quick Backpack Belt"></div>
+
+      <!-- MOBILE TWIN-STICK VIRTUAL TOUCH CONTROLS (Left Move Stick + Right Aim/Attack & Skills) -->
+      <div id="mobile-touch-controls" aria-label="Mobile Touch Controls">
+        <!-- Left Thumb: 360° Analog Movement Joystick -->
+        <div id="touch-joystick-zone">
+          <div id="joystick-base">
+            <div id="joystick-knob"></div>
+          </div>
+        </div>
+
+        <!-- Right Thumb: Twin-Stick Attack/Aim Pad + Radial Skill Arc -->
+        <div id="touch-action-cluster">
+          <button id="btn-touch-relic" class="touch-skill-btn relic-btn" type="button" aria-label="Use Sacred Relic">
+            <span class="touch-icon">✨</span>
+            <span class="touch-sub">RELIC</span>
+          </button>
+          <button id="btn-touch-shield" class="touch-skill-btn shield-btn" type="button" aria-label="Raise Shield or Perfect Parry">
+            <span class="touch-icon">🛡️</span>
+            <span class="touch-sub">PARRY</span>
+          </button>
+          <button id="btn-touch-dash" class="touch-skill-btn dash-btn" type="button" aria-label="Dodge Roll">
+            <span class="touch-icon">💨</span>
+            <span class="touch-sub">DASH</span>
+          </button>
+          <button id="btn-touch-pot" class="touch-skill-btn pot-btn" type="button" aria-label="Lift or Throw Urn">
+            <span class="touch-icon">🏺</span>
+            <span class="touch-sub">URN</span>
+          </button>
+          <div id="btn-touch-attack" role="button" aria-label="Hold or Drag to Aim and Attack">
+            <div id="attack-stick-knob">
+              <span class="attack-icon">⚔️</span>
+              <span class="attack-sub">SLASH</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- BOTTOM-LEFT MMO CHAT & CALLOUTS -->
       <aside id="bottom-left-chat" aria-label="MMO Realm Chat">
         <div id="chat-messages"></div>
         <div id="chat-input-row">
-          <input id="chat-input" type="text" placeholder="Press Enter to chat or type /elder, /glands, /boss, /max88, /whitebag..." />
+          <input id="chat-input" type="text" placeholder="Tap to chat or type /elder, /glands, /boss, /max88, /whitebag..." />
         </div>
       </aside>
     </section>
 
-    <!-- RIGHT-SIDE SIDEBAR -->
+    <!-- MOBILE DRAWER BACKDROP SCRIM -->
+    <div id="mobile-drawer-backdrop"></div>
+
+    <!-- RIGHT-SIDE SIDEBAR (SLIDE-OVER DRAWER ON MOBILE PHONES) -->
     <aside id="rotmg-sidebar" aria-label="Character HUD and Inventory">
+      <div id="mobile-drawer-header">
+        <strong style="color:#fde047;font-size:13px;letter-spacing:0.04em;">🎒 HERO, RADAR &amp; BACKPACK</strong>
+        <button id="btn-close-drawer" class="hud-btn" type="button">✕ Close</button>
+      </div>
       <!-- 1. MINIMAP -->
       <div class="sidebar-section">
         <div class="section-header">
           <span>Realm Radar</span>
-          <span style="color:#38bdf8;font-size:9.5px;">Click Green Dot to TP</span>
+          <span style="color:#38bdf8;font-size:9.5px;">Tap Green Dot to TP</span>
         </div>
         <div id="minimap-wrap">
           <canvas id="minimap-canvas" width="268" height="148"></canvas>
@@ -740,7 +1330,7 @@ html, body {
       <div class="sidebar-section">
         <div class="section-header">
           <span>Backpack (Keys 1–8)</span>
-          <span style="color:#94a3b8;font-size:9.5px;">Click to Drink/Equip</span>
+          <span style="color:#94a3b8;font-size:9.5px;">Tap to Drink/Equip</span>
         </div>
         <div id="inventory-grid" class="item-grid-4"></div>
       </div>
@@ -3697,9 +4287,17 @@ class GameEngine {
     this.realmEventsRemaining = 3;
     this.activeQuestEnemy = null;
 
-    // Input State
+    // Input State (Desktop Keyboard/Mouse + Mobile Twin-Stick Touch)
     this.keys = {};
-    this.mouse = { x: 0, y: 0, worldX: 0, worldY: 0, leftDown: false, rightDown: false };
+    this.mouse = { x: 0, y: 0, worldX: 0, worldY: 0, leftDown: false, rightDown: false, hasMoved: false };
+    this.touch = {
+      active: false,
+      moveX: 0,
+      moveY: 0,
+      aimActive: false,
+      aimAngle: 0,
+      attacking: false
+    };
     this.autoFire = false;
     this.cameraShake = 0;
 
@@ -5178,23 +5776,41 @@ class GameEngine {
       return;
     }
 
-    // Aim Angle toward Mouse World Position
-    this.mouse.worldX = p.x + (this.mouse.x - this.canvas.width / 2) / TILE_SIZE;
-    this.mouse.worldY = p.y + (this.mouse.y - this.canvas.height / 2) / TILE_SIZE;
-    p.aimAngle = Math.atan2(this.mouse.worldY - p.y, this.mouse.worldX - p.x);
-
-    // Movement Vector (WASD / Arrow Keys)
+    // Movement Vector (WASD / Arrow Keys OR Mobile Left Analog Joystick)
     let mx = 0;
     let my = 0;
-    if (this.keys['KeyW'] || this.keys['ArrowUp']) my -= 1;
-    if (this.keys['KeyS'] || this.keys['ArrowDown']) my += 1;
-    if (this.keys['KeyA'] || this.keys['ArrowLeft']) mx -= 1;
-    if (this.keys['KeyD'] || this.keys['ArrowRight']) mx += 1;
+    if (this.touch.moveX !== 0 || this.touch.moveY !== 0) {
+      mx = this.touch.moveX;
+      my = this.touch.moveY;
+    } else {
+      if (this.keys['KeyW'] || this.keys['ArrowUp']) my -= 1;
+      if (this.keys['KeyS'] || this.keys['ArrowDown']) my += 1;
+      if (this.keys['KeyA'] || this.keys['ArrowLeft']) mx -= 1;
+      if (this.keys['KeyD'] || this.keys['ArrowRight']) mx += 1;
 
-    if (mx !== 0 || my !== 0) {
-      const len = Math.hypot(mx, my);
-      mx /= len;
-      my /= len;
+      if (mx !== 0 || my !== 0) {
+        const len = Math.hypot(mx, my);
+        mx /= len;
+        my /= len;
+      }
+    }
+
+    // Aim Angle: Mobile Right Aim Stick / Auto-Aim OR Desktop Mouse World Position
+    if (this.touch.aimActive) {
+      p.aimAngle = this.touch.aimAngle;
+    } else if (this.touch.active) {
+      const autoAngle = this.findAutoAimAngle();
+      if (autoAngle !== null) {
+        p.aimAngle = autoAngle;
+      } else if (mx !== 0 || my !== 0) {
+        p.aimAngle = Math.atan2(my, mx);
+      }
+    } else if (this.mouse.hasMoved) {
+      this.mouse.worldX = p.x + (this.mouse.x - this.canvas.width / 2) / TILE_SIZE;
+      this.mouse.worldY = p.y + (this.mouse.y - this.canvas.height / 2) / TILE_SIZE;
+      p.aimAngle = Math.atan2(this.mouse.worldY - p.y, this.mouse.worldX - p.x);
+    } else if (mx !== 0 || my !== 0) {
+      p.aimAngle = Math.atan2(my, mx);
     }
 
     // Speed calculation from RotMG SPD stat: (4.2 + 5.6 * (SPD / 75)) tiles/sec
@@ -5224,8 +5840,11 @@ class GameEngine {
     const attacksPerSec = (1.6 + 4.8 * (p.stats.dex / 75)) * rateMult;
     const cooldownDur = 1 / attacksPerSec;
 
-    if (this.mouse.leftDown || this.keys['Space'] || this.autoFire) {
-      if (this.mouse.leftDown && !this.autoFire) {
+    const isAttackingInput = this.mouse.leftDown || this.touch.attacking || this.keys['Space'] || this.autoFire;
+    const isHoldCharging = (this.mouse.leftDown || this.touch.attacking) && !this.autoFire;
+
+    if (isAttackingInput) {
+      if (isHoldCharging) {
         const prevCharge = p.chargeTime;
         p.chargeTime += dt;
         if (prevCharge < 0.55 && p.chargeTime >= 0.55) {
@@ -5244,6 +5863,39 @@ class GameEngine {
       }
       p.chargeTime = 0;
     }
+  }
+
+  findAutoAimAngle() {
+    const p = this.player;
+    if (!p) return null;
+    let bestE = null;
+    let bestDist = 8.5;
+    for (const e of this.enemies) {
+      const d = Math.hypot(e.x - p.x, e.y - p.y);
+      if (d < bestDist) {
+        bestDist = d;
+        bestE = e;
+      }
+    }
+    if (bestE) {
+      return Math.atan2(bestE.y - p.y, bestE.x - p.x);
+    }
+    return null;
+  }
+
+  triggerDash() {
+    const p = this.player;
+    if (!p || p.dead) return false;
+    if (p.dashCooldown <= 0 && p.stamina >= 22) {
+      p.stamina -= 22;
+      p.dashTimer = 0.24;
+      p.dashCooldown = 0.55;
+      p.invulnTimer = Math.max(p.invulnTimer, 0.26);
+      sound.playSfx('dash');
+      this.spawnBurstParticles(p.x, p.y, '#e2e8f0', 10);
+      return true;
+    }
+    return false;
   }
 
   // ==========================================================================
@@ -6254,14 +6906,7 @@ class HudController {
         this.game.addChatMessage('SANCTUARY', 'Warped safely to the Radiant Sanctuary Hub! [R]', '#38bdf8');
       } else if (e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'KeyC') {
         e.preventDefault();
-        if (p.dashCooldown <= 0 && p.stamina >= 22) {
-          p.stamina -= 22;
-          p.dashTimer = 0.24;
-          p.dashCooldown = 0.55;
-          p.invulnTimer = Math.max(p.invulnTimer, 0.26);
-          sound.playSfx('dash');
-          this.game.spawnBurstParticles(p.x, p.y, '#e2e8f0', 10);
-        }
+        this.game.triggerDash();
       } else if (e.code === 'KeyI') {
         this.game.autoFire = !this.game.autoFire;
         this.game.spawnFloatingText(p.x, p.y - 0.8, `AUTO-FIRE: ${this.game.autoFire ? 'ON' : 'OFF'}`, '#fde047', 12);
@@ -6282,6 +6927,7 @@ class HudController {
       const rect = canvas.getBoundingClientRect();
       this.game.mouse.x = e.clientX - rect.left;
       this.game.mouse.y = e.clientY - rect.top;
+      this.game.mouse.hasMoved = true;
     });
 
     canvas.addEventListener('mousedown', (e) => {
@@ -6355,9 +7001,282 @@ class HudController {
         }
       });
     }
+
+    this.bindTouchControls();
+  }
+
+  bindTouchControls() {
+    // 1. Left Thumb Virtual Analog Movement Joystick
+    const moveZone = document.getElementById('touch-joystick-zone');
+    const joyBase = document.getElementById('joystick-base');
+    const joyKnob = document.getElementById('joystick-knob');
+
+    if (moveZone && joyBase && joyKnob) {
+      let moveTouchId = null;
+      let moveMouseDown = false;
+      const maxRadius = 36;
+
+      const updateMoveStick = (clientX, clientY) => {
+        const rect = joyBase.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const dx = clientX - cx;
+        const dy = clientY - cy;
+        const dist = Math.hypot(dx, dy);
+        const clamped = Math.min(maxRadius, dist);
+        const angle = Math.atan2(dy, dx);
+        const kx = dist > 3 ? Math.cos(angle) * clamped : 0;
+        const ky = dist > 3 ? Math.sin(angle) * clamped : 0;
+
+        joyKnob.style.transform = `translate(${Math.round(kx)}px, ${Math.round(ky)}px)`;
+        this.game.touch.active = true;
+        this.game.touch.moveX = dist > 4 ? kx / maxRadius : 0;
+        this.game.touch.moveY = dist > 4 ? ky / maxRadius : 0;
+      };
+
+      const resetMoveStick = () => {
+        moveTouchId = null;
+        moveMouseDown = false;
+        joyKnob.style.transform = 'translate(0px, 0px)';
+        this.game.touch.moveX = 0;
+        this.game.touch.moveY = 0;
+      };
+
+      moveZone.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        sound.init();
+        const t = e.changedTouches[0];
+        if (t) {
+          moveTouchId = t.identifier;
+          updateMoveStick(t.clientX, t.clientY);
+        }
+      });
+
+      moveZone.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          const t = e.changedTouches[i];
+          if (t.identifier === moveTouchId) {
+            updateMoveStick(t.clientX, t.clientY);
+            break;
+          }
+        }
+      });
+
+      moveZone.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          if (e.changedTouches[i].identifier === moveTouchId) {
+            resetMoveStick();
+            break;
+          }
+        }
+      });
+
+      moveZone.addEventListener('touchcancel', () => resetMoveStick());
+
+      // Also support mouse drag on the virtual joystick for responsive testing
+      moveZone.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        sound.init();
+        moveMouseDown = true;
+        updateMoveStick(e.clientX, e.clientY);
+      });
+      window.addEventListener('mousemove', (e) => {
+        if (moveMouseDown) updateMoveStick(e.clientX, e.clientY);
+      });
+      window.addEventListener('mouseup', () => {
+        if (moveMouseDown) resetMoveStick();
+      });
+    }
+
+    // 2. Right Thumb Twin-Stick Attack & 360° Aim Pad
+    const attackBtn = document.getElementById('btn-touch-attack');
+    const attackKnob = document.getElementById('attack-stick-knob');
+    if (attackBtn && attackKnob) {
+      let aimTouchId = null;
+      let aimMouseDown = false;
+      const maxAimR = 20;
+
+      const updateAimStick = (clientX, clientY) => {
+        const rect = attackBtn.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const dx = clientX - cx;
+        const dy = clientY - cy;
+        const dist = Math.hypot(dx, dy);
+        this.game.touch.active = true;
+        this.game.touch.attacking = true;
+        attackBtn.classList.add('active');
+
+        if (dist > 10) {
+          const angle = Math.atan2(dy, dx);
+          const clamped = Math.min(maxAimR, dist);
+          attackKnob.style.transform = `translate(${Math.round(Math.cos(angle) * clamped)}px, ${Math.round(Math.sin(angle) * clamped)}px)`;
+          this.game.touch.aimActive = true;
+          this.game.touch.aimAngle = angle;
+        } else {
+          attackKnob.style.transform = 'translate(0px, 0px)';
+          this.game.touch.aimActive = false;
+        }
+      };
+
+      const resetAimStick = () => {
+        aimTouchId = null;
+        aimMouseDown = false;
+        attackBtn.classList.remove('active');
+        attackKnob.style.transform = 'translate(0px, 0px)';
+        this.game.touch.attacking = false;
+        this.game.touch.aimActive = false;
+      };
+
+      attackBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        sound.init();
+        const t = e.changedTouches[0];
+        if (t) {
+          aimTouchId = t.identifier;
+          updateAimStick(t.clientX, t.clientY);
+        }
+      });
+
+      attackBtn.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          const t = e.changedTouches[i];
+          if (t.identifier === aimTouchId) {
+            updateAimStick(t.clientX, t.clientY);
+            break;
+          }
+        }
+      });
+
+      attackBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          if (e.changedTouches[i].identifier === aimTouchId) {
+            resetAimStick();
+            break;
+          }
+        }
+      });
+
+      attackBtn.addEventListener('touchcancel', () => resetAimStick());
+
+      attackBtn.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        sound.init();
+        aimMouseDown = true;
+        updateAimStick(e.clientX, e.clientY);
+      });
+      window.addEventListener('mousemove', (e) => {
+        if (aimMouseDown) updateAimStick(e.clientX, e.clientY);
+      });
+      window.addEventListener('mouseup', () => {
+        if (aimMouseDown) resetAimStick();
+      });
+    }
+
+    // 3. Radial Action Buttons (Relic [Q], Parry/Shield, Dash, Urn [F])
+    const relicBtn = document.getElementById('btn-touch-relic');
+    if (relicBtn) {
+      const triggerRelic = (e) => {
+        e.preventDefault();
+        sound.init();
+        this.game.touch.active = true;
+        this.game.useRelicAbility();
+      };
+      relicBtn.addEventListener('touchstart', triggerRelic);
+      relicBtn.addEventListener('click', triggerRelic);
+    }
+
+    const shieldBtn = document.getElementById('btn-touch-shield');
+    if (shieldBtn) {
+      const startShield = (e) => {
+        e.preventDefault();
+        sound.init();
+        this.game.touch.active = true;
+        shieldBtn.classList.add('active');
+        if (this.game.player) {
+          this.game.player.shielding = true;
+          this.game.player.shieldRaiseTime = this.game.time;
+        }
+      };
+      const endShield = (e) => {
+        if (e) e.preventDefault();
+        shieldBtn.classList.remove('active');
+        if (this.game.player) {
+          this.game.player.shielding = false;
+        }
+      };
+      shieldBtn.addEventListener('touchstart', startShield);
+      shieldBtn.addEventListener('touchend', endShield);
+      shieldBtn.addEventListener('touchcancel', endShield);
+      shieldBtn.addEventListener('mousedown', startShield);
+      shieldBtn.addEventListener('mouseup', endShield);
+    }
+
+    const dashBtn = document.getElementById('btn-touch-dash');
+    if (dashBtn) {
+      const onDash = (e) => {
+        e.preventDefault();
+        sound.init();
+        this.game.touch.active = true;
+        this.game.triggerDash();
+      };
+      dashBtn.addEventListener('touchstart', onDash);
+      dashBtn.addEventListener('click', onDash);
+    }
+
+    const potBtn = document.getElementById('btn-touch-pot');
+    if (potBtn) {
+      const onPot = (e) => {
+        e.preventDefault();
+        sound.init();
+        this.game.touch.active = true;
+        this.game.liftOrThrowPot();
+      };
+      potBtn.addEventListener('touchstart', onPot);
+      potBtn.addEventListener('click', onPot);
+    }
+  }
+
+  toggleMobileDrawer(forceOpen = null) {
+    const sidebar = document.getElementById('rotmg-sidebar');
+    const backdrop = document.getElementById('mobile-drawer-backdrop');
+    if (!sidebar) return;
+    const isOpen = forceOpen !== null ? forceOpen : !this.mobileDrawerOpen;
+    this.mobileDrawerOpen = isOpen;
+    sidebar.classList.toggle('drawer-open', isOpen);
+    if (backdrop) backdrop.classList.toggle('open', isOpen);
   }
 
   bindTopBarButtons() {
+    const drawerBtn = document.getElementById('btn-toggle-drawer');
+    if (drawerBtn) {
+      drawerBtn.addEventListener('click', () => {
+        this.toggleMobileDrawer();
+      });
+    }
+    const closeDrawerBtn = document.getElementById('btn-close-drawer');
+    if (closeDrawerBtn) {
+      closeDrawerBtn.addEventListener('click', () => {
+        this.toggleMobileDrawer(false);
+      });
+    }
+    const drawerBackdrop = document.getElementById('mobile-drawer-backdrop');
+    if (drawerBackdrop) {
+      drawerBackdrop.addEventListener('click', () => {
+        this.toggleMobileDrawer(false);
+      });
+    }
+    const chatToggleBtn = document.getElementById('btn-toggle-chat');
+    if (chatToggleBtn) {
+      chatToggleBtn.addEventListener('click', () => {
+        const chatBox = document.getElementById('bottom-left-chat');
+        if (chatBox) chatBox.classList.toggle('chat-open');
+      });
+    }
     const elderBtn = document.getElementById('btn-open-elder');
     if (elderBtn) {
       elderBtn.addEventListener('click', () => {
@@ -6392,7 +7311,7 @@ class HudController {
     if (audioBtn) {
       audioBtn.addEventListener('click', (e) => {
         sound.muted = !sound.muted;
-        e.currentTarget.textContent = sound.muted ? '🔇 Muted' : '🔊 Audio';
+        e.currentTarget.textContent = sound.muted ? '🔇' : '🔊';
       });
     }
   }
@@ -6428,7 +7347,7 @@ class HudController {
     // 2. Update Life Heart Containers (1 Heart = 50 HP, up to 16 Hearts shown)
     this.renderLifeHearts(p.hp, p.stats.hp);
 
-    // 3. Update RotMG Numerical Bars (Level/XP, Fame, HP, MP)
+    // 3. Update RotMG Numerical Bars (Level/XP, Fame, HP, MP) + Mobile Compact Bars
     const lvlFill = document.getElementById('bar-xp-fill');
     const lvlLabel = document.getElementById('bar-xp-label');
     if (p.level < 20) {
@@ -6450,12 +7369,25 @@ class HudController {
     document.getElementById('bar-mp-fill').style.width = `${mpPct}%`;
     document.getElementById('bar-mp-label').innerHTML = `<span>MP (MANA)</span><span>${Math.floor(p.mp)} / ${p.stats.mp}</span>`;
 
+    const mobHpFill = document.getElementById('mobile-hp-fill');
+    const mobHpText = document.getElementById('mobile-hp-text');
+    if (mobHpFill && mobHpText) {
+      mobHpFill.style.width = `${hpPct}%`;
+      mobHpText.textContent = `HP ${Math.ceil(p.hp)}/${p.stats.hp}`;
+    }
+    const mobMpFill = document.getElementById('mobile-mp-fill');
+    const mobMpText = document.getElementById('mobile-mp-text');
+    if (mobMpFill && mobMpText) {
+      mobMpFill.style.width = `${mpPct}%`;
+      mobMpText.textContent = `MP ${Math.floor(p.mp)}/${p.stats.mp}`;
+    }
+
     // 4. Context Interaction Prompt Banner ([E] Speak with High Elder Vaelen / Enter Portal / Open Vault)
     const target = this.game.getNearestInteractiveTarget();
     const banner = document.getElementById('interact-banner');
     if (target) {
       banner.style.display = 'block';
-      banner.textContent = target.label;
+      banner.textContent = `✋ ${target.label}`;
     } else {
       banner.style.display = 'none';
     }
@@ -6501,6 +7433,11 @@ class HudController {
       maxedBadge.textContent = `${p.maxedCount}/8 MAXED`;
       maxedBadge.style.color = p.maxedCount === 8 ? '#facc15' : '#93c5fd';
     }
+    const mobileBagBadge = document.getElementById('mobile-bag-badge');
+    if (mobileBagBadge) {
+      mobileBagBadge.textContent = `${p.maxedCount}/8`;
+      mobileBagBadge.style.color = p.maxedCount === 8 ? '#facc15' : '#93c5fd';
+    }
 
     if (statsGrid) {
       statsGrid.innerHTML = STAT_NAMES.map((st) => {
@@ -6540,6 +7477,15 @@ class HudController {
         return this.renderSlotHtml(itemId, `${idx + 1}`, 'inventory', idx);
       }).join('');
       this.bindSlotEvents(invContainer, 'inventory');
+    }
+
+    // 3b. Update Mobile 4-Slot Quick-Belt (First 4 backpack slots for 1-tap potions/swaps)
+    const quickBelt = document.getElementById('mobile-quick-belt');
+    if (quickBelt) {
+      quickBelt.innerHTML = p.inventory.slice(0, 4).map((itemId, idx) => {
+        return this.renderSlotHtml(itemId, `${idx + 1}`, 'inventory', idx);
+      }).join('');
+      this.bindSlotEvents(quickBelt, 'inventory');
     }
 
     // 4. Update Nearby Party Roster
@@ -6626,8 +7572,10 @@ class HudController {
       const rawLeft = flipLeft ? screenX - popupWidth - 24 : screenX + 24;
       const rawTop = screenY - 48;
 
+      // On mobile screens, keep the floating chest popup above the bottom virtual controls
+      const bottomMargin = cw <= 960 ? 175 : 12;
       const clampedLeft = Math.max(12, Math.min(cw - popupWidth - 12, Math.round(rawLeft)));
-      const clampedTop = Math.max(54, Math.min(ch - popupHeight - 12, Math.round(rawTop)));
+      const clampedTop = Math.max(54, Math.min(ch - popupHeight - bottomMargin, Math.round(rawTop)));
 
       worldPopup.style.display = 'block';
       worldPopup.style.left = `${clampedLeft}px`;

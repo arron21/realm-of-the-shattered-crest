@@ -284,4 +284,46 @@ assert.strictEqual(game.player.dead, true, 'Fatal hit without Lumina Wisp must t
 assert(game.gravestones.length === 1, 'Permadeath must leave a physical Gravestone on the map');
 console.log('✓ 10. Dungeons, Stat Potions, Lumina Wisp Revival & Permadeath verified');
 
-console.log('\nALL 10 REALM OF THE SHATTERED CREST TEST SUITES PASSED!');
+// Suite 11: Mobile Phone UI/UX — Twin-Stick Touch Controls, Smart Auto-Aim, Quick-Belt & Slide-Over Drawer
+game.spawnNewHero('knight');
+game.warpToMap('nexus');
+const startX = game.player.x;
+game.touch.active = true;
+game.touch.moveX = 1.0;
+game.touch.moveY = 0;
+game.updatePlayer(0.1);
+assert(game.player.x > startX, 'Mobile left virtual joystick (touch.moveX) must move the hero smoothly');
+game.touch.moveX = 0;
+
+// Test Smart Auto-Aim toward nearest enemy when right attack pad is tapped without dragging
+game.enemies.push({
+  id: 'mob_test_1',
+  name: 'Test Construct',
+  x: game.player.x,
+  y: game.player.y - 4.0,
+  hp: 100,
+  maxHp: 100
+});
+const autoAngle = game.findAutoAimAngle();
+assert(Math.abs(autoAngle - (-Math.PI / 2)) < 0.05, 'Smart Auto-Aim must lock onto the nearest enemy within range');
+
+// Test Mobile Dash button trigger
+game.player.dashCooldown = 0;
+const dashed = game.triggerDash();
+assert.strictEqual(dashed, true, 'Mobile Dash button (triggerDash) must activate Windstep Dash');
+
+// Test Mobile 4-Slot Quick-Belt & Slide-Over Drawer
+game.player.inventory[0] = 'pot_def';
+hud.refreshAllStatsAndSlots();
+assert(
+  getMockEl('mobile-quick-belt').innerHTML.includes('pot_def'),
+  'Mobile 4-Slot Quick-Belt (#mobile-quick-belt) must render the first 4 backpack slots'
+);
+hud.toggleMobileDrawer(true);
+assert.strictEqual(hud.mobileDrawerOpen, true, 'Mobile Gear Drawer must open when toggled on');
+hud.toggleMobileDrawer(false);
+assert.strictEqual(hud.mobileDrawerOpen, false, 'Mobile Gear Drawer must close when toggled off');
+console.log('✓ 11. Mobile Phone UI/UX (Twin-Stick Touch Controls, Smart Auto-Aim, Quick-Belt & Slide-Over Gear Drawer) verified');
+
+console.log('\nALL 11 REALM OF THE SHATTERED CREST TEST SUITES PASSED!');
+

@@ -61,9 +61,17 @@ export class GameEngine {
     this.realmEventsRemaining = 3;
     this.activeQuestEnemy = null;
 
-    // Input State
+    // Input State (Desktop Keyboard/Mouse + Mobile Twin-Stick Touch)
     this.keys = {};
-    this.mouse = { x: 0, y: 0, worldX: 0, worldY: 0, leftDown: false, rightDown: false };
+    this.mouse = { x: 0, y: 0, worldX: 0, worldY: 0, leftDown: false, rightDown: false, hasMoved: false };
+    this.touch = {
+      active: false,
+      moveX: 0,
+      moveY: 0,
+      aimActive: false,
+      aimAngle: 0,
+      attacking: false
+    };
     this.autoFire = false;
     this.cameraShake = 0;
 
@@ -1542,23 +1550,41 @@ export class GameEngine {
       return;
     }
 
-    // Aim Angle toward Mouse World Position
-    this.mouse.worldX = p.x + (this.mouse.x - this.canvas.width / 2) / TILE_SIZE;
-    this.mouse.worldY = p.y + (this.mouse.y - this.canvas.height / 2) / TILE_SIZE;
-    p.aimAngle = Math.atan2(this.mouse.worldY - p.y, this.mouse.worldX - p.x);
-
-    // Movement Vector (WASD / Arrow Keys)
+    // Movement Vector (WASD / Arrow Keys OR Mobile Left Analog Joystick)
     let mx = 0;
     let my = 0;
-    if (this.keys['KeyW'] || this.keys['ArrowUp']) my -= 1;
-    if (this.keys['KeyS'] || this.keys['ArrowDown']) my += 1;
-    if (this.keys['KeyA'] || this.keys['ArrowLeft']) mx -= 1;
-    if (this.keys['KeyD'] || this.keys['ArrowRight']) mx += 1;
+    if (this.touch.moveX !== 0 || this.touch.moveY !== 0) {
+      mx = this.touch.moveX;
+      my = this.touch.moveY;
+    } else {
+      if (this.keys['KeyW'] || this.keys['ArrowUp']) my -= 1;
+      if (this.keys['KeyS'] || this.keys['ArrowDown']) my += 1;
+      if (this.keys['KeyA'] || this.keys['ArrowLeft']) mx -= 1;
+      if (this.keys['KeyD'] || this.keys['ArrowRight']) mx += 1;
 
-    if (mx !== 0 || my !== 0) {
-      const len = Math.hypot(mx, my);
-      mx /= len;
-      my /= len;
+      if (mx !== 0 || my !== 0) {
+        const len = Math.hypot(mx, my);
+        mx /= len;
+        my /= len;
+      }
+    }
+
+    // Aim Angle: Mobile Right Aim Stick / Auto-Aim OR Desktop Mouse World Position
+    if (this.touch.aimActive) {
+      p.aimAngle = this.touch.aimAngle;
+    } else if (this.touch.active) {
+      const autoAngle = this.findAutoAimAngle();
+      if (autoAngle !== null) {
+        p.aimAngle = autoAngle;
+      } else if (mx !== 0 || my !== 0) {
+        p.aimAngle = Math.atan2(my, mx);
+      }
+    } else if (this.mouse.hasMoved) {
+      this.mouse.worldX = p.x + (this.mouse.x - this.canvas.width / 2) / TILE_SIZE;
+      this.mouse.worldY = p.y + (this.mouse.y - this.canvas.height / 2) / TILE_SIZE;
+      p.aimAngle = Math.atan2(this.mouse.worldY - p.y, this.mouse.worldX - p.x);
+    } else if (mx !== 0 || my !== 0) {
+      p.aimAngle = Math.atan2(my, mx);
     }
 
     // Speed calculation from RotMG SPD stat: (4.2 + 5.6 * (SPD / 75)) tiles/sec
@@ -1588,8 +1614,11 @@ export class GameEngine {
     const attacksPerSec = (1.6 + 4.8 * (p.stats.dex / 75)) * rateMult;
     const cooldownDur = 1 / attacksPerSec;
 
-    if (this.mouse.leftDown || this.keys['Space'] || this.autoFire) {
-      if (this.mouse.leftDown && !this.autoFire) {
+    const isAttackingInput = this.mouse.leftDown || this.touch.attacking || this.keys['Space'] || this.autoFire;
+    const isHoldCharging = (this.mouse.leftDown || this.touch.attacking) && !this.autoFire;
+
+    if (isAttackingInput) {
+      if (isHoldCharging) {
         const prevCharge = p.chargeTime;
         p.chargeTime += dt;
         if (prevCharge < 0.55 && p.chargeTime >= 0.55) {
@@ -1608,6 +1637,39 @@ export class GameEngine {
       }
       p.chargeTime = 0;
     }
+  }
+
+  findAutoAimAngle() {
+    const p = this.player;
+    if (!p) return null;
+    let bestE = null;
+    let bestDist = 8.5;
+    for (const e of this.enemies) {
+      const d = Math.hypot(e.x - p.x, e.y - p.y);
+      if (d < bestDist) {
+        bestDist = d;
+        bestE = e;
+      }
+    }
+    if (bestE) {
+      return Math.atan2(bestE.y - p.y, bestE.x - p.x);
+    }
+    return null;
+  }
+
+  triggerDash() {
+    const p = this.player;
+    if (!p || p.dead) return false;
+    if (p.dashCooldown <= 0 && p.stamina >= 22) {
+      p.stamina -= 22;
+      p.dashTimer = 0.24;
+      p.dashCooldown = 0.55;
+      p.invulnTimer = Math.max(p.invulnTimer, 0.26);
+      sound.playSfx('dash');
+      this.spawnBurstParticles(p.x, p.y, '#e2e8f0', 10);
+      return true;
+    }
+    return false;
   }
 
   // ==========================================================================
