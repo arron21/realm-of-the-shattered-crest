@@ -111,10 +111,12 @@ ${css}
           <button id="world-loot-take-all" type="button" title="Loot or Drink All Items">Loot All</button>
         </div>
         <div id="world-loot-grid" class="item-grid-4"></div>
-        <div class="world-loot-hint">Tap item to loot/drink • Auto-closes when moving away</div>
+        <div id="world-loot-inspector" class="inline-item-inspector" style="display:none;"></div>
+        <div class="world-loot-hint">Tap item to view stats • Auto-closes when moving away</div>
       </div>
 
-      <!-- MOBILE QUICK-BELT (First 4 Backpack Slots Accessible with One Tap!) -->
+      <!-- MOBILE QUICK-BELT (First 4 Backpack Slots — Tap to View Stats & Equip/Drink!) -->
+      <div id="quick-belt-inspector" class="inline-item-inspector floating-belt-inspector" style="display:none;"></div>
       <div id="mobile-quick-belt" aria-label="Quick Backpack Belt"></div>
 
       <!-- MOBILE TWIN-STICK VIRTUAL TOUCH CONTROLS (Left Move Stick + Right Aim/Attack & Skills) -->
@@ -220,7 +222,7 @@ ${css}
       <div class="sidebar-section">
         <div class="section-header">
           <span>Equipped Relics</span>
-          <span style="color:#fde047;font-size:9.5px;">[Q] Use Relic</span>
+          <span style="color:#fde047;font-size:9.5px;">Tap to View Stats</span>
         </div>
         <div id="equipment-grid" class="item-grid-4"></div>
       </div>
@@ -229,16 +231,19 @@ ${css}
       <div class="sidebar-section">
         <div class="section-header">
           <span>Backpack (Keys 1–8)</span>
-          <span style="color:#94a3b8;font-size:9.5px;">Tap to Drink/Equip</span>
+          <span style="color:#38bdf8;font-size:9.5px;">Tap to View Stats</span>
         </div>
         <div id="inventory-grid" class="item-grid-4"></div>
       </div>
+
+      <!-- 6b. SELECTED ITEM STATS & EQUIP INSPECTOR PANEL -->
+      <div id="item-inspector-panel" class="sidebar-section inline-item-inspector" style="display:none;"></div>
 
       <!-- 7. GROUND LOOT BAG VIEWER (DYNAMIC) -->
       <div id="loot-bag-section" class="sidebar-section">
         <div class="section-header">
           <span id="loot-bag-title">Loot Bag</span>
-          <span style="color:#fde047;font-size:9.5px;">Nearby Drop</span>
+          <span style="color:#fde047;font-size:9.5px;">Tap to View Stats</span>
         </div>
         <div id="loot-bag-grid" class="item-grid-4"></div>
       </div>
@@ -297,12 +302,13 @@ ${css}
         <button class="hud-btn modal-close-btn">✕ Close</button>
       </div>
       <p style="font-size:12px;color:#94a3b8;margin:6px 0 12px;">
-        Click any item in your Backpack to deposit it into your Account Vault, or click a Vault slot to withdraw it.
+        Tap any item in your Backpack or Vault Chests to view its stats, then tap Deposit, Withdraw, or Equip.
       </p>
-      <div style="font-size:11px;font-weight:800;color:#fde047;margin-bottom:6px;">YOUR HERO BACKPACK (CLICK TO DEPOSIT)</div>
-      <div id="vault-player-inv" class="item-grid-4" style="margin-bottom:16px;"></div>
-      <div style="font-size:11px;font-weight:800;color:#38bdf8;margin-bottom:6px;">ACCOUNT VAULT CHESTS (CLICK TO WITHDRAW)</div>
+      <div style="font-size:11px;font-weight:800;color:#fde047;margin-bottom:6px;">YOUR HERO BACKPACK (TAP ITEM TO VIEW STATS)</div>
+      <div id="vault-player-inv" class="item-grid-4" style="margin-bottom:14px;"></div>
+      <div style="font-size:11px;font-weight:800;color:#38bdf8;margin-bottom:6px;">ACCOUNT VAULT CHESTS (TAP ITEM TO VIEW STATS)</div>
       <div id="vault-chest-grid" class="item-grid-4"></div>
+      <div id="vault-item-inspector" class="inline-item-inspector" style="display:none;margin-top:12px;"></div>
     </div>
   </div>
 

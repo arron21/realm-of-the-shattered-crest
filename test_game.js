@@ -325,5 +325,38 @@ hud.toggleMobileDrawer(false);
 assert.strictEqual(hud.mobileDrawerOpen, false, 'Mobile Gear Drawer must close when toggled off');
 console.log('✓ 11. Mobile Phone UI/UX (Twin-Stick Touch Controls, Smart Auto-Aim, Quick-Belt & Slide-Over Gear Drawer) verified');
 
-console.log('\nALL 11 REALM OF THE SHATTERED CREST TEST SUITES PASSED!');
+// Suite 12: Tap-to-View Item Stats & Tap-to-Equip / Drink / Drop Inspector Panel
+game.player.inventory[1] = 'wep_sword_t2';
+hud.refreshAllStatsAndSlots();
+const selectedOk = hud.selectItemSlot('inventory', 1);
+assert.strictEqual(selectedOk, true, 'Tapping an inventory slot must select the item for inspection');
+const inspectorPanel = getMockEl('item-inspector-panel');
+assert.strictEqual(inspectorPanel.style.display, 'block', 'Selecting an inventory item must display #item-inspector-panel');
+assert(
+  inspectorPanel.innerHTML.includes('Damage:') && inspectorPanel.innerHTML.includes('Equip WEAPON'),
+  '#item-inspector-panel must show the weapon damage stats and an explicit Equip WEAPON button'
+);
+
+// Tap the Equip WEAPON button in the inspector
+const equippedOk = hud.executeInspectorAction('primary', 'inventory', 1);
+assert.strictEqual(equippedOk, true, 'Tapping the Equip button in the inspector must equip the weapon');
+assert.strictEqual(game.player.equipment.weapon, 'wep_sword_t2', 'Hero weapon slot must now hold wep_sword_t2');
+assert.strictEqual(inspectorPanel.style.display, 'none', 'Inspector panel must close cleanly after equipping');
+
+// Tap Quick-Belt slot 0 (pot_def) to inspect on the main combat screen, then tap Drink
+const beltSelected = hud.selectItemSlot('quick_belt', 0);
+assert.strictEqual(beltSelected, true, 'Tapping a Quick-Belt slot must select it');
+const beltInspector = getMockEl('quick-belt-inspector');
+assert.strictEqual(beltInspector.style.display, 'block', 'Tapping a Quick-Belt slot must open #quick-belt-inspector');
+assert(
+  beltInspector.innerHTML.includes('Drink Potion'),
+  '#quick-belt-inspector must show potion stats and a Drink Potion button'
+);
+const defBeforeDrink = game.player.baseStats.def;
+hud.executeInspectorAction('primary', 'quick_belt', 0);
+assert.strictEqual(game.player.baseStats.def, defBeforeDrink + 1, 'Tapping Drink Potion in #quick-belt-inspector must consume the potion');
+console.log('✓ 12. Tap-to-View Stats & Tap-to-Equip / Drink Inspector Panel verified');
+
+console.log('\nALL 12 REALM OF THE SHATTERED CREST TEST SUITES PASSED!');
+
 

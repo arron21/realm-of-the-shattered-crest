@@ -1288,6 +1288,56 @@ export class GameEngine {
     return true;
   }
 
+  unequipItem(slotKey) {
+    const p = this.player;
+    if (!p || p.dead) return false;
+    const itemId = p.equipment[slotKey];
+    if (!itemId) return false;
+    const emptyIdx = p.inventory.findIndex((x) => !x);
+    if (emptyIdx === -1) {
+      this.spawnFloatingText(p.x, p.y - 0.7, 'BACKPACK FULL!', '#ef4444', 12);
+      return false;
+    }
+    p.inventory[emptyIdx] = itemId;
+    p.equipment[slotKey] = null;
+    this.recalcPlayerStats(false);
+    sound.playSfx('rupee');
+    return true;
+  }
+
+  dropInventoryItem(slotIndex) {
+    const p = this.player;
+    if (!p || p.dead) return false;
+    const itemId = p.inventory[slotIndex];
+    if (!itemId) return false;
+    p.inventory[slotIndex] = null;
+    this.spawnLootBag(p.x + 0.35, p.y + 0.25, [itemId]);
+    sound.playSfx('pot');
+    if (this.ui && this.ui.onStatsChanged) this.ui.onStatsChanged();
+    return true;
+  }
+
+  takeBagItemToInventory(slotIndex, bagObj) {
+    const p = this.player;
+    if (!p || p.dead || !bagObj || !bagObj.items) return false;
+    const itemId = bagObj.items[slotIndex];
+    if (!itemId) return false;
+    const emptyIdx = p.inventory.findIndex((x) => !x);
+    if (emptyIdx === -1) {
+      this.spawnFloatingText(p.x, p.y - 0.7, 'BACKPACK FULL!', '#ef4444', 12);
+      return false;
+    }
+    p.inventory[emptyIdx] = itemId;
+    bagObj.items.splice(slotIndex, 1);
+    if (bagObj.items.length === 0) {
+      const bIdx = this.lootBags.indexOf(bagObj);
+      if (bIdx !== -1) this.lootBags.splice(bIdx, 1);
+    }
+    sound.playSfx('rupee');
+    if (this.ui && this.ui.onStatsChanged) this.ui.onStatsChanged();
+    return true;
+  }
+
   lootAllFromBag(bagObj) {
     const p = this.player;
     if (!p || p.dead || !bagObj || !bagObj.items) return 0;

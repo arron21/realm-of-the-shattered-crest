@@ -3,7 +3,7 @@
 // ============================================================================
 
 import { CLASSES, STAT_NAMES, STAT_LABELS, getStarRankColor, CREST_SHARDS, ELDER_LORE_CHAPTERS } from '../data/classes.js';
-import { ITEMS, BAG_TYPES } from '../data/items.js';
+import { ITEMS, BAG_TYPES, canClassEquip } from '../data/items.js';
 import { TILES, TILE_SIZE } from '../data/worldgen.js';
 import { getItemIconDataUrl } from '../graphics/sprites.js';
 import { sound } from '../audio/sound.js';
@@ -17,6 +17,7 @@ export class HudController {
 
     this.activeBagId = null;
     this.lastBagSignature = '';
+    this.selectedSlot = null;
 
     this.bindInputs();
     this.bindTopBarButtons();
@@ -645,17 +646,39 @@ export class HudController {
       this.bindSlotEvents(invContainer, 'inventory');
     }
 
-    // 3b. Update Mobile 4-Slot Quick-Belt (First 4 backpack slots for 1-tap potions/swaps)
+    // 3b. Update Mobile 4-Slot Quick-Belt (First 4 backpack slots)
     const quickBelt = document.getElementById('mobile-quick-belt');
     if (quickBelt) {
       quickBelt.innerHTML = p.inventory.slice(0, 4).map((itemId, idx) => {
-        return this.renderSlotHtml(itemId, `${idx + 1}`, 'inventory', idx);
+        return this.renderSlotHtml(itemId, `${idx + 1}`, 'quick_belt', idx);
       }).join('');
-      this.bindSlotEvents(quickBelt, 'inventory');
+      this.bindSlotEvents(quickBelt, 'quick_belt');
     }
+
+    // 3c. Refresh Selected Item Stats & Equip Inspector Panel
+    this.renderItemInspectorPanels();
 
     // 4. Update Nearby Party Roster
     this.renderPartyList();
+  }
+
+  isSlotSelected(group, indexOrKey) {
+    if (!this.selectedSlot) return false;
+    const s = this.selectedSlot;
+    if (s.group === group && String(s.index) === String(indexOrKey)) return true;
+    if (
+      (s.group === 'inventory' && group === 'quick_belt' && String(s.index) === String(indexOrKey)) ||
+      (s.group === 'quick_belt' && group === 'inventory' && String(s.index) === String(indexOrKey))
+    ) {
+      return true;
+    }
+    if (
+      (s.group === 'bag' && group === 'world_bag' && String(s.index) === String(indexOrKey)) ||
+      (s.group === 'world_bag' && group === 'bag' && String(s.index) === String(indexOrKey))
+    ) {
+      return true;
+    }
+    return false;
   }
 
   renderSlotHtml(itemId, placeholder, group, indexOrKey) {
@@ -667,7 +690,8 @@ export class HudController {
     }
     const iconUrl = getItemIconDataUrl(itemId);
     const isUt = item.tier === 'UT' || item.tier === 'SHARD';
-    return `<div class="item-slot ${isUt ? 'ut-slot' : ''}" data-group="${group}" data-index="${indexOrKey}" data-item-id="${itemId}">
+    const isSel = this.isSlotSelected(group, indexOrKey);
+    return `<div class="item-slot ${isUt ? 'ut-slot' : ''} ${isSel ? 'selected-slot' : ''}" data-group="${group}" data-index="${indexOrKey}" data-item-id="${itemId}">
       <img src="${iconUrl}" alt="${item.name}" />
       <span class="slot-tier-badge ${isUt ? 'ut' : ''}">${item.tier}</span>
     </div>`;
@@ -677,29 +701,418 @@ export class HudController {
     const slots = container.querySelectorAll('.item-slot');
     slots.forEach((el) => {
       const itemId = el.getAttribute('data-item-id');
-      const idx = parseInt(el.getAttribute('data-index'), 10);
+      const rawIdx = el.getAttribute('data-index');
+      const idxOrKey = group === 'equip' ? rawIdx : parseInt(rawIdx, 10);
 
       el.addEventListener('mouseenter', (e) => {
-        if (itemId) this.showItemTooltip(itemId, e.clientX, e.clientY);
+        if (itemId && !this.game.touch.active) this.showItemTooltip(itemId, e.clientX, e.clientY);
       });
       el.addEventListener('mousemove', (e) => {
-        if (itemId) this.moveTooltip(e.clientX, e.clientY);
+        if (itemId && !this.game.touch.active) this.moveTooltip(e.clientX, e.clientY);
       });
       el.addEventListener('mouseleave', () => {
         this.hideTooltip();
       });
 
-      el.addEventListener('click', () => {
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
         this.hideTooltip();
-        if (group === 'inventory' && itemId) {
-          this.game.useOrEquipItem('inventory', idx);
-        } else if (group === 'bag' && itemId && bagObj) {
-          this.game.useOrEquipItem('bag', idx, bagObj);
-          this.lastBagSignature = ''; // Force bag UI redraw
-          this.updateGroundBagPanel();
+        if (!itemId) {
+          this.clearSelectedSlot();
+          return;
         }
+        this.selectItemSlot(group, idxOrKey, bagObj);
       });
     });
+  }
+
+  resolveSlotItemId(group, indexOrKey, bagObj = null) {
+    const p = this.game.player;
+    if (!p) return null;
+    if (group === 'inventory' || group === 'quick_belt' || group === 'vault_inv') {
+      return p.inventory[Number(indexOrKey)] || null;
+    }
+    if (group === 'equip') {
+      return p.equipment[indexOrKey] || null;
+    }
+    if (group === 'bag' || group === 'world_bag') {
+      const activeBag = bagObj || this.game.getNearestBag();
+      return activeBag && activeBag.items ? activeBag.items[Number(indexOrKey)] || null : null;
+    }
+    if (group === 'vault_chest') {
+      return this.game.account && this.game.account.vault
+        ? this.game.account.vault[Number(indexOrKey)] || null
+        : null;
+    }
+    return null;
+  }
+
+  selectItemSlot(group, indexOrKey, bagObj = null) {
+    const itemId = this.resolveSlotItemId(group, indexOrKey, bagObj);
+    if (!itemId) {
+      this.clearSelectedSlot();
+      return false;
+    }
+    this.selectedSlot = { group, index: indexOrKey, itemId };
+    this.updateSlotSelectionHighlights();
+    this.renderItemInspectorPanels(bagObj);
+
+    if (group === 'inventory' || group === 'equip' || group === 'bag') {
+      const sidebarInspector = document.getElementById('item-inspector-panel');
+      if (sidebarInspector && typeof sidebarInspector.scrollIntoView === 'function') {
+        sidebarInspector.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+    return true;
+  }
+
+  clearSelectedSlot() {
+    this.selectedSlot = null;
+    this.updateSlotSelectionHighlights();
+    const ids = ['item-inspector-panel', 'world-loot-inspector', 'quick-belt-inspector', 'vault-item-inspector'];
+    for (const id of ids) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.style.display = 'none';
+        el.innerHTML = '';
+      }
+    }
+  }
+
+  updateSlotSelectionHighlights() {
+    document.querySelectorAll('.item-slot').forEach((el) => {
+      const g = el.getAttribute('data-group');
+      const idx = el.getAttribute('data-index');
+      const itemId = el.getAttribute('data-item-id');
+      el.classList.toggle('selected-slot', Boolean(itemId && this.isSlotSelected(g, idx)));
+    });
+  }
+
+  buildInspectorCardHtml(group, indexOrKey, itemId) {
+    const item = ITEMS[itemId];
+    const p = this.game.player;
+    if (!item || !p) return '';
+
+    const iconUrl = getItemIconDataUrl(itemId);
+    const bagMeta = BAG_TYPES[item.bagType] || BAG_TYPES[0];
+    const isUt = item.tier === 'UT' || item.tier === 'SHARD';
+    const canEquip = item.slot !== 'consumable' ? canClassEquip(p.classId, item) : true;
+
+    const slotLabelMap = {
+      weapon: 'Primary Weapon',
+      relic: 'Sacred Relic [Q]',
+      armor: 'Armor Vestment',
+      ring: 'Sacred Signet Ring',
+      consumable: item.subType === 'crest_shard' ? 'Holy Crest Shard' : 'Consumable Potion'
+    };
+    const compatibilityTag = item.slot === 'consumable'
+      ? '<span style="color:#4ade80;">• Instant Use</span>'
+      : canEquip
+        ? `<span style="color:#4ade80;">• ✓ Usable by ${p.className}</span>`
+        : `<span style="color:#f87171;">• ✕ Not Usable by ${p.className}</span>`;
+
+    const statLines = [];
+    if (item.minDmg) {
+      statLines.push(
+        `<div style="color:#fde047;font-weight:800;">⚔️ Damage: ${item.minDmg}–${item.maxDmg}${item.shots > 1 ? ` (x${item.shots} shots)` : ''}${item.range ? ` • Range: ${item.range}` : ''}${item.pierce ? ' • Piercing' : ''}${item.pierceArmor ? ' • Armor-Piercing' : ''}</div>`
+      );
+    }
+    if (item.dmg) {
+      statLines.push(
+        `<div style="color:#38bdf8;font-weight:800;">✨ Relic Power: ${item.dmg} Dmg (${item.mpCost || 30} MP)${item.stunSec ? ` • ${item.stunSec}s Stun` : ''}${item.blastRadius ? ` • ${item.blastRadius}m Blast` : ''}</div>`
+      );
+    }
+    if (item.heal) {
+      statLines.push(
+        `<div style="color:#4ade80;font-weight:800;">💚 Party Heal: +${item.heal} HP (${item.mpCost || 45} MP)${item.buffSec ? ` • ${item.buffSec}s Party Buff` : ''}</div>`
+      );
+    }
+    if (item.subType === 'stat_pot' && item.stat) {
+      const cls = CLASSES[p.classId];
+      const curBase = p.baseStats[item.stat];
+      const maxCap = cls.maxStats[item.stat];
+      statLines.push(
+        `<div style="color:#4ade80;font-weight:800;">🧪 Permanent Stat: +${item.amount} Base ${item.stat.toUpperCase()} (${curBase}/${maxCap})</div>`
+      );
+    }
+    if (item.subType === 'stat_omni') {
+      statLines.push(`<div style="color:#fde047;font-weight:800;">🌟 Ambrosia Blessing: +45 HP, +30 MP, +4 All Base Stats</div>`);
+    }
+    if (item.subType === 'heal') {
+      statLines.push(`<div style="color:#f472b6;font-weight:800;">🧚 Restores +${item.healHp || 250} HP, +${item.healMp || 100} MP &amp; Auto-Revives on Fatal Hit</div>`);
+    }
+    if (item.stats) {
+      const pairs = Object.entries(item.stats).map(([k, v]) => `+${v} ${k.toUpperCase()}`).join(', ');
+      statLines.push(`<div style="color:#4ade80;font-weight:700;">🛡️ Equip Bonus: ${pairs}</div>`);
+    }
+    if (item.fameBonus) {
+      statLines.push(`<div style="color:#facc15;font-size:10px;font-weight:700;">★ Legacy Fame Bonus: +${item.fameBonus * 5} Fame</div>`);
+    }
+
+    let compareHtml = '';
+    if (group !== 'equip' && item.slot !== 'consumable') {
+      const curEqId = p.equipment[item.slot];
+      const curEq = curEqId ? ITEMS[curEqId] : null;
+      if (curEq) {
+        const curStatSummary = curEq.minDmg
+          ? `${curEq.minDmg}–${curEq.maxDmg} Dmg`
+          : curEq.stats
+            ? Object.entries(curEq.stats).map(([k, v]) => `+${v} ${k.toUpperCase()}`).join(', ')
+            : curEq.tier;
+        compareHtml = `<div class="inspector-compare">Currently Equipped: <span style="color:#f8fafc;">${curEq.name} (${curEq.tier})</span> [${curStatSummary}]</div>`;
+      }
+    }
+
+    let actionsHtml = '';
+    if (group === 'inventory' || group === 'quick_belt') {
+      if (item.slot === 'consumable') {
+        const btnLabel = item.subType === 'crest_shard'
+          ? '✨ Attune Crest Shard'
+          : item.subType === 'heal'
+            ? '🧚 Consume Wisp'
+            : '🧪 Drink Potion';
+        actionsHtml = `
+          <button type="button" class="inspector-btn primary-drink" data-inspector-action="primary">${btnLabel}</button>
+          <button type="button" class="inspector-btn danger-act" data-inspector-action="drop" title="Drop Item">🗑️ Drop</button>
+        `;
+      } else {
+        const equipLabel = canEquip ? `⚔️ Equip ${item.slot.toUpperCase()}` : `✕ Cannot Equip (${p.className})`;
+        actionsHtml = `
+          <button type="button" class="inspector-btn primary-equip" data-inspector-action="primary" ${canEquip ? '' : 'disabled'}>${equipLabel}</button>
+          <button type="button" class="inspector-btn danger-act" data-inspector-action="drop" title="Drop Item">🗑️ Drop</button>
+        `;
+      }
+    } else if (group === 'equip') {
+      if (indexOrKey === 'relic') {
+        actionsHtml = `
+          <button type="button" class="inspector-btn primary-equip" data-inspector-action="use-relic">✨ Use Relic (${item.mpCost || 30} MP)</button>
+          <button type="button" class="inspector-btn secondary-act" data-inspector-action="unequip">📥 Unequip</button>
+        `;
+      } else {
+        actionsHtml = `
+          <button type="button" class="inspector-btn secondary-act" style="flex:1;" data-inspector-action="unequip">📥 Unequip to Backpack</button>
+        `;
+      }
+    } else if (group === 'bag' || group === 'world_bag') {
+      if (item.slot === 'consumable') {
+        const btnLabel = item.subType === 'crest_shard' ? '✨ Attune Shard' : '🧪 Drink / Use';
+        actionsHtml = `
+          <button type="button" class="inspector-btn primary-drink" data-inspector-action="primary">${btnLabel}</button>
+          <button type="button" class="inspector-btn secondary-act" data-inspector-action="take-bag">🎒 Backpack</button>
+        `;
+      } else if (canEquip) {
+        actionsHtml = `
+          <button type="button" class="inspector-btn primary-equip" data-inspector-action="primary">⚔️ Equip ${item.slot.toUpperCase()}</button>
+          <button type="button" class="inspector-btn secondary-act" data-inspector-action="take-bag">🎒 Backpack</button>
+        `;
+      } else {
+        actionsHtml = `
+          <button type="button" class="inspector-btn primary-equip" data-inspector-action="take-bag">🎒 Take to Backpack</button>
+        `;
+      }
+    } else if (group === 'vault_inv') {
+      const secLabel = item.slot === 'consumable' ? '🧪 Drink' : '⚔️ Equip';
+      actionsHtml = `
+        <button type="button" class="inspector-btn primary-equip" data-inspector-action="vault-deposit">📥 Deposit to Vault</button>
+        <button type="button" class="inspector-btn secondary-act" data-inspector-action="primary" ${item.slot !== 'consumable' && !canEquip ? 'disabled' : ''}>${secLabel}</button>
+      `;
+    } else if (group === 'vault_chest') {
+      actionsHtml = `
+        <button type="button" class="inspector-btn primary-equip" data-inspector-action="vault-withdraw">📤 Withdraw to Backpack</button>
+      `;
+    }
+
+    return `
+      <div class="inspector-top-row">
+        <div class="inspector-item-identity">
+          <img src="${iconUrl}" alt="${item.name}" />
+          <div class="inspector-title-wrap">
+            <div class="inspector-item-name" style="color:${isUt ? '#22d3ee' : '#fde047'};">
+              ${item.name}
+              <span style="font-size:10px;font-weight:900;padding:1px 5px;margin-left:4px;border-radius:3px;background:rgba(255,255,255,0.1);color:${bagMeta.color};">${item.tier}</span>
+            </div>
+            <div class="inspector-item-sub">${slotLabelMap[item.slot] || 'Sacred Item'} ${compatibilityTag}</div>
+          </div>
+        </div>
+        <button type="button" class="inspector-close-x" data-inspector-action="close" aria-label="Close Item Details">✕</button>
+      </div>
+      ${statLines.length > 0 ? `<div class="inspector-stats-list">${statLines.join('')}</div>` : ''}
+      <div class="inspector-desc">${item.desc}</div>
+      ${compareHtml}
+      <div class="inspector-actions">${actionsHtml}</div>
+    `;
+  }
+
+  renderItemInspectorPanels(bagObj = null) {
+    const sidebarInspector = document.getElementById('item-inspector-panel');
+    const worldInspector = document.getElementById('world-loot-inspector');
+    const beltInspector = document.getElementById('quick-belt-inspector');
+    const vaultInspector = document.getElementById('vault-item-inspector');
+
+    if (!this.selectedSlot) {
+      if (sidebarInspector) sidebarInspector.style.display = 'none';
+      if (worldInspector) worldInspector.style.display = 'none';
+      if (beltInspector) beltInspector.style.display = 'none';
+      if (vaultInspector) vaultInspector.style.display = 'none';
+      return;
+    }
+
+    const { group, index } = this.selectedSlot;
+    const currentItemId = this.resolveSlotItemId(group, index, bagObj);
+    if (!currentItemId) {
+      this.clearSelectedSlot();
+      return;
+    }
+    this.selectedSlot.itemId = currentItemId;
+    const item = ITEMS[currentItemId];
+    const isUt = item && (item.tier === 'UT' || item.tier === 'SHARD');
+    const html = this.buildInspectorCardHtml(group, index, currentItemId);
+
+    // 1. Sidebar Inspector (shown for inventory, equip, bag, quick_belt)
+    if (sidebarInspector) {
+      if (group === 'inventory' || group === 'equip' || group === 'bag' || group === 'quick_belt') {
+        sidebarInspector.innerHTML = html;
+        sidebarInspector.style.display = 'block';
+        sidebarInspector.classList.toggle('ut-inspector', Boolean(isUt));
+        this.bindInspectorActions(sidebarInspector, group, index, bagObj);
+      } else {
+        sidebarInspector.style.display = 'none';
+      }
+    }
+
+    // 2. Floating World Chest Inspector (shown when inspecting a chest/bag slot)
+    if (worldInspector) {
+      if (group === 'bag' || group === 'world_bag') {
+        worldInspector.innerHTML = html;
+        worldInspector.style.display = 'block';
+        worldInspector.classList.toggle('ut-inspector', Boolean(isUt));
+        this.bindInspectorActions(worldInspector, group, index, bagObj);
+      } else {
+        worldInspector.style.display = 'none';
+      }
+    }
+
+    // 3. Mobile Quick-Belt Floating Inspector (shown when tapping quick-belt on combat screen)
+    if (beltInspector) {
+      if (group === 'quick_belt') {
+        beltInspector.innerHTML = html;
+        beltInspector.style.display = 'block';
+        beltInspector.classList.toggle('ut-inspector', Boolean(isUt));
+        this.bindInspectorActions(beltInspector, group, index, bagObj);
+      } else {
+        beltInspector.style.display = 'none';
+      }
+    }
+
+    // 4. Vault Modal Inspector
+    if (vaultInspector) {
+      if (group === 'vault_inv' || group === 'vault_chest') {
+        vaultInspector.innerHTML = html;
+        vaultInspector.style.display = 'block';
+        vaultInspector.classList.toggle('ut-inspector', Boolean(isUt));
+        this.bindInspectorActions(vaultInspector, group, index, bagObj);
+      } else {
+        vaultInspector.style.display = 'none';
+      }
+    }
+  }
+
+  bindInspectorActions(container, group, indexOrKey, bagObj = null) {
+    const buttons = container.querySelectorAll('[data-inspector-action]');
+    buttons.forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const act = btn.getAttribute('data-inspector-action');
+        if (act === 'close') {
+          this.clearSelectedSlot();
+          return;
+        }
+        this.executeInspectorAction(act, group, indexOrKey, bagObj);
+      });
+    });
+  }
+
+  executeInspectorAction(action, group, indexOrKey, bagObj = null) {
+    const p = this.game.player;
+    if (!p) return false;
+    const activeBag = bagObj || this.game.getNearestBag();
+
+    if (action === 'primary') {
+      if (group === 'inventory' || group === 'quick_belt' || group === 'vault_inv') {
+        const ok = this.game.useOrEquipItem('inventory', Number(indexOrKey));
+        this.clearSelectedSlot();
+        this.refreshAllStatsAndSlots();
+        if (group === 'vault_inv') this.populateVaultModal();
+        return ok;
+      }
+      if (group === 'bag' || group === 'world_bag') {
+        const ok = this.game.useOrEquipItem('bag', Number(indexOrKey), activeBag);
+        this.clearSelectedSlot();
+        this.lastBagSignature = '';
+        this.refreshAllStatsAndSlots();
+        this.updateGroundBagPanel();
+        return ok;
+      }
+    } else if (action === 'take-bag') {
+      const ok = this.game.takeBagItemToInventory(Number(indexOrKey), activeBag);
+      this.clearSelectedSlot();
+      this.lastBagSignature = '';
+      this.refreshAllStatsAndSlots();
+      this.updateGroundBagPanel();
+      return ok;
+    } else if (action === 'drop') {
+      const ok = this.game.dropInventoryItem(Number(indexOrKey));
+      this.clearSelectedSlot();
+      this.lastBagSignature = '';
+      this.refreshAllStatsAndSlots();
+      this.updateGroundBagPanel();
+      return ok;
+    } else if (action === 'unequip') {
+      const ok = this.game.unequipItem(indexOrKey);
+      this.clearSelectedSlot();
+      this.refreshAllStatsAndSlots();
+      return ok;
+    } else if (action === 'use-relic') {
+      this.game.useRelicAbility();
+      this.clearSelectedSlot();
+      this.refreshAllStatsAndSlots();
+      return true;
+    } else if (action === 'vault-deposit') {
+      const idx = Number(indexOrKey);
+      const itemId = p.inventory[idx];
+      if (!itemId) return false;
+      const emptyVaultIdx = this.game.account.vault.findIndex((x) => !x);
+      if (emptyVaultIdx === -1) {
+        this.game.spawnFloatingText(p.x, p.y - 0.7, 'VAULT FULL!', '#ef4444', 12);
+        return false;
+      }
+      this.game.account.vault[emptyVaultIdx] = itemId;
+      p.inventory[idx] = null;
+      this.game.saveAccount();
+      sound.playSfx('rupee');
+      this.clearSelectedSlot();
+      this.populateVaultModal();
+      this.refreshAllStatsAndSlots();
+      return true;
+    } else if (action === 'vault-withdraw') {
+      const idx = Number(indexOrKey);
+      const itemId = this.game.account.vault[idx];
+      if (!itemId) return false;
+      const emptyInvIdx = p.inventory.findIndex((x) => !x);
+      if (emptyInvIdx === -1) {
+        this.game.spawnFloatingText(p.x, p.y - 0.7, 'BACKPACK FULL!', '#ef4444', 12);
+        return false;
+      }
+      p.inventory[emptyInvIdx] = itemId;
+      this.game.account.vault[idx] = null;
+      this.game.saveAccount();
+      sound.playSfx('rupee');
+      this.clearSelectedSlot();
+      this.populateVaultModal();
+      this.refreshAllStatsAndSlots();
+      return true;
+    }
+    return false;
   }
 
   updateGroundBagPanel() {
@@ -715,6 +1128,9 @@ export class HudController {
       if (this.activeBagId !== null) {
         this.activeBagId = null;
         this.lastBagSignature = '';
+        if (this.selectedSlot && (this.selectedSlot.group === 'bag' || this.selectedSlot.group === 'world_bag')) {
+          this.clearSelectedSlot();
+        }
         if (bagSection) bagSection.style.display = 'none';
         if (worldPopup) worldPopup.style.display = 'none';
       }
@@ -732,8 +1148,9 @@ export class HudController {
       const screenX = (bag.x - p.x) * TILE_SIZE + cw / 2;
       const screenY = (bag.y - p.y) * TILE_SIZE + ch / 2;
 
-      const popupWidth = 224;
-      const popupHeight = bag.items.length > 4 ? 170 : 114;
+      const popupWidth = 240;
+      const isInspectingBag = this.selectedSlot && (this.selectedSlot.group === 'bag' || this.selectedSlot.group === 'world_bag');
+      const popupHeight = (bag.items.length > 4 ? 170 : 114) + (isInspectingBag ? 165 : 0);
       const flipLeft = screenX + 24 + popupWidth > cw - 12;
       const rawLeft = flipLeft ? screenX - popupWidth - 24 : screenX + 24;
       const rawTop = screenY - 48;
@@ -758,23 +1175,24 @@ export class HudController {
 
     const padded = [...bag.items];
     while (padded.length < 4) padded.push(null);
-    const slotsHtml = padded.slice(0, 8).map((itemId, idx) => {
-      return this.renderSlotHtml(itemId, '', 'bag', idx);
-    }).join('');
 
     if (worldTitle && worldGrid) {
       worldTitle.textContent = chestLabel;
       worldTitle.style.color = bag.bagType === 6 ? '#22d3ee' : meta.color;
-      worldGrid.innerHTML = slotsHtml;
-      this.bindSlotEvents(worldGrid, 'bag', bag);
+      worldGrid.innerHTML = padded.slice(0, 8).map((itemId, idx) => {
+        return this.renderSlotHtml(itemId, '', 'world_bag', idx);
+      }).join('');
+      this.bindSlotEvents(worldGrid, 'world_bag', bag);
     }
 
     if (bagSection && bagGrid && bagTitle) {
       bagSection.style.display = 'block';
       bagSection.classList.toggle('white-bag-active', bag.bagType === 6);
-      bagTitle.textContent = `${chestLabel} (Click to Loot)`;
+      bagTitle.textContent = `${chestLabel} (Tap to Inspect)`;
       bagTitle.style.color = bag.bagType === 6 ? '#22d3ee' : meta.color;
-      bagGrid.innerHTML = slotsHtml;
+      bagGrid.innerHTML = padded.slice(0, 8).map((itemId, idx) => {
+        return this.renderSlotHtml(itemId, '', 'bag', idx);
+      }).join('');
       this.bindSlotEvents(bagGrid, 'bag', bag);
     }
   }
@@ -1107,39 +1525,9 @@ export class HudController {
     invEl.innerHTML = p.inventory.map((id, idx) => this.renderSlotHtml(id, `INV ${idx + 1}`, 'vault_inv', idx)).join('');
     chestEl.innerHTML = this.game.account.vault.map((id, idx) => this.renderSlotHtml(id, `V ${idx + 1}`, 'vault_chest', idx)).join('');
 
-    // Click Player Inv -> Deposit to Vault
-    invEl.querySelectorAll('.item-slot').forEach((slot) => {
-      slot.addEventListener('click', () => {
-        const idx = parseInt(slot.getAttribute('data-index'), 10);
-        const itemId = p.inventory[idx];
-        if (!itemId) return;
-        const emptyVaultIdx = this.game.account.vault.findIndex((x) => !x);
-        if (emptyVaultIdx === -1) return;
-        this.game.account.vault[emptyVaultIdx] = itemId;
-        p.inventory[idx] = null;
-        this.game.saveAccount();
-        sound.playSfx('rupee');
-        this.populateVaultModal();
-        this.refreshAllStatsAndSlots();
-      });
-    });
-
-    // Click Vault Chest -> Withdraw to Player Inv
-    chestEl.querySelectorAll('.item-slot').forEach((slot) => {
-      slot.addEventListener('click', () => {
-        const idx = parseInt(slot.getAttribute('data-index'), 10);
-        const itemId = this.game.account.vault[idx];
-        if (!itemId) return;
-        const emptyInvIdx = p.inventory.findIndex((x) => !x);
-        if (emptyInvIdx === -1) return;
-        p.inventory[emptyInvIdx] = itemId;
-        this.game.account.vault[idx] = null;
-        this.game.saveAccount();
-        sound.playSfx('rupee');
-        this.populateVaultModal();
-        this.refreshAllStatsAndSlots();
-      });
-    });
+    this.bindSlotEvents(invEl, 'vault_inv');
+    this.bindSlotEvents(chestEl, 'vault_chest');
+    this.renderItemInspectorPanels();
   }
 
   populateForgeModal() {
