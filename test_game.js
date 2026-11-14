@@ -521,7 +521,73 @@ assert(game.player.buffs.damaging >= 4.5, 'Remote ally Solar Templar Warhorn mus
   );
   console.log('✓ 14. World & Dungeon NPC cap (0 in Sanctuary, 3 in Realm, 3 per Dungeon) & 25% HP floor (NPCs cannot complete dungeons) verified');
 
-  console.log('\nALL 14 REALM OF THE SHATTERED CREST TEST SUITES PASSED!');
+  // Suite 15: Clock-Ring Sanctuary Teleporters, Top DPS Recorder NPC Next to Dummy & Death Counter NPC
+  game.warpToMap('nexus');
+  const nexusPortals = game.currentMap.portals;
+  assert.strictEqual(nexusPortals.length, 8, 'Sanctuary Hub must have all 8 Realm & Dungeon teleporters');
+  const expectedClockOrder = ['12:00', '1:30', '3:00', '4:30', '6:00', '7:30', '9:00', '10:30'];
+  nexusPortals.forEach((pt, idx) => {
+    assert.strictEqual(pt.clockPos, expectedClockOrder[idx], `Portal ${pt.id} must be at clock position ${expectedClockOrder[idx]}`);
+    const distFromCenter = Math.hypot(pt.x - 24.0, pt.y - 24.0);
+    assert(
+      Math.abs(distFromCenter - 8.5) < 0.15,
+      `Portal ${pt.id} at ${pt.clockPos} must sit on the 8.5-tile clock ring around (24,24) (got ${distFromCenter})`
+    );
+  });
+
+  // Verify Master Tactician Kael (dps_npc) is next to the Combat Dummy and records Top DPS
+  const dpsNpc = game.currentMap.props.find((p) => p.type === 'dps_npc');
+  assert(dpsNpc, 'Master Tactician Kael (dps_npc) must exist in the Sanctuary Hub');
+  const combatDummy = game.enemies.find((e) => e.isDummy);
+  assert(combatDummy, 'Combat Dummy must exist in the Sanctuary Hub');
+  const distNpcToDummy = Math.hypot(dpsNpc.x - combatDummy.x, dpsNpc.y - combatDummy.y);
+  assert(
+    distNpcToDummy <= 2.5,
+    `DPS Recorder NPC must stand right next to the Combat Dummy (distance was ${distNpcToDummy.toFixed(2)} tiles)`
+  );
+
+  game.resetTopDps();
+  assert.strictEqual(game.getTopDps(), 0, 'Top DPS must start at 0 after reset');
+  game.damageEnemy(combatDummy, 320, 0, true, false);
+  assert(game.getTopDps() >= 250, `Hitting the dummy must record Top DPS (got ${game.getTopDps()})`);
+
+  game.player.x = dpsNpc.x;
+  game.player.y = dpsNpc.y + 0.6;
+  const nearDpsTarget = game.getNearestInteractiveTarget();
+  assert(nearDpsTarget && nearDpsTarget.kind === 'dps_npc', 'Standing near Master Tactician Kael must prompt DPS interaction');
+  game.interactWithNearest();
+  assert.strictEqual(getMockEl('modal-dps').style.display, 'flex', 'Interacting with DPS NPC must open #modal-dps');
+  assert(
+    getMockEl('dps-modal-body').innerHTML.includes(String(game.getTopDps())),
+    '#dps-modal-body must display the recorded Top DPS'
+  );
+
+  // Verify Soul Warden Morrigan (death_npc) tracks and tells you how many times you have died
+  const deathNpc = game.currentMap.props.find((p) => p.type === 'death_npc');
+  assert(deathNpc, 'Soul Warden Morrigan (death_npc) must exist in the Sanctuary Hub');
+  const deathsBefore = game.getDeathCount();
+  assert(deathsBefore >= 1, 'Death counter must have recorded the earlier test permadeath');
+  game.triggerPermadeath('Ignis the Magma Overlord');
+  const deathsAfter = game.getDeathCount();
+  assert.strictEqual(deathsAfter, deathsBefore + 1, 'Each permadeath must increment the death counter by 1');
+
+  game.spawnNewHero('knight');
+  game.player.x = deathNpc.x;
+  game.player.y = deathNpc.y + 0.6;
+  const nearDeathTarget = game.getNearestInteractiveTarget();
+  assert(
+    nearDeathTarget && nearDeathTarget.kind === 'death_npc' && nearDeathTarget.label.includes(String(deathsAfter)),
+    'Standing near Soul Warden Morrigan must show how many times you have died'
+  );
+  game.interactWithNearest();
+  assert.strictEqual(getMockEl('modal-graveyard').style.display, 'flex', 'Interacting with Death NPC must open #modal-graveyard');
+  assert(
+    getMockEl('graveyard-modal-body').innerHTML.includes(String(deathsAfter)),
+    '#graveyard-modal-body must display total deaths recorded'
+  );
+  console.log('✓ 15. Clock-Ring Sanctuary Teleporters, Master Kael Top DPS Recorder NPC & Soul Warden Morrigan Death Counter NPC verified');
+
+  console.log('\nALL 15 REALM OF THE SHATTERED CREST TEST SUITES PASSED!');
 })().catch((err) => {
   console.error(err);
   process.exit(1);

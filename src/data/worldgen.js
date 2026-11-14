@@ -113,33 +113,68 @@ export function generateNexusMap() {
     }
   }
 
+  // Golden Celestial Clock Track around the Sanctuary Center (24, 24) at radius 8.5
+  for (let y = 13; y <= 35; y++) {
+    for (let x = 13; x <= 35; x++) {
+      const dist = Math.hypot(x + 0.5 - 24.0, y + 0.5 - 24.0);
+      if (Math.abs(dist - 8.5) <= 0.65) {
+        setTile(x, y, TILES.MARBLE_GOLD);
+      }
+    }
+  }
+
   // HIGH ELDER VAELEN & THE ALTAR OF THE SHATTERED CREST (Center Plaza, North of Fountain)
   props.push({
     id: 'nexus_elder_vaelen',
     type: 'elder_npc',
     x: 24.0,
-    y: 19.5,
+    y: 20.0,
     name: 'High Elder Vaelen (Keeper of the Holy Crest)'
   });
 
-  // West Wing: Warden Training Courtyard (Bushes, Urns, Runic Switch, Grapple Canal, Cracked Wall)
-  for (let y = 18; y <= 30; y++) {
-    for (let x = 10; x <= 17; x++) {
+  // SOUL WARDEN MORRIGAN — DEATH COUNTER & FALLEN HEROES CHRONICLER (Center Plaza, East of Spawn)
+  props.push({
+    id: 'nexus_death_npc',
+    type: 'death_npc',
+    x: 27.5,
+    y: 26.5,
+    name: 'Soul Warden Morrigan (Chronicler of Deaths)'
+  });
+
+  // South-West Combat & DPS Courtyard (Training Dummies + Master Tactician Kael Next to Dummy)
+  for (let y = 26; y <= 33; y++) {
+    for (let x = 10; x <= 15; x++) {
       setTile(x, y, TILES.GRASS);
     }
   }
-  for (let y = 20; y <= 25; y++) {
-    setTile(13, y, TILES.WATER);
-  }
-  setTile(13, 26, TILES.WOOD_BRIDGE);
-  props.push({ id: 'n_grapple_1', type: 'grapple_post', x: 11.5, y: 22.5 });
-  props.push({ id: 'n_grapple_2', type: 'grapple_post', x: 15.5, y: 22.5 });
 
-  for (let y = 19; y <= 29; y += 2) {
-    props.push({ id: `n_bush_${y}`, type: 'bush', x: 10.5, y: y + 0.5, hp: 1 });
-    props.push({ id: `n_pot_${y}`,  type: 'pot',  x: 16.5, y: y + 0.5, hp: 1 });
+  // MASTER TACTICIAN KAEL — TOP DPS RECORDER NPC (Standing right next to the Combat Dummies!)
+  props.push({
+    id: 'nexus_dps_npc',
+    type: 'dps_npc',
+    x: 12.75,
+    y: 26.6,
+    name: 'Master Tactician Kael (Top DPS Recorder)'
+  });
+
+  // North-West Warden Training Courtyard (Grapple Canal, Bushes, Urns, Runic Switch, Cracked Wall)
+  for (let y = 12; y <= 23; y++) {
+    for (let x = 10; x <= 14; x++) {
+      setTile(x, y, TILES.GRASS);
+    }
   }
-  props.push({ id: 'n_switch_1', type: 'crystal_switch', x: 15.5, y: 18.5, state: 'red' });
+  for (let y = 12; y <= 15; y++) {
+    setTile(12, y, TILES.WATER);
+  }
+  setTile(12, 16, TILES.WOOD_BRIDGE);
+  props.push({ id: 'n_grapple_1', type: 'grapple_post', x: 10.5, y: 14.0 });
+  props.push({ id: 'n_grapple_2', type: 'grapple_post', x: 13.8, y: 14.0 });
+
+  for (let y = 18; y <= 22; y += 2) {
+    props.push({ id: `n_bush_${y}`, type: 'bush', x: 10.5, y: y + 0.5, hp: 1 });
+    props.push({ id: `n_pot_${y}`,  type: 'pot',  x: 13.5, y: y + 0.5, hp: 1 });
+  }
+  props.push({ id: 'n_switch_1', type: 'crystal_switch', x: 12.0, y: 17.5, state: 'red' });
 
   // Secret Brimstone-Breachable Vault Nook in North-West Corner of Sanctuary!
   setTile(11, 9, TILES.WALL_STONE);
@@ -156,94 +191,111 @@ export function generateNexusMap() {
   });
 
   // East Wing: Account Vault Chest & Relic Forge Anvil
-  props.push({ id: 'nexus_vault_chest', type: 'vault_chest', x: 33.5, y: 23.5, name: 'Account Vault & Potion Storage' });
-  props.push({ id: 'nexus_forge_anvil', type: 'forge_anvil', x: 33.5, y: 26.5, name: 'Sanctuary Relic & UT Forge' });
+  props.push({ id: 'nexus_vault_chest', type: 'vault_chest', x: 36.5, y: 22.5, name: 'Account Vault & Potion Storage' });
+  props.push({ id: 'nexus_forge_anvil', type: 'forge_anvil', x: 36.5, y: 25.5, name: 'Sanctuary Relic & UT Forge' });
 
-  // North Wing: Realm & Dungeon Portals (Where the 5 Crest Shards are hidden!)
-  portals.push({
-    id: 'portal_realm_beach',
-    name: 'Aethelgard Realm (Sunlit Shoals)',
-    targetMap: 'realm',
-    targetZone: 'beach',
-    x: 24.0,
-    y: 14.0,
-    color: '#22c55e',
-    playersCount: 24
-  });
+  // ============================================================================
+  // CELESTIAL CLOCK RING OF TELEPORTERS (Organized Around Center 24,24 Like a Clock)
+  // ============================================================================
+  const clockCenterX = 24.0;
+  const clockCenterY = 24.0;
+  const clockRadius = 8.5;
+  const clockPortalsSpec = [
+    {
+      clockPos: '12:00',
+      angleDeg: -90,
+      id: 'portal_realm_beach',
+      name: '12:00 • Aethelgard Realm (Sunlit Shoals)',
+      targetMap: 'realm',
+      targetZone: 'beach',
+      color: '#22c55e',
+      playersCount: 24
+    },
+    {
+      clockPos: '1:30',
+      angleDeg: -45,
+      id: 'portal_cove_direct',
+      name: '1:30 • I. Sunken Corsair Grotto (Shard I)',
+      targetMap: 'dungeon',
+      dungeonId: 'pirate_cove',
+      color: '#f59e0b'
+    },
+    {
+      clockPos: '3:00',
+      angleDeg: 0,
+      id: 'portal_deku_direct',
+      name: '3:00 • II. Blighted Sylvan Temple (Shard II)',
+      targetMap: 'dungeon',
+      dungeonId: 'deku_temple',
+      color: '#10b981'
+    },
+    {
+      clockPos: '4:30',
+      angleDeg: 45,
+      id: 'portal_sprite_direct',
+      name: '4:30 • III. The Astral Conduit (Shard III)',
+      targetMap: 'dungeon',
+      dungeonId: 'sprite_world',
+      color: '#38bdf8'
+    },
+    {
+      clockPos: '6:00',
+      angleDeg: 90,
+      id: 'portal_udl_direct',
+      name: '6:00 • IV. Sunken Catacombs (Shard IV)',
+      targetMap: 'dungeon',
+      dungeonId: 'undead_lair',
+      color: '#c084fc'
+    },
+    {
+      clockPos: '7:30',
+      angleDeg: 135,
+      id: 'portal_abyss_direct',
+      name: '7:30 • V. Caldera of the Abyss (Shard V)',
+      targetMap: 'dungeon',
+      dungeonId: 'abyss_mountain',
+      color: '#ef4444'
+    },
+    {
+      clockPos: '9:00',
+      angleDeg: 180,
+      id: 'portal_realm_godlands',
+      name: '9:00 • The Blightlands Rift (Lvl 20)',
+      targetMap: 'realm',
+      targetZone: 'godlands',
+      color: '#a855f7',
+      playersCount: 14
+    },
+    {
+      clockPos: '10:30',
+      angleDeg: -135,
+      id: 'portal_sanctum_direct',
+      name: '10:30 • Sanctum of the Evil Bane (Raid)',
+      targetMap: 'dungeon',
+      dungeonId: 'mad_sanctum',
+      color: '#facc15'
+    }
+  ];
 
-  portals.push({
-    id: 'portal_realm_godlands',
-    name: 'The Blightlands Rift (Lvl 20)',
-    targetMap: 'realm',
-    targetZone: 'godlands',
-    x: 19.5,
-    y: 14.0,
-    color: '#a855f7',
-    playersCount: 14
-  });
-
-  portals.push({
-    id: 'portal_sanctum_direct',
-    name: 'Sanctum of the Evil Bane (Raid)',
-    targetMap: 'dungeon',
-    dungeonId: 'mad_sanctum',
-    x: 28.5,
-    y: 14.0,
-    color: '#facc15'
-  });
-
-  // 5 Shard Dungeon Trial Portals row along North Alcove (y = 10.5)
-  portals.push({
-    id: 'portal_cove_direct',
-    name: 'I. Sunken Corsair Grotto (Shard I)',
-    targetMap: 'dungeon',
-    dungeonId: 'pirate_cove',
-    x: 15.5,
-    y: 10.8,
-    color: '#f59e0b'
-  });
-  portals.push({
-    id: 'portal_deku_direct',
-    name: 'II. Blighted Sylvan Temple (Shard II)',
-    targetMap: 'dungeon',
-    dungeonId: 'deku_temple',
-    x: 19.8,
-    y: 10.8,
-    color: '#10b981'
-  });
-  portals.push({
-    id: 'portal_sprite_direct',
-    name: 'III. The Astral Conduit (Shard III)',
-    targetMap: 'dungeon',
-    dungeonId: 'sprite_world',
-    x: 24.0,
-    y: 10.8,
-    color: '#38bdf8'
-  });
-  portals.push({
-    id: 'portal_udl_direct',
-    name: 'IV. Sunken Catacombs (Shard IV)',
-    targetMap: 'dungeon',
-    dungeonId: 'undead_lair',
-    x: 28.2,
-    y: 10.8,
-    color: '#c084fc'
-  });
-  portals.push({
-    id: 'portal_abyss_direct',
-    name: 'V. Caldera of the Abyss (Shard V)',
-    targetMap: 'dungeon',
-    dungeonId: 'abyss_mountain',
-    x: 32.5,
-    y: 10.8,
-    color: '#ef4444'
-  });
+  for (const spec of clockPortalsSpec) {
+    const rad = (spec.angleDeg * Math.PI) / 180;
+    portals.push({
+      ...spec,
+      clockAngle: rad,
+      clockRadius,
+      x: Number((clockCenterX + Math.cos(rad) * clockRadius).toFixed(2)),
+      y: Number((clockCenterY + Math.sin(rad) * clockRadius).toFixed(2))
+    });
+  }
 
   return {
     id: 'nexus',
     name: 'The Radiant Sanctuary Hub',
     width,
     height,
+    cx: clockCenterX,
+    cy: clockCenterY,
+    clockRadius,
     tiles,
     props,
     portals,

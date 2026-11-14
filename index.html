@@ -1688,6 +1688,44 @@ html, body {
     </div>
   </div>
 
+  <!-- MODAL 5: MASTER TACTICIAN KAEL — COMBAT DUMMY & TOP DPS RECORDER -->
+  <div id="modal-dps" class="modal-backdrop">
+    <div class="modal-card" style="max-width:520px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <h2 style="margin:0;font-size:18px;color:#fb923c;">⚔️ Master Tactician Kael — Top DPS Recorder</h2>
+          <div style="font-size:11.5px;color:#fde047;font-weight:700;margin-top:2px;">
+            Sanctuary Combat Courtyard • Live &amp; All-Time Dummy Damage Per Second
+          </div>
+        </div>
+        <button class="hud-btn modal-close-btn">✕ Close</button>
+      </div>
+      <div id="dps-modal-body" style="margin-top:10px;"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:12px;">
+        <button id="btn-reset-top-dps" type="button" class="hud-btn" style="border-color:rgba(248,113,113,0.5);color:#fca5a5;">
+          🔄 Reset Top DPS Record
+        </button>
+        <button type="button" class="hud-btn primary-gold modal-close-btn">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 6: SOUL WARDEN MORRIGAN — DEATH COUNTER & CHRONICLE OF THE FALLEN -->
+  <div id="modal-graveyard" class="modal-backdrop">
+    <div class="modal-card" style="max-width:580px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <h2 style="margin:0;font-size:18px;color:#e879f9;">💀 Soul Warden Morrigan — Chronicle of Deaths</h2>
+          <div style="font-size:11.5px;color:#c084fc;font-weight:700;margin-top:2px;">
+            Keeper of the Book of the Fallen • Sanctuary Death Counter &amp; Memorial
+          </div>
+        </div>
+        <button class="hud-btn modal-close-btn">✕ Close</button>
+      </div>
+      <div id="graveyard-modal-body" style="margin-top:10px;"></div>
+    </div>
+  </div>
+
   <script>
 (() => {
 // --- MODULE: src/data/classes.js ---
@@ -2939,33 +2977,68 @@ function generateNexusMap() {
     }
   }
 
+  // Golden Celestial Clock Track around the Sanctuary Center (24, 24) at radius 8.5
+  for (let y = 13; y <= 35; y++) {
+    for (let x = 13; x <= 35; x++) {
+      const dist = Math.hypot(x + 0.5 - 24.0, y + 0.5 - 24.0);
+      if (Math.abs(dist - 8.5) <= 0.65) {
+        setTile(x, y, TILES.MARBLE_GOLD);
+      }
+    }
+  }
+
   // HIGH ELDER VAELEN & THE ALTAR OF THE SHATTERED CREST (Center Plaza, North of Fountain)
   props.push({
     id: 'nexus_elder_vaelen',
     type: 'elder_npc',
     x: 24.0,
-    y: 19.5,
+    y: 20.0,
     name: 'High Elder Vaelen (Keeper of the Holy Crest)'
   });
 
-  // West Wing: Warden Training Courtyard (Bushes, Urns, Runic Switch, Grapple Canal, Cracked Wall)
-  for (let y = 18; y <= 30; y++) {
-    for (let x = 10; x <= 17; x++) {
+  // SOUL WARDEN MORRIGAN — DEATH COUNTER & FALLEN HEROES CHRONICLER (Center Plaza, East of Spawn)
+  props.push({
+    id: 'nexus_death_npc',
+    type: 'death_npc',
+    x: 27.5,
+    y: 26.5,
+    name: 'Soul Warden Morrigan (Chronicler of Deaths)'
+  });
+
+  // South-West Combat & DPS Courtyard (Training Dummies + Master Tactician Kael Next to Dummy)
+  for (let y = 26; y <= 33; y++) {
+    for (let x = 10; x <= 15; x++) {
       setTile(x, y, TILES.GRASS);
     }
   }
-  for (let y = 20; y <= 25; y++) {
-    setTile(13, y, TILES.WATER);
-  }
-  setTile(13, 26, TILES.WOOD_BRIDGE);
-  props.push({ id: 'n_grapple_1', type: 'grapple_post', x: 11.5, y: 22.5 });
-  props.push({ id: 'n_grapple_2', type: 'grapple_post', x: 15.5, y: 22.5 });
 
-  for (let y = 19; y <= 29; y += 2) {
-    props.push({ id: `n_bush_${y}`, type: 'bush', x: 10.5, y: y + 0.5, hp: 1 });
-    props.push({ id: `n_pot_${y}`,  type: 'pot',  x: 16.5, y: y + 0.5, hp: 1 });
+  // MASTER TACTICIAN KAEL — TOP DPS RECORDER NPC (Standing right next to the Combat Dummies!)
+  props.push({
+    id: 'nexus_dps_npc',
+    type: 'dps_npc',
+    x: 12.75,
+    y: 26.6,
+    name: 'Master Tactician Kael (Top DPS Recorder)'
+  });
+
+  // North-West Warden Training Courtyard (Grapple Canal, Bushes, Urns, Runic Switch, Cracked Wall)
+  for (let y = 12; y <= 23; y++) {
+    for (let x = 10; x <= 14; x++) {
+      setTile(x, y, TILES.GRASS);
+    }
   }
-  props.push({ id: 'n_switch_1', type: 'crystal_switch', x: 15.5, y: 18.5, state: 'red' });
+  for (let y = 12; y <= 15; y++) {
+    setTile(12, y, TILES.WATER);
+  }
+  setTile(12, 16, TILES.WOOD_BRIDGE);
+  props.push({ id: 'n_grapple_1', type: 'grapple_post', x: 10.5, y: 14.0 });
+  props.push({ id: 'n_grapple_2', type: 'grapple_post', x: 13.8, y: 14.0 });
+
+  for (let y = 18; y <= 22; y += 2) {
+    props.push({ id: `n_bush_${y}`, type: 'bush', x: 10.5, y: y + 0.5, hp: 1 });
+    props.push({ id: `n_pot_${y}`,  type: 'pot',  x: 13.5, y: y + 0.5, hp: 1 });
+  }
+  props.push({ id: 'n_switch_1', type: 'crystal_switch', x: 12.0, y: 17.5, state: 'red' });
 
   // Secret Brimstone-Breachable Vault Nook in North-West Corner of Sanctuary!
   setTile(11, 9, TILES.WALL_STONE);
@@ -2982,94 +3055,111 @@ function generateNexusMap() {
   });
 
   // East Wing: Account Vault Chest & Relic Forge Anvil
-  props.push({ id: 'nexus_vault_chest', type: 'vault_chest', x: 33.5, y: 23.5, name: 'Account Vault & Potion Storage' });
-  props.push({ id: 'nexus_forge_anvil', type: 'forge_anvil', x: 33.5, y: 26.5, name: 'Sanctuary Relic & UT Forge' });
+  props.push({ id: 'nexus_vault_chest', type: 'vault_chest', x: 36.5, y: 22.5, name: 'Account Vault & Potion Storage' });
+  props.push({ id: 'nexus_forge_anvil', type: 'forge_anvil', x: 36.5, y: 25.5, name: 'Sanctuary Relic & UT Forge' });
 
-  // North Wing: Realm & Dungeon Portals (Where the 5 Crest Shards are hidden!)
-  portals.push({
-    id: 'portal_realm_beach',
-    name: 'Aethelgard Realm (Sunlit Shoals)',
-    targetMap: 'realm',
-    targetZone: 'beach',
-    x: 24.0,
-    y: 14.0,
-    color: '#22c55e',
-    playersCount: 24
-  });
+  // ============================================================================
+  // CELESTIAL CLOCK RING OF TELEPORTERS (Organized Around Center 24,24 Like a Clock)
+  // ============================================================================
+  const clockCenterX = 24.0;
+  const clockCenterY = 24.0;
+  const clockRadius = 8.5;
+  const clockPortalsSpec = [
+    {
+      clockPos: '12:00',
+      angleDeg: -90,
+      id: 'portal_realm_beach',
+      name: '12:00 • Aethelgard Realm (Sunlit Shoals)',
+      targetMap: 'realm',
+      targetZone: 'beach',
+      color: '#22c55e',
+      playersCount: 24
+    },
+    {
+      clockPos: '1:30',
+      angleDeg: -45,
+      id: 'portal_cove_direct',
+      name: '1:30 • I. Sunken Corsair Grotto (Shard I)',
+      targetMap: 'dungeon',
+      dungeonId: 'pirate_cove',
+      color: '#f59e0b'
+    },
+    {
+      clockPos: '3:00',
+      angleDeg: 0,
+      id: 'portal_deku_direct',
+      name: '3:00 • II. Blighted Sylvan Temple (Shard II)',
+      targetMap: 'dungeon',
+      dungeonId: 'deku_temple',
+      color: '#10b981'
+    },
+    {
+      clockPos: '4:30',
+      angleDeg: 45,
+      id: 'portal_sprite_direct',
+      name: '4:30 • III. The Astral Conduit (Shard III)',
+      targetMap: 'dungeon',
+      dungeonId: 'sprite_world',
+      color: '#38bdf8'
+    },
+    {
+      clockPos: '6:00',
+      angleDeg: 90,
+      id: 'portal_udl_direct',
+      name: '6:00 • IV. Sunken Catacombs (Shard IV)',
+      targetMap: 'dungeon',
+      dungeonId: 'undead_lair',
+      color: '#c084fc'
+    },
+    {
+      clockPos: '7:30',
+      angleDeg: 135,
+      id: 'portal_abyss_direct',
+      name: '7:30 • V. Caldera of the Abyss (Shard V)',
+      targetMap: 'dungeon',
+      dungeonId: 'abyss_mountain',
+      color: '#ef4444'
+    },
+    {
+      clockPos: '9:00',
+      angleDeg: 180,
+      id: 'portal_realm_godlands',
+      name: '9:00 • The Blightlands Rift (Lvl 20)',
+      targetMap: 'realm',
+      targetZone: 'godlands',
+      color: '#a855f7',
+      playersCount: 14
+    },
+    {
+      clockPos: '10:30',
+      angleDeg: -135,
+      id: 'portal_sanctum_direct',
+      name: '10:30 • Sanctum of the Evil Bane (Raid)',
+      targetMap: 'dungeon',
+      dungeonId: 'mad_sanctum',
+      color: '#facc15'
+    }
+  ];
 
-  portals.push({
-    id: 'portal_realm_godlands',
-    name: 'The Blightlands Rift (Lvl 20)',
-    targetMap: 'realm',
-    targetZone: 'godlands',
-    x: 19.5,
-    y: 14.0,
-    color: '#a855f7',
-    playersCount: 14
-  });
-
-  portals.push({
-    id: 'portal_sanctum_direct',
-    name: 'Sanctum of the Evil Bane (Raid)',
-    targetMap: 'dungeon',
-    dungeonId: 'mad_sanctum',
-    x: 28.5,
-    y: 14.0,
-    color: '#facc15'
-  });
-
-  // 5 Shard Dungeon Trial Portals row along North Alcove (y = 10.5)
-  portals.push({
-    id: 'portal_cove_direct',
-    name: 'I. Sunken Corsair Grotto (Shard I)',
-    targetMap: 'dungeon',
-    dungeonId: 'pirate_cove',
-    x: 15.5,
-    y: 10.8,
-    color: '#f59e0b'
-  });
-  portals.push({
-    id: 'portal_deku_direct',
-    name: 'II. Blighted Sylvan Temple (Shard II)',
-    targetMap: 'dungeon',
-    dungeonId: 'deku_temple',
-    x: 19.8,
-    y: 10.8,
-    color: '#10b981'
-  });
-  portals.push({
-    id: 'portal_sprite_direct',
-    name: 'III. The Astral Conduit (Shard III)',
-    targetMap: 'dungeon',
-    dungeonId: 'sprite_world',
-    x: 24.0,
-    y: 10.8,
-    color: '#38bdf8'
-  });
-  portals.push({
-    id: 'portal_udl_direct',
-    name: 'IV. Sunken Catacombs (Shard IV)',
-    targetMap: 'dungeon',
-    dungeonId: 'undead_lair',
-    x: 28.2,
-    y: 10.8,
-    color: '#c084fc'
-  });
-  portals.push({
-    id: 'portal_abyss_direct',
-    name: 'V. Caldera of the Abyss (Shard V)',
-    targetMap: 'dungeon',
-    dungeonId: 'abyss_mountain',
-    x: 32.5,
-    y: 10.8,
-    color: '#ef4444'
-  });
+  for (const spec of clockPortalsSpec) {
+    const rad = (spec.angleDeg * Math.PI) / 180;
+    portals.push({
+      ...spec,
+      clockAngle: rad,
+      clockRadius,
+      x: Number((clockCenterX + Math.cos(rad) * clockRadius).toFixed(2)),
+      y: Number((clockCenterY + Math.sin(rad) * clockRadius).toFixed(2))
+    });
+  }
 
   return {
     id: 'nexus',
     name: 'The Radiant Sanctuary Hub',
     width,
     height,
+    cx: clockCenterX,
+    cy: clockCenterY,
+    clockRadius,
     tiles,
     props,
     portals,
@@ -3829,6 +3919,121 @@ function drawProp(ctx, prop, screenX, screenY, time) {
       break;
     }
 
+    case 'dps_npc': {
+      // Crimson Tactician Aura
+      const grad = ctx.createRadialGradient(0, 0, 4, 0, 0, 30);
+      grad.addColorStop(0, 'rgba(249, 115, 22, 0.42)');
+      grad.addColorStop(1, 'rgba(249, 115, 22, 0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(0, 0, 30, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Tactician Ring on Floor
+      ctx.strokeStyle = '#f97316';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, 4, 18, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Master Tactician Kael's Crimson & Gold Commander Armor
+      ctx.fillStyle = '#991b1b';
+      ctx.strokeStyle = '#facc15';
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.roundRect(-11, -7, 22, 20, 5);
+      ctx.fill();
+      ctx.stroke();
+
+      // Head & Tactician Visor Helm
+      ctx.fillStyle = '#fed7aa';
+      ctx.beginPath();
+      ctx.arc(0, -10, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#f97316';
+      ctx.fillRect(-8, -17, 16, 5);
+
+      // Chronometer / Combat Ledger & Greatsword at Side
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(13, 11);
+      ctx.lineTo(15, -15);
+      ctx.stroke();
+
+      // Overhead Nameplate & Live Top DPS Readout
+      ctx.fillStyle = '#fb923c';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('⚔️ MASTER KAEL (DPS) [E]', 0, -31);
+      ctx.fillStyle = '#fde047';
+      ctx.font = 'bold 9.5px monospace';
+      const topDps = prop.topDps || 0;
+      const liveDps = prop.liveDps || 0;
+      ctx.fillText(liveDps > 0 ? `TOP: ${topDps} DPS • NOW: ${liveDps}/s` : `TOP RECORD: ${topDps} DPS`, 0, -19);
+      break;
+    }
+
+    case 'death_npc': {
+      // Spectral Amethyst Soul Aura
+      const grad = ctx.createRadialGradient(0, 0, 4, 0, 0, 30);
+      grad.addColorStop(0, 'rgba(168, 85, 247, 0.45)');
+      grad.addColorStop(1, 'rgba(168, 85, 247, 0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(0, 0, 30, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Runic Soul Circle on Floor
+      ctx.strokeStyle = '#c084fc';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, 4, 18, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Soul Warden Morrigan's Obsidian & Violet Robes
+      ctx.fillStyle = '#3b0764';
+      ctx.strokeStyle = '#c084fc';
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.roundRect(-11, -7, 22, 20, 6);
+      ctx.fill();
+      ctx.stroke();
+
+      // Hooded Head
+      ctx.fillStyle = '#e9d5ff';
+      ctx.beginPath();
+      ctx.arc(0, -10, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Amethyst Hood & Floating Soul Lantern
+      ctx.fillStyle = '#7e22ce';
+      ctx.fillRect(-8, -17, 16, 4.5);
+
+      const bob = Math.sin(time * 4.5) * 2.5;
+      ctx.fillStyle = '#f472b6';
+      ctx.beginPath();
+      ctx.arc(-14, -14 + bob, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      // Overhead Nameplate & Live Death Counter Readout
+      const deaths = prop.totalDeaths || 0;
+      ctx.fillStyle = '#e879f9';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('💀 SOUL WARDEN MORRIGAN [E]', 0, -31);
+      ctx.fillStyle = '#f8fafc';
+      ctx.font = 'bold 9.5px monospace';
+      ctx.fillText(`DEATHS RECORDED: ${deaths}`, 0, -19);
+      break;
+    }
+
     case 'bush': {
       ctx.fillStyle = 'rgba(0,0,0,0.35)';
       ctx.beginPath();
@@ -4550,8 +4755,15 @@ class GameEngine {
     this.particles = [];
     this.floatingTexts = [];
     this.gravestones = [];
-    this.aiPlayers = []; // Kept empty (100% real multiplayer players in shared instance!)
+    this.aiPlayers = [];
     this.remotePlayers = new Map();
+
+    // Live & All-Time Top DPS Tracker (Recorded by Master Tactician Kael next to the Dummy)
+    this.dpsTracker = {
+      hits: [],
+      totalDamage: 0,
+      lastRecordNotifyTime: -10
+    };
 
     // Realm Event Progress (Defeat 3 Blight Heralds to unseal the Citadel of Evil Bane!)
     this.realmEventsRemaining = 3;
@@ -4597,6 +4809,11 @@ class GameEngine {
       lastClassId: 'knight',
       crestShards: [false, false, false, false, false],
       classBestFame: { knight: 25, ranger: 20, pyromancer: 0, paladin: 0, assassin: 0 },
+      topDps: 0,
+      topDpsClass: 'Aethelgard Vanguard',
+      topSingleHit: 0,
+      totalDeaths: 0,
+      luminaRevives: 0,
       vault: [
         'wep_sword_ut_master',
         'rel_hook_t2',
@@ -4621,7 +4838,12 @@ class GameEngine {
         crestShards: Array.isArray(parsed.crestShards) && parsed.crestShards.length === 5
           ? parsed.crestShards
           : [...fallback.crestShards],
-        classBestFame: { ...fallback.classBestFame, ...(parsed.classBestFame || {}) }
+        classBestFame: { ...fallback.classBestFame, ...(parsed.classBestFame || {}) },
+        topDps: typeof parsed.topDps === 'number' ? parsed.topDps : 0,
+        topSingleHit: typeof parsed.topSingleHit === 'number' ? parsed.topSingleHit : 0,
+        totalDeaths: typeof parsed.totalDeaths === 'number'
+          ? parsed.totalDeaths
+          : (Array.isArray(parsed.graveyard) ? parsed.graveyard.length : 0)
       };
     } catch (e) {
       return fallback;
@@ -4632,6 +4854,59 @@ class GameEngine {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(this.account));
     } catch (e) {}
+  }
+
+  getLiveDps() {
+    if (!this.dpsTracker || !Array.isArray(this.dpsTracker.hits)) return 0;
+    const cutoff = this.time - 3.0;
+    this.dpsTracker.hits = this.dpsTracker.hits.filter((h) => h.time >= cutoff);
+    if (this.dpsTracker.hits.length === 0) return 0;
+    const sumDmg = this.dpsTracker.hits.reduce((acc, h) => acc + h.dmg, 0);
+    const span = Math.max(1.0, Math.min(3.0, this.time - this.dpsTracker.hits[0].time + 0.25));
+    return Math.round(sumDmg / span);
+  }
+
+  getTopDps() {
+    return (this.account && this.account.topDps) || 0;
+  }
+
+  resetTopDps() {
+    this.account.topDps = 0;
+    this.account.topSingleHit = 0;
+    if (this.dpsTracker) {
+      this.dpsTracker.hits = [];
+      this.dpsTracker.totalDamage = 0;
+    }
+    this.saveAccount();
+    return true;
+  }
+
+  recordPlayerDamageHit(dmg, isDummy = false) {
+    if (!dmg || dmg <= 0) return;
+    if (!this.dpsTracker) {
+      this.dpsTracker = { hits: [], totalDamage: 0, lastRecordNotifyTime: -10 };
+    }
+    this.dpsTracker.hits.push({ time: this.time, dmg, isDummy });
+    this.dpsTracker.totalDamage += dmg;
+    if (dmg > (this.account.topSingleHit || 0)) {
+      this.account.topSingleHit = dmg;
+    }
+    const liveDps = this.getLiveDps();
+    if (liveDps > (this.account.topDps || 0)) {
+      this.account.topDps = liveDps;
+      this.account.topDpsClass = this.player ? this.player.className : 'Champion';
+      this.saveAccount();
+      if (isDummy && this.time - this.dpsTracker.lastRecordNotifyTime >= 0.85) {
+        this.dpsTracker.lastRecordNotifyTime = this.time;
+        this.spawnFloatingText(12.75, 25.4, `★ NEW TOP DPS: ${liveDps}/s! ★`, '#fb923c', 13);
+      }
+    }
+  }
+
+  getDeathCount() {
+    const accDeaths = (this.account && typeof this.account.totalDeaths === 'number') ? this.account.totalDeaths : 0;
+    const graveLen = (this.account && Array.isArray(this.account.graveyard)) ? this.account.graveyard.length : 0;
+    return Math.max(accDeaths, graveLen, this.gravestones ? this.gravestones.length : 0);
   }
 
   getRestoredShardsCount() {
@@ -4927,9 +5202,9 @@ class GameEngine {
     this.activeQuestEnemy = null;
 
     if (this.currentMap.id === 'nexus') {
-      // Spawn 2 friendly Training Target Dummies in the West Courtyard
-      this.spawnEnemy('octorok', 12.5, 28.0, { isDummy: true, name: 'Vanguard Combat Dummy' });
-      this.spawnEnemy('darknut_knight', 15.0, 28.0, { isDummy: true, name: 'Armored Parry Dummy' });
+      // Spawn 2 friendly Training Target Dummies right beside Master Tactician Kael (DPS Recorder NPC)
+      this.spawnEnemy('octorok', 11.5, 28.5, { isDummy: true, name: 'Vanguard Combat Dummy' });
+      this.spawnEnemy('darknut_knight', 14.0, 28.5, { isDummy: true, name: 'Armored Parry Dummy' });
       return;
     }
 
@@ -5591,7 +5866,10 @@ class GameEngine {
 
     enemy.hp -= finalDmg;
     enemy.hitFlash = 0.12;
-    if (!fromNetwork) sound.playSfx('hit_enemy');
+    if (!fromNetwork) {
+      sound.playSfx('hit_enemy');
+      this.recordPlayerDamageHit(finalDmg, Boolean(enemy.isDummy));
+    }
     this.spawnFloatingText(
       enemy.x + (Math.random() - 0.5) * 0.5,
       enemy.y - 0.6,
@@ -6078,6 +6356,8 @@ class GameEngine {
         p.hp = Math.round(p.stats.hp * 0.65);
         p.mp = Math.round(p.stats.mp * 0.50);
         p.invulnTimer = 2.2;
+        this.account.luminaRevives = (this.account.luminaRevives || 0) + 1;
+        this.saveAccount();
         sound.playSfx('secret');
         this.spawnBurstParticles(p.x, p.y, '#f472b6', 32);
         this.spawnFloatingText(p.x, p.y - 1.1, '★ LUMINA WISP REVIVED YOU! ★', '#f472b6', 16);
@@ -6117,11 +6397,12 @@ class GameEngine {
 
     const totalFame = baseFame + bonuses.reduce((acc, b) => acc + b.amount, 0);
 
-    // Update Account Fame, Best Class Fame & Graveyard
+    // Update Account Fame, Best Class Fame, Total Deaths & Graveyard
     this.account.accountFame += totalFame;
     if (totalFame > (this.account.classBestFame[p.classId] || 0)) {
       this.account.classBestFame[p.classId] = totalFame;
     }
+    this.account.totalDeaths = (this.account.totalDeaths || 0) + 1;
     const grave = {
       name: p.name,
       className: p.className,
@@ -6926,6 +7207,21 @@ class GameEngine {
             label: `Speak with High Elder Vaelen — Lore & Holy Crest (${this.getRestoredShardsCount()}/5 Shards) [E]`
           };
         }
+        if (prop.type === 'dps_npc') {
+          return {
+            kind: 'dps_npc',
+            obj: prop,
+            label: `Speak with Master Tactician Kael — Top DPS: ${this.getTopDps()}/s (Live: ${this.getLiveDps()}/s) [E]`
+          };
+        }
+        if (prop.type === 'death_npc') {
+          const deaths = this.getDeathCount();
+          return {
+            kind: 'death_npc',
+            obj: prop,
+            label: `Speak with Soul Warden Morrigan — You Have Died ${deaths} ${deaths === 1 ? 'Time' : 'Times'} [E]`
+          };
+        }
         if (prop.type === 'vault_chest') return { kind: 'vault', obj: prop, label: 'Open Account Vault [E]' };
         if (prop.type === 'forge_anvil') return { kind: 'forge', obj: prop, label: 'Open Relic Forge [E]' };
         if (prop.type === 'chest' && !prop.opened) return { kind: 'chest', obj: prop, label: 'Open Treasure Chest [E]' };
@@ -6945,6 +7241,35 @@ class GameEngine {
     if (target.kind === 'elder' && this.ui && this.ui.onOpenModal) {
       sound.playSfx('secret');
       this.ui.onOpenModal('elder');
+      return true;
+    }
+    if (target.kind === 'dps_npc') {
+      sound.playSfx('secret');
+      const topDps = this.getTopDps();
+      const liveDps = this.getLiveDps();
+      const bestHit = this.account.topSingleHit || 0;
+      this.addChatMessage(
+        'MASTER KAEL (DPS)',
+        `"Your recorded Top DPS is ${topDps} DMG/sec (${this.account.topDpsClass || 'Champion'}) • Highest Hit: ${bestHit} DMG • Live Dummy DPS: ${liveDps}/s!"`,
+        '#fb923c'
+      );
+      if (this.ui && this.ui.onOpenModal) {
+        this.ui.onOpenModal('dps');
+      }
+      return true;
+    }
+    if (target.kind === 'death_npc') {
+      sound.playSfx('secret');
+      const deaths = this.getDeathCount();
+      const saves = this.account.luminaRevives || 0;
+      this.addChatMessage(
+        'SOUL WARDEN MORRIGAN',
+        `"You have died ${deaths} ${deaths === 1 ? 'time' : 'times'} across the realms of Aethelgard (and escaped death ${saves} ${saves === 1 ? 'time' : 'times'} via Lumina Wisps)."`,
+        '#e879f9'
+      );
+      if (this.ui && this.ui.onOpenModal) {
+        this.ui.onOpenModal('graveyard');
+      }
       return true;
     }
     if (target.kind === 'vault' && this.ui && this.ui.onOpenModal) {
@@ -6996,6 +7321,42 @@ class GameEngine {
       }
     }
 
+    // 1b. Draw Sanctuary Hub Celestial Clock Dial & Radial Spokes around Center (24, 24)
+    if (m.id === 'nexus') {
+      const centerSx = (m.cx || 24.0) * TILE_SIZE - camX;
+      const centerSy = (m.cy || 24.0) * TILE_SIZE - camY;
+      const ringRadiusPx = (m.clockRadius || 8.5) * TILE_SIZE;
+
+      ctx.save();
+      ctx.translate(centerSx, centerSy);
+
+      // Outer & Inner Golden Celestial Clock Rings
+      ctx.strokeStyle = 'rgba(250, 204, 21, 0.36)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(0, 0, ringRadiusPx, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(0, 0, ringRadiusPx - 14, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Radial Clock-Hand Spokes from Central Fountain to each of the 8 Clock Teleporters
+      for (const pt of m.portals) {
+        if (typeof pt.clockAngle === 'number') {
+          ctx.strokeStyle = 'rgba(250, 204, 21, 0.28)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(Math.cos(pt.clockAngle) * 76, Math.sin(pt.clockAngle) * 76);
+          ctx.lineTo(Math.cos(pt.clockAngle) * (ringRadiusPx - 20), Math.sin(pt.clockAngle) * (ringRadiusPx - 20));
+          ctx.stroke();
+        }
+      }
+      ctx.restore();
+    }
+
     // 2. Draw Portals
     for (const pt of m.portals) {
       const sx = pt.x * TILE_SIZE - camX;
@@ -7028,8 +7389,17 @@ class GameEngine {
       ctx.restore();
     }
 
-    // 3. Draw Interactive Props (including High Elder Vaelen in the Sanctuary Hub!)
+    // 3. Draw Interactive Props (including High Elder Vaelen, Master Kael DPS Recorder & Soul Warden Morrigan!)
+    const liveDpsVal = this.getLiveDps();
+    const topDpsVal = this.getTopDps();
+    const totalDeathsVal = this.getDeathCount();
     for (const prop of m.props) {
+      if (prop.type === 'dps_npc') {
+        prop.topDps = topDpsVal;
+        prop.liveDps = liveDpsVal;
+      } else if (prop.type === 'death_npc') {
+        prop.totalDeaths = totalDeathsVal;
+      }
       const sx = prop.x * TILE_SIZE - camX;
       const sy = prop.y * TILE_SIZE - camY;
       if (sx < -50 || sx > w + 50 || sy < -50 || sy > h + 50) continue;
@@ -9321,8 +9691,12 @@ class HudController {
       } else if (cmd === '/whitebag') {
         const p = this.game.player;
         this.game.spawnLootBag(p.x + 0.8, p.y, ['wep_sword_ut_master', 'rng_ut_crown', 'arm_ut_magic_armor', 'rel_boom_ut']);
+      } else if (cmd === '/dps') {
+        this.openModal('dps');
+      } else if (cmd === '/deaths' || cmd === '/graveyard' || cmd === '/died') {
+        this.openModal('graveyard');
       } else {
-        this.game.addChatMessage('HELP', 'Commands: /who, /login <Name>, /nexus, /elder, /glands, /boss, /max88, /whitebag', '#38bdf8');
+        this.game.addChatMessage('HELP', 'Commands: /who, /login <Name>, /nexus, /elder, /dps, /deaths, /glands, /boss, /max88, /whitebag', '#38bdf8');
       }
       return;
     }
@@ -9331,12 +9705,20 @@ class HudController {
   }
 
   // ==========================================================================
-  // MODALS: LOGIN, HIGH ELDER VAELEN LORE & HOLY CREST, CLASSES, VAULT, FORGE & DEATH
+  // MODALS: LOGIN, HIGH ELDER VAELEN LORE & HOLY CREST, CLASSES, VAULT, FORGE, DPS & DEATH
   // ==========================================================================
   renderStaticModals() {
     document.querySelectorAll('.modal-close-btn').forEach((btn) => {
       btn.addEventListener('click', () => this.closeAllModals());
     });
+    const resetDpsBtn = document.getElementById('btn-reset-top-dps');
+    if (resetDpsBtn) {
+      resetDpsBtn.addEventListener('click', () => {
+        this.game.resetTopDps();
+        sound.playSfx('secret');
+        this.populateDpsModal();
+      });
+    }
   }
 
   openModal(modalName) {
@@ -9358,6 +9740,14 @@ class HudController {
     } else if (modalName === 'forge') {
       this.populateForgeModal();
       document.getElementById('modal-forge').style.display = 'flex';
+    } else if (modalName === 'dps') {
+      this.populateDpsModal();
+      const el = document.getElementById('modal-dps');
+      if (el) el.style.display = 'flex';
+    } else if (modalName === 'graveyard') {
+      this.populateGraveyardModal();
+      const el = document.getElementById('modal-graveyard');
+      if (el) el.style.display = 'flex';
     }
   }
 
@@ -9658,6 +10048,86 @@ class HudController {
       this.game.spawnNewHero(this.game.player.classId);
       this.refreshAllStatsAndSlots();
     };
+  }
+
+  populateDpsModal() {
+    const body = document.getElementById('dps-modal-body');
+    if (!body) return;
+
+    const topDps = this.game.getTopDps ? this.game.getTopDps() : 0;
+    const liveDps = this.game.getLiveDps ? this.game.getLiveDps() : 0;
+    const topClass = (this.game.account && this.game.account.topDpsClass) || (this.game.player ? this.game.player.className : 'Champion');
+    const bestHit = (this.game.account && this.game.account.topSingleHit) || 0;
+    const totalDmg = (this.game.dpsTracker && this.game.dpsTracker.totalDamage) || 0;
+
+    body.innerHTML = `
+      <div style="background:rgba(9,14,23,0.82);border:1px solid rgba(251,146,60,0.45);border-radius:8px;padding:14px 16px;">
+        <div style="text-align:center;margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;">All-Time Top DPS Record</div>
+          <div style="font-size:28px;font-weight:900;color:#fde047;margin-top:2px;">⚔️ ${topDps} DPS</div>
+          <div style="font-size:11.5px;color:#fb923c;font-weight:700;">Recorded as ${topClass}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;font-size:12px;border-top:1px solid rgba(148,163,184,0.18);padding-top:10px;">
+          <div style="display:flex;justify-content:space-between;">
+            <span style="color:#cbd5e1;">Current Live DPS (3s Rolling Window)</span>
+            <strong style="color:#4ade80;">${liveDps} DMG / sec</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;">
+            <span style="color:#cbd5e1;">Highest Single Hit Recorded</span>
+            <strong style="color:#38bdf8;">${bestHit} DMG</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;">
+            <span style="color:#cbd5e1;">Total Session Damage Dealt</span>
+            <strong style="color:#f8fafc;">${totalDmg} DMG</strong>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:11.5px;color:#94a3b8;margin-top:10px;line-height:1.45;font-style:italic;">
+        "Strike the Vanguard Combat Dummy or Armored Parry Dummy right beside me to benchmark your weapon, 8/8 stats, and Sacred Relic burst!" — Master Tactician Kael
+      </div>
+    `;
+  }
+
+  populateGraveyardModal() {
+    const body = document.getElementById('graveyard-modal-body');
+    if (!body) return;
+
+    const totalDeaths = this.game.getDeathCount ? this.game.getDeathCount() : 0;
+    const luminaSaves = (this.game.account && this.game.account.luminaRevives) || 0;
+    const graves = (this.game.account && Array.isArray(this.game.account.graveyard)) ? this.game.account.graveyard : [];
+
+    const graveRows = graves.length === 0
+      ? `<div style="padding:12px;text-align:center;color:#94a3b8;font-size:12px;background:rgba(15,23,42,0.65);border-radius:6px;border:1px solid #1e293b;">
+          No heroes have fallen yet! Your Soul Ledger remains unblemished (0 Deaths).
+        </div>`
+      : graves.map((g, i) => `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:rgba(15,23,42,0.78);border:1px solid rgba(192,132,252,0.28);border-radius:6px;font-size:11.5px;">
+            <div>
+              <strong style="color:#f8fafc;">#${i + 1} ${g.name || 'Hero'}</strong>
+              <span style="color:#c084fc;font-weight:700;">— Lvl ${g.level || 1} ${g.className || 'Champion'} (${g.maxedCount || 0}/8)</span>
+              <div style="font-size:10.5px;color:#94a3b8;margin-top:2px;">Slain by <strong style="color:#f87171;">${g.killerName || 'Realm Monster'}</strong> ${g.date ? `at ${g.date}` : ''}</div>
+            </div>
+            <span style="color:#fde047;font-weight:800;font-size:11.5px;">★ +${g.totalFame || 0} Fame</span>
+          </div>
+        `).join('');
+
+    body.innerHTML = `
+      <div style="background:rgba(59,7,100,0.28);border:1px solid rgba(192,132,252,0.45);border-radius:8px;padding:12px 16px;margin-bottom:12px;text-align:center;">
+        <div style="font-size:11px;font-weight:800;color:#d8b4fe;text-transform:uppercase;letter-spacing:0.06em;">Soul Warden's Tally</div>
+        <div style="font-size:26px;font-weight:900;color:#f8fafc;margin-top:2px;">
+          💀 You Have Died <span style="color:#f43f5e;">${totalDeaths}</span> ${totalDeaths === 1 ? 'Time' : 'Times'}
+        </div>
+        <div style="font-size:11.5px;color:#cbd5e1;margin-top:4px;">
+          🧚 Saved from Death by Bottled Lumina Wisps: <strong style="color:#f472b6;">${luminaSaves} ${luminaSaves === 1 ? 'Time' : 'Times'}</strong>
+        </div>
+      </div>
+      <div style="font-size:11px;font-weight:800;color:#c084fc;text-transform:uppercase;margin-bottom:6px;">
+        Recent Fallen Heroes (${graves.length})
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;">
+        ${graveRows}
+      </div>
+    `;
   }
 }
 

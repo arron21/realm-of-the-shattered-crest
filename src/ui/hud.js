@@ -1502,8 +1502,12 @@ export class HudController {
       } else if (cmd === '/whitebag') {
         const p = this.game.player;
         this.game.spawnLootBag(p.x + 0.8, p.y, ['wep_sword_ut_master', 'rng_ut_crown', 'arm_ut_magic_armor', 'rel_boom_ut']);
+      } else if (cmd === '/dps') {
+        this.openModal('dps');
+      } else if (cmd === '/deaths' || cmd === '/graveyard' || cmd === '/died') {
+        this.openModal('graveyard');
       } else {
-        this.game.addChatMessage('HELP', 'Commands: /who, /login <Name>, /nexus, /elder, /glands, /boss, /max88, /whitebag', '#38bdf8');
+        this.game.addChatMessage('HELP', 'Commands: /who, /login <Name>, /nexus, /elder, /dps, /deaths, /glands, /boss, /max88, /whitebag', '#38bdf8');
       }
       return;
     }
@@ -1512,12 +1516,20 @@ export class HudController {
   }
 
   // ==========================================================================
-  // MODALS: LOGIN, HIGH ELDER VAELEN LORE & HOLY CREST, CLASSES, VAULT, FORGE & DEATH
+  // MODALS: LOGIN, HIGH ELDER VAELEN LORE & HOLY CREST, CLASSES, VAULT, FORGE, DPS & DEATH
   // ==========================================================================
   renderStaticModals() {
     document.querySelectorAll('.modal-close-btn').forEach((btn) => {
       btn.addEventListener('click', () => this.closeAllModals());
     });
+    const resetDpsBtn = document.getElementById('btn-reset-top-dps');
+    if (resetDpsBtn) {
+      resetDpsBtn.addEventListener('click', () => {
+        this.game.resetTopDps();
+        sound.playSfx('secret');
+        this.populateDpsModal();
+      });
+    }
   }
 
   openModal(modalName) {
@@ -1539,6 +1551,14 @@ export class HudController {
     } else if (modalName === 'forge') {
       this.populateForgeModal();
       document.getElementById('modal-forge').style.display = 'flex';
+    } else if (modalName === 'dps') {
+      this.populateDpsModal();
+      const el = document.getElementById('modal-dps');
+      if (el) el.style.display = 'flex';
+    } else if (modalName === 'graveyard') {
+      this.populateGraveyardModal();
+      const el = document.getElementById('modal-graveyard');
+      if (el) el.style.display = 'flex';
     }
   }
 
@@ -1839,5 +1859,85 @@ export class HudController {
       this.game.spawnNewHero(this.game.player.classId);
       this.refreshAllStatsAndSlots();
     };
+  }
+
+  populateDpsModal() {
+    const body = document.getElementById('dps-modal-body');
+    if (!body) return;
+
+    const topDps = this.game.getTopDps ? this.game.getTopDps() : 0;
+    const liveDps = this.game.getLiveDps ? this.game.getLiveDps() : 0;
+    const topClass = (this.game.account && this.game.account.topDpsClass) || (this.game.player ? this.game.player.className : 'Champion');
+    const bestHit = (this.game.account && this.game.account.topSingleHit) || 0;
+    const totalDmg = (this.game.dpsTracker && this.game.dpsTracker.totalDamage) || 0;
+
+    body.innerHTML = `
+      <div style="background:rgba(9,14,23,0.82);border:1px solid rgba(251,146,60,0.45);border-radius:8px;padding:14px 16px;">
+        <div style="text-align:center;margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;">All-Time Top DPS Record</div>
+          <div style="font-size:28px;font-weight:900;color:#fde047;margin-top:2px;">⚔️ ${topDps} DPS</div>
+          <div style="font-size:11.5px;color:#fb923c;font-weight:700;">Recorded as ${topClass}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;font-size:12px;border-top:1px solid rgba(148,163,184,0.18);padding-top:10px;">
+          <div style="display:flex;justify-content:space-between;">
+            <span style="color:#cbd5e1;">Current Live DPS (3s Rolling Window)</span>
+            <strong style="color:#4ade80;">${liveDps} DMG / sec</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;">
+            <span style="color:#cbd5e1;">Highest Single Hit Recorded</span>
+            <strong style="color:#38bdf8;">${bestHit} DMG</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;">
+            <span style="color:#cbd5e1;">Total Session Damage Dealt</span>
+            <strong style="color:#f8fafc;">${totalDmg} DMG</strong>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:11.5px;color:#94a3b8;margin-top:10px;line-height:1.45;font-style:italic;">
+        "Strike the Vanguard Combat Dummy or Armored Parry Dummy right beside me to benchmark your weapon, 8/8 stats, and Sacred Relic burst!" — Master Tactician Kael
+      </div>
+    `;
+  }
+
+  populateGraveyardModal() {
+    const body = document.getElementById('graveyard-modal-body');
+    if (!body) return;
+
+    const totalDeaths = this.game.getDeathCount ? this.game.getDeathCount() : 0;
+    const luminaSaves = (this.game.account && this.game.account.luminaRevives) || 0;
+    const graves = (this.game.account && Array.isArray(this.game.account.graveyard)) ? this.game.account.graveyard : [];
+
+    const graveRows = graves.length === 0
+      ? `<div style="padding:12px;text-align:center;color:#94a3b8;font-size:12px;background:rgba(15,23,42,0.65);border-radius:6px;border:1px solid #1e293b;">
+          No heroes have fallen yet! Your Soul Ledger remains unblemished (0 Deaths).
+        </div>`
+      : graves.map((g, i) => `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:rgba(15,23,42,0.78);border:1px solid rgba(192,132,252,0.28);border-radius:6px;font-size:11.5px;">
+            <div>
+              <strong style="color:#f8fafc;">#${i + 1} ${g.name || 'Hero'}</strong>
+              <span style="color:#c084fc;font-weight:700;">— Lvl ${g.level || 1} ${g.className || 'Champion'} (${g.maxedCount || 0}/8)</span>
+              <div style="font-size:10.5px;color:#94a3b8;margin-top:2px;">Slain by <strong style="color:#f87171;">${g.killerName || 'Realm Monster'}</strong> ${g.date ? `at ${g.date}` : ''}</div>
+            </div>
+            <span style="color:#fde047;font-weight:800;font-size:11.5px;">★ +${g.totalFame || 0} Fame</span>
+          </div>
+        `).join('');
+
+    body.innerHTML = `
+      <div style="background:rgba(59,7,100,0.28);border:1px solid rgba(192,132,252,0.45);border-radius:8px;padding:12px 16px;margin-bottom:12px;text-align:center;">
+        <div style="font-size:11px;font-weight:800;color:#d8b4fe;text-transform:uppercase;letter-spacing:0.06em;">Soul Warden's Tally</div>
+        <div style="font-size:26px;font-weight:900;color:#f8fafc;margin-top:2px;">
+          💀 You Have Died <span style="color:#f43f5e;">${totalDeaths}</span> ${totalDeaths === 1 ? 'Time' : 'Times'}
+        </div>
+        <div style="font-size:11.5px;color:#cbd5e1;margin-top:4px;">
+          🧚 Saved from Death by Bottled Lumina Wisps: <strong style="color:#f472b6;">${luminaSaves} ${luminaSaves === 1 ? 'Time' : 'Times'}</strong>
+        </div>
+      </div>
+      <div style="font-size:11px;font-weight:800;color:#c084fc;text-transform:uppercase;margin-bottom:6px;">
+        Recent Fallen Heroes (${graves.length})
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;">
+        ${graveRows}
+      </div>
+    `;
   }
 }

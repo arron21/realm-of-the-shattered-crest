@@ -388,6 +388,44 @@ ${css}
     </div>
   </div>
 
+  <!-- MODAL 5: MASTER TACTICIAN KAEL — COMBAT DUMMY & TOP DPS RECORDER -->
+  <div id="modal-dps" class="modal-backdrop">
+    <div class="modal-card" style="max-width:520px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <h2 style="margin:0;font-size:18px;color:#fb923c;">⚔️ Master Tactician Kael — Top DPS Recorder</h2>
+          <div style="font-size:11.5px;color:#fde047;font-weight:700;margin-top:2px;">
+            Sanctuary Combat Courtyard • Live &amp; All-Time Dummy Damage Per Second
+          </div>
+        </div>
+        <button class="hud-btn modal-close-btn">✕ Close</button>
+      </div>
+      <div id="dps-modal-body" style="margin-top:10px;"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:12px;">
+        <button id="btn-reset-top-dps" type="button" class="hud-btn" style="border-color:rgba(248,113,113,0.5);color:#fca5a5;">
+          🔄 Reset Top DPS Record
+        </button>
+        <button type="button" class="hud-btn primary-gold modal-close-btn">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 6: SOUL WARDEN MORRIGAN — DEATH COUNTER & CHRONICLE OF THE FALLEN -->
+  <div id="modal-graveyard" class="modal-backdrop">
+    <div class="modal-card" style="max-width:580px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <h2 style="margin:0;font-size:18px;color:#e879f9;">💀 Soul Warden Morrigan — Chronicle of Deaths</h2>
+          <div style="font-size:11.5px;color:#c084fc;font-weight:700;margin-top:2px;">
+            Keeper of the Book of the Fallen • Sanctuary Death Counter &amp; Memorial
+          </div>
+        </div>
+        <button class="hud-btn modal-close-btn">✕ Close</button>
+      </div>
+      <div id="graveyard-modal-body" style="margin-top:10px;"></div>
+    </div>
+  </div>
+
   <script>
 (() => {
 ${combinedJs}

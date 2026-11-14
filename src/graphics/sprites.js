@@ -323,6 +323,121 @@ export function drawProp(ctx, prop, screenX, screenY, time) {
       break;
     }
 
+    case 'dps_npc': {
+      // Crimson Tactician Aura
+      const grad = ctx.createRadialGradient(0, 0, 4, 0, 0, 30);
+      grad.addColorStop(0, 'rgba(249, 115, 22, 0.42)');
+      grad.addColorStop(1, 'rgba(249, 115, 22, 0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(0, 0, 30, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Tactician Ring on Floor
+      ctx.strokeStyle = '#f97316';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, 4, 18, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Master Tactician Kael's Crimson & Gold Commander Armor
+      ctx.fillStyle = '#991b1b';
+      ctx.strokeStyle = '#facc15';
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.roundRect(-11, -7, 22, 20, 5);
+      ctx.fill();
+      ctx.stroke();
+
+      // Head & Tactician Visor Helm
+      ctx.fillStyle = '#fed7aa';
+      ctx.beginPath();
+      ctx.arc(0, -10, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#f97316';
+      ctx.fillRect(-8, -17, 16, 5);
+
+      // Chronometer / Combat Ledger & Greatsword at Side
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(13, 11);
+      ctx.lineTo(15, -15);
+      ctx.stroke();
+
+      // Overhead Nameplate & Live Top DPS Readout
+      ctx.fillStyle = '#fb923c';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('⚔️ MASTER KAEL (DPS) [E]', 0, -31);
+      ctx.fillStyle = '#fde047';
+      ctx.font = 'bold 9.5px monospace';
+      const topDps = prop.topDps || 0;
+      const liveDps = prop.liveDps || 0;
+      ctx.fillText(liveDps > 0 ? `TOP: ${topDps} DPS • NOW: ${liveDps}/s` : `TOP RECORD: ${topDps} DPS`, 0, -19);
+      break;
+    }
+
+    case 'death_npc': {
+      // Spectral Amethyst Soul Aura
+      const grad = ctx.createRadialGradient(0, 0, 4, 0, 0, 30);
+      grad.addColorStop(0, 'rgba(168, 85, 247, 0.45)');
+      grad.addColorStop(1, 'rgba(168, 85, 247, 0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(0, 0, 30, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Runic Soul Circle on Floor
+      ctx.strokeStyle = '#c084fc';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, 4, 18, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Soul Warden Morrigan's Obsidian & Violet Robes
+      ctx.fillStyle = '#3b0764';
+      ctx.strokeStyle = '#c084fc';
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.roundRect(-11, -7, 22, 20, 6);
+      ctx.fill();
+      ctx.stroke();
+
+      // Hooded Head
+      ctx.fillStyle = '#e9d5ff';
+      ctx.beginPath();
+      ctx.arc(0, -10, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Amethyst Hood & Floating Soul Lantern
+      ctx.fillStyle = '#7e22ce';
+      ctx.fillRect(-8, -17, 16, 4.5);
+
+      const bob = Math.sin(time * 4.5) * 2.5;
+      ctx.fillStyle = '#f472b6';
+      ctx.beginPath();
+      ctx.arc(-14, -14 + bob, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      // Overhead Nameplate & Live Death Counter Readout
+      const deaths = prop.totalDeaths || 0;
+      ctx.fillStyle = '#e879f9';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('💀 SOUL WARDEN MORRIGAN [E]', 0, -31);
+      ctx.fillStyle = '#f8fafc';
+      ctx.font = 'bold 9.5px monospace';
+      ctx.fillText(`DEATHS RECORDED: ${deaths}`, 0, -19);
+      break;
+    }
+
     case 'bush': {
       ctx.fillStyle = 'rgba(0,0,0,0.35)';
       ctx.beginPath();
