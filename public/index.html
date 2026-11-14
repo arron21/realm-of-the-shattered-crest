@@ -4695,6 +4695,21 @@ class GameEngine {
     return stars;
   }
 
+  getTotalClassStars() {
+    return this.getTotalStars();
+  }
+
+  selectClass(classId = 'knight') {
+    const prevX = this.player ? this.player.x : null;
+    const prevY = this.player ? this.player.y : null;
+    this.spawnNewHero(classId);
+    if (prevX !== null && prevY !== null && this.player) {
+      this.player.x = prevX;
+      this.player.y = prevY;
+    }
+    return this.player;
+  }
+
   // ==========================================================================
   // HERO CREATION & STAT CALCULATION (0/8 to 8/8 Maxing + Crest Blessings!)
   // ==========================================================================
@@ -7135,7 +7150,7 @@ class GameEngine {
       className: p.className,
       level: p.level || 20,
       maxedCount: p.maxedCount || 0,
-      stars: this.getTotalClassStars(),
+      stars: this.getTotalStars(),
       x: Math.round(p.x * 100) / 100,
       y: Math.round(p.y * 100) / 100,
       vx: Math.round((p.vx || 0) * 100) / 100,
@@ -7147,7 +7162,7 @@ class GameEngine {
       maxMp: Math.round(p.stats ? p.stats.mp : 250),
       shielding: Boolean(p.shielding),
       slashTimer: p.slashTimer > 0 ? Number(p.slashTimer.toFixed(2)) : 0,
-      spinAttack: Boolean(p.spinAttack),
+      spinAttack: Boolean(p.spinAttack || p.isSpinSlash),
       dead: Boolean(p.dead),
       palette: p.palette,
       equipment: p.equipment,
@@ -7205,12 +7220,14 @@ class GameEngine {
       return { ok: false, error: 'Hero Name must be at least 2 characters.' };
     }
 
+    this.account.heroName = cleanName;
+    this.account.loggedInName = cleanName;
+    this.mmo.username = cleanName;
+
     if (classId && CLASSES[classId] && (!this.player || this.player.classId !== classId)) {
       this.selectClass(classId);
     }
 
-    this.account.heroName = cleanName;
-    this.account.loggedInName = cleanName;
     if (this.player) {
       this.player.name = cleanName;
     }

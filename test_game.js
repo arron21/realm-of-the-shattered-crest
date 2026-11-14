@@ -464,9 +464,25 @@ game.handleNetworkPacket({
 });
 assert(game.player.hp > hpBeforeBuff, 'Remote ally Solar Templar Warhorn must heal nearby players in the shared instance');
 assert(game.player.buffs.damaging >= 4.5, 'Remote ally Solar Templar Warhorn must grant Damaging buff to nearby players');
-console.log('✓ 13. Multiplayer Login & 1 Shared MMO Instance (Aethelgard-Prime sync, chat, party buff & cross-map TP) verified');
+// Test client loginToMmo + submitLoginForm with class switching & serializeLocalPlayer
+(async () => {
+  getMockEl('login-username-input').value = 'AethelHero';
+  getMockEl('login-password-input').value = 'secret';
+  hud._selectedLoginClassId = 'paladin';
+  const formOk = await hud.submitLoginForm();
+  assert.strictEqual(formOk, true, 'hud.submitLoginForm() must succeed when changing class and logging in');
+  assert.strictEqual(game.player.name, 'AethelHero', 'Hero name must update to AethelHero after login');
+  assert.strictEqual(game.player.classId, 'paladin', 'Hero class must switch to paladin on login');
+  const serialized = game.serializeLocalPlayer();
+  assert.strictEqual(serialized.name, 'AethelHero', 'serializeLocalPlayer() must serialize logged-in hero');
+  assert.strictEqual(typeof serialized.stars, 'number', 'serializeLocalPlayer() must include numeric star rank');
+  console.log('✓ 13. Multiplayer Login & 1 Shared MMO Instance (Aethelgard-Prime sync, chat, party buff & cross-map TP) verified');
+  console.log('\nALL 13 REALM OF THE SHATTERED CREST TEST SUITES PASSED!');
+})().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
 
-console.log('\nALL 13 REALM OF THE SHATTERED CREST TEST SUITES PASSED!');
 
 
 
