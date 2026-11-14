@@ -688,11 +688,27 @@ export function drawHero(ctx, entity, screenX, screenY, time, isSelf = false) {
   }
 
   if (entity.name) {
-    ctx.font = 'bold 10px sans-serif';
+    ctx.font = 'bold 10.5px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillStyle = isSelf ? '#fde047' : '#e2e8f0';
+    const starPrefix = !isSelf && entity.stars !== undefined ? `★${entity.stars} ` : '';
     const maxTag = entity.maxedCount > 0 ? ` [${entity.maxedCount}/8]` : '';
-    ctx.fillText(`${entity.name}${maxTag}`, 0, -24);
+    const label = `${starPrefix}${entity.name}${maxTag}`;
+    ctx.fillStyle = 'rgba(9, 13, 22, 0.85)';
+    ctx.fillText(label, 1, -23);
+    ctx.fillStyle = isSelf ? '#fde047' : '#4ade80';
+    ctx.fillText(label, 0, -24);
+  }
+
+  // Live HP Bar beneath remote MMO players
+  const maxHp = entity.maxHp || (entity.stats && entity.stats.hp) || 0;
+  if (!isSelf && maxHp > 0 && entity.hp !== undefined) {
+    const bw = 28;
+    const bh = 4;
+    const ratio = Math.max(0, Math.min(1, entity.hp / maxHp));
+    ctx.fillStyle = 'rgba(9, 13, 22, 0.85)';
+    ctx.fillRect(-bw / 2 - 1, 15, bw + 2, bh + 2);
+    ctx.fillStyle = ratio > 0.5 ? '#22c55e' : ratio > 0.25 ? '#eab308' : '#ef4444';
+    ctx.fillRect(-bw / 2, 16, Math.round(bw * ratio), bh);
   }
 
   ctx.restore();

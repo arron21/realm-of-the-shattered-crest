@@ -37,12 +37,22 @@ export class HudController {
     resizeCanvas();
 
     window.addEventListener('keydown', (e) => {
-      if (document.activeElement && document.activeElement.id === 'chat-input') {
+      const activeId = document.activeElement ? document.activeElement.id : '';
+      if (activeId === 'chat-input') {
         if (e.key === 'Enter') {
           this.submitChatInput();
           document.activeElement.blur();
         } else if (e.key === 'Escape') {
           document.activeElement.blur();
+        }
+        return;
+      }
+      if (activeId === 'login-username-input' || activeId === 'login-password-input') {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          this.submitLoginForm();
+        } else if (e.key === 'Escape') {
+          this.closeAllModals();
         }
         return;
       }
@@ -135,17 +145,18 @@ export class HudController {
       const worldX = (mx / this.minimapCanvas.width) * m.width;
       const worldY = (my / this.minimapCanvas.height) * m.height;
 
-      let closestBot = null;
+      let closestPlayer = null;
       let bestD = 12;
-      for (const bot of this.game.aiPlayers) {
-        const d = Math.hypot(bot.x - worldX, bot.y - worldY);
+      for (const rp of this.game.remotePlayers.values()) {
+        if (rp.mapId !== m.id) continue;
+        const d = Math.hypot(rp.x - worldX, rp.y - worldY);
         if (d < bestD) {
           bestD = d;
-          closestBot = bot;
+          closestPlayer = rp;
         }
       }
-      if (closestBot) {
-        this.game.teleportToPlayer(closestBot);
+      if (closestPlayer) {
+        this.game.teleportToPlayer(closestPlayer);
       }
     });
 
@@ -444,6 +455,18 @@ export class HudController {
         if (chatBox) chatBox.classList.toggle('chat-open');
       });
     }
+    const loginBtn = document.getElementById('btn-open-login');
+    if (loginBtn) {
+      loginBtn.addEventListener('click', () => {
+        this.openModal('login');
+      });
+    }
+    const submitLoginBtn = document.getElementById('btn-submit-login');
+    if (submitLoginBtn) {
+      submitLoginBtn.addEventListener('click', () => {
+        this.submitLoginForm();
+      });
+    }
     const elderBtn = document.getElementById('btn-open-elder');
     if (elderBtn) {
       elderBtn.addEventListener('click', () => {
@@ -562,8 +585,14 @@ export class HudController {
     // 5. Ground Loot Bag Panel (Appears automatically when standing near any Loot Bag!)
     this.updateGroundBagPanel();
 
-    // 6. Render Minimap
+    // 6. Render Minimap & Refresh Live MMO Party Roster when player list changes
     this.renderMinimap();
+    const partySig = `${p.name}_${this.game.currentMap.id}_${this.game.getOnlinePlayerCount()}_` +
+      Array.from(this.game.remotePlayers.values()).map((r) => `${r.id}:${r.name}:${r.mapId}:${r.maxedCount || 0}`).join('|');
+    if (this._partySig !== partySig) {
+      this._partySig = partySig;
+      this.renderPartyList();
+    }
   }
 
   renderLifeHearts(hp, maxHp) {
@@ -1301,10 +1330,11 @@ export class HudController {
       }
     }
 
-    // AI MMO Party Players (Green dots — Clickable to Teleport!)
-    for (const bot of this.game.aiPlayers) {
+    // Real Online MMO Players on Same Map (Green dots — Clickable to Teleport!)
+    for (const rp of this.game.remotePlayers.values()) {
+      if (rp.mapId !== m.id) continue;
       ctx.fillStyle = '#4ade80';
-      ctx.fillRect(bot.x * scaleX - 2, bot.y * scaleY - 2, 4, 4);
+      ctx.fillRect(rp.x * scaleX - 2.5, rp.y * scaleY - 2.5, 5, 5);
     }
 
     // Local Player (Bright White crosshair dot)
@@ -1315,30 +1345,68 @@ export class HudController {
   }
 
   renderPartyList() {
-    const listEl = document.getElementById('party-list');
-    if (!listEl) return;
-    if (!this.game.aiPlayers || this.game.aiPlayers.length === 0) {
-      listEl.innerHTML = `<div style="font-size:10.5px;color:#94a3b8;padding:4px 2px;line-height:1.35;">Sanctuary Safe Haven — Walk north past High Elder Vaelen to enter a Realm or Sanctum Portal [E].</div>`;
-      return;
-    }
-    listEl.innerHTML = this.game.aiPlayers.slice(0, 6).map((bot) => {
-      return `<div class="party-row" data-bot-id="${bot.id}" title="Click to Teleport (TP) to ${bot.name}!">
-        <span><strong style="color:#4ade80;">★${bot.stars}</strong> ${bot.name} <span style="color:#94a3b8;font-size:10px;">(${bot.maxedCount}/8)</span></span>
-        <span style="color:#38bdf8;font-weight:800;font-size:10px;">TP ➔</span>
-      </div>`;
-    }).join('');
+    const p = this.game.player;
+    const onlineCount = this.game.getOnlinePlayerCount ? this.game.getOnlinePlayerCount() : (1 + this.game.remotePlayers.size);
 
-    listEl.querySelectorAll('.party-row').forEach((row) => {
+    const topOnlineBadge = document.getElementById('online-count-badge');
+    if (topOnlineBadge) {
+      topOnlineBadge.textContent = `● ${onlineCount}`;
+    }
+    const topLoginLabel = document.getElementById('top-login-label');
+    if (topLoginLabel && p) {
+      topLoginLabel.textContent = this.game.account.loggedInName ? p.name : 'Login';
+    }
+    const partyOnlineBadge = document.getElementById('party-online-badge');
+    if (partyOnlineBadge) {
+      partyOnlineBadge.textContent = `● ${onlineCount} Online`;
+    }
+
+    const listEl = document.getElementById('party-list');
+    if (!listEl || !p) return;
+
+    const remoteList = Array.from(this.game.remotePlayers.values());
+    const mapLabel = (mapId) => {
+      if (!mapId || mapId === 'nexus') return 'Sanctuary';
+      if (mapId === 'realm') return 'Realm';
+      return mapId.replace('dungeon_', '').replace(/_/g, ' ');
+    };
+
+    const selfRow = `<div class="party-row" data-self-login="1" style="border-color:rgba(74,222,128,0.4);background:rgba(22,163,74,0.12);" title="Click to change your Hero Name or switch account in Aethelgard-Prime">
+      <span><strong style="color:#4ade80;">● You:</strong> <strong style="color:#f8fafc;">${p.name}</strong> <span style="color:#94a3b8;font-size:10px;">(${p.maxedCount}/8 ${mapLabel(this.game.currentMap.id)})</span></span>
+      <span style="color:#fde047;font-weight:800;font-size:9.5px;">✎ ID</span>
+    </div>`;
+
+    if (remoteList.length === 0) {
+      listEl.innerHTML = selfRow + `<div style="font-size:10px;color:#94a3b8;padding:4px 2px 2px;line-height:1.35;">
+        Shared Instance <strong style="color:#38bdf8;">Aethelgard-Prime</strong> active. Other players who log in appear here for instant co-op &amp; TP!
+      </div>`;
+    } else {
+      const remoteRows = remoteList.slice(0, 8).map((rp) => {
+        const sameMap = rp.mapId === this.game.currentMap.id;
+        const zoneTag = sameMap ? 'Here' : mapLabel(rp.mapId);
+        return `<div class="party-row" data-player-id="${rp.id}" title="Click to Teleport (TP) to ${rp.name} (${zoneTag})!">
+          <span><strong style="color:#4ade80;">★${rp.stars || 1}</strong> ${rp.name} <span style="color:#94a3b8;font-size:9.5px;">(${rp.maxedCount || 0}/8 • ${zoneTag})</span></span>
+          <span style="color:#38bdf8;font-weight:800;font-size:10px;">TP ➔</span>
+        </div>`;
+      }).join('');
+      listEl.innerHTML = selfRow + remoteRows;
+    }
+
+    listEl.querySelectorAll('[data-self-login]').forEach((selfLoginRow) => {
+      selfLoginRow.addEventListener('click', () => this.openModal('login'));
+    });
+
+    listEl.querySelectorAll('.party-row[data-player-id]').forEach((row) => {
       row.addEventListener('click', () => {
-        const botId = row.getAttribute('data-bot-id');
-        const bot = this.game.aiPlayers.find((b) => b.id === botId);
-        if (bot) this.game.teleportToPlayer(bot);
+        const pid = row.getAttribute('data-player-id');
+        const target = this.game.remotePlayers.get(pid);
+        if (target) this.game.teleportToPlayer(target);
       });
     });
   }
 
   // ==========================================================================
-  // MMO CHAT & SLASH COMMANDS (/nexus, /elder, /glands, /boss, /max88, /whitebag)
+  // MMO CHAT & SLASH COMMANDS (/who, /login, /nexus, /elder, /glands, /boss, /max88, /whitebag)
   // ==========================================================================
   appendChatMessage({ sender, text, color, botTarget }) {
     const box = document.getElementById('chat-messages');
@@ -1347,7 +1415,7 @@ export class HudController {
     line.className = 'chat-line';
     line.innerHTML = `<strong style="color:${color || '#fde047'};">[${sender}]:</strong> <span>${text}</span>`;
 
-    if (botTarget) {
+    if (botTarget && botTarget.id !== (this.game.player && this.game.player.id)) {
       const tpBtn = document.createElement('span');
       tpBtn.className = 'chat-tp-link';
       tpBtn.textContent = 'TP';
@@ -1370,9 +1438,19 @@ export class HudController {
     if (!val) return;
 
     if (val.startsWith('/')) {
-      const cmd = val.toLowerCase();
+      const parts = val.split(/\s+/);
+      const cmd = parts[0].toLowerCase();
       if (cmd === '/nexus' || cmd === '/sanctuary') {
         this.game.warpToMap('nexus');
+      } else if (cmd === '/login' || cmd === '/name') {
+        if (parts[1]) {
+          this.game.loginToMmo(parts.slice(1).join(' '), '', this.game.player.classId);
+        } else {
+          this.openModal('login');
+        }
+      } else if (cmd === '/who' || cmd === '/online' || cmd === '/players') {
+        const names = [this.game.player.name, ...Array.from(this.game.remotePlayers.values()).map((r) => `${r.name} (${r.mapId})`)];
+        this.game.addChatMessage('AETHELGARD-PRIME', `Online Heroes (${names.length}): ${names.join(', ')}`, '#4ade80');
       } else if (cmd === '/elder' || cmd === '/lore' || cmd === '/crest') {
         this.openModal('elder');
       } else if (cmd === '/glands' || cmd === '/godlands') {
@@ -1391,21 +1469,16 @@ export class HudController {
         const p = this.game.player;
         this.game.spawnLootBag(p.x + 0.8, p.y, ['wep_sword_ut_master', 'rng_ut_crown', 'arm_ut_magic_armor', 'rel_boom_ut']);
       } else {
-        this.game.addChatMessage('HELP', 'Commands: /nexus, /elder, /glands, /boss, /max88, /whitebag', '#38bdf8');
+        this.game.addChatMessage('HELP', 'Commands: /who, /login <Name>, /nexus, /elder, /glands, /boss, /max88, /whitebag', '#38bdf8');
       }
       return;
     }
 
-    this.game.addChatMessage(this.game.player.name, val, '#4ade80');
-    if (this.game.bc) {
-      try {
-        this.game.bc.postMessage({ type: 'chat', sender: this.game.player.name, text: val, color: '#4ade80' });
-      } catch (e) {}
-    }
+    this.game.sendGlobalChat(val);
   }
 
   // ==========================================================================
-  // MODALS: HIGH ELDER VAELEN LORE & HOLY CREST, CLASSES, VAULT, FORGE & DEATH
+  // MODALS: LOGIN, HIGH ELDER VAELEN LORE & HOLY CREST, CLASSES, VAULT, FORGE & DEATH
   // ==========================================================================
   renderStaticModals() {
     document.querySelectorAll('.modal-close-btn').forEach((btn) => {
@@ -1415,7 +1488,11 @@ export class HudController {
 
   openModal(modalName) {
     this.closeAllModals();
-    if (modalName === 'elder') {
+    if (modalName === 'login') {
+      this.populateLoginModal();
+      const el = document.getElementById('modal-login');
+      if (el) el.style.display = 'flex';
+    } else if (modalName === 'elder') {
       this.populateElderModal();
       const el = document.getElementById('modal-elder');
       if (el) el.style.display = 'flex';
@@ -1429,6 +1506,104 @@ export class HudController {
       this.populateForgeModal();
       document.getElementById('modal-forge').style.display = 'flex';
     }
+  }
+
+  populateLoginModal() {
+    const p = this.game.player;
+    const nameInput = document.getElementById('login-username-input');
+    const passInput = document.getElementById('login-password-input');
+    const pillsEl = document.getElementById('login-class-pills');
+    const countEl = document.getElementById('login-online-count');
+    const rosterEl = document.getElementById('login-online-roster');
+    const statusEl = document.getElementById('login-status-msg');
+
+    if (nameInput && p) {
+      nameInput.value = this.game.account.loggedInName || p.name || '';
+    }
+    if (passInput) {
+      passInput.value = '';
+    }
+    if (statusEl) {
+      statusEl.textContent = this.game.account.loggedInName
+        ? `✓ Logged in as ${this.game.account.loggedInName} on Aethelgard-Prime`
+        : 'Enter your Hero Name to join all players in the Aethelgard-Prime MMO instance.';
+      statusEl.style.color = '#4ade80';
+    }
+
+    this._selectedLoginClassId = p ? p.classId : 'knight';
+    if (pillsEl) {
+      pillsEl.innerHTML = Object.values(CLASSES).map((cls) => {
+        const isSel = cls.id === this._selectedLoginClassId;
+        return `<button type="button" class="hud-btn login-class-pill ${isSel ? 'primary-gold' : ''}" data-login-class="${cls.id}" style="justify-content:space-between;padding:6px 9px;">
+          <span>${cls.name}</span>
+          <span style="font-size:9.5px;opacity:0.85;">${cls.maxStats.hp}HP</span>
+        </button>`;
+      }).join('');
+
+      pillsEl.querySelectorAll('[data-login-class]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          this._selectedLoginClassId = btn.getAttribute('data-login-class');
+          pillsEl.querySelectorAll('[data-login-class]').forEach((b) => {
+            b.classList.toggle('primary-gold', b.getAttribute('data-login-class') === this._selectedLoginClassId);
+          });
+        });
+      });
+    }
+
+    const onlineCount = this.game.getOnlinePlayerCount ? this.game.getOnlinePlayerCount() : (1 + this.game.remotePlayers.size);
+    if (countEl) {
+      countEl.textContent = `${onlineCount} ${onlineCount === 1 ? 'Hero' : 'Heroes'} Online`;
+    }
+
+    if (rosterEl && p) {
+      const allPlayers = [
+        { name: `${p.name} (You)`, className: p.className, maxedCount: p.maxedCount, mapId: this.game.currentMap.id, isSelf: true },
+        ...Array.from(this.game.remotePlayers.values())
+      ];
+      rosterEl.innerHTML = allPlayers.map((pl) => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px;background:rgba(15,23,42,0.75);border:1px solid #1e293b;border-radius:4px;font-size:11px;">
+          <span><strong style="color:${pl.isSelf ? '#fde047' : '#4ade80'};">● ${pl.name}</strong> <span style="color:#94a3b8;">— ${pl.className || 'Champion'} (${pl.maxedCount || 0}/8)</span></span>
+          <span style="color:#38bdf8;font-size:10px;font-weight:700;">${pl.mapId || 'nexus'}</span>
+        </div>
+      `).join('');
+    }
+  }
+
+  async submitLoginForm() {
+    const nameInput = document.getElementById('login-username-input');
+    const passInput = document.getElementById('login-password-input');
+    const statusEl = document.getElementById('login-status-msg');
+    const rawName = nameInput ? nameInput.value.trim() : '';
+    const rawPass = passInput ? passInput.value : '';
+    const classId = this._selectedLoginClassId || (this.game.player ? this.game.player.classId : 'knight');
+
+    if (!rawName || rawName.length < 2) {
+      if (statusEl) {
+        statusEl.textContent = 'Please enter a Hero Name (at least 2 characters).';
+        statusEl.style.color = '#f87171';
+      }
+      return false;
+    }
+
+    if (statusEl) {
+      statusEl.textContent = 'Connecting to Aethelgard-Prime MMO Instance...';
+      statusEl.style.color = '#38bdf8';
+    }
+
+    const res = await this.game.loginToMmo(rawName, rawPass, classId);
+    if (!res || !res.ok) {
+      if (statusEl) {
+        statusEl.textContent = (res && res.error) || 'Could not log in with that Hero Name.';
+        statusEl.style.color = '#f87171';
+      }
+      return false;
+    }
+
+    sound.playSfx('secret');
+    this.refreshAllStatsAndSlots();
+    this.renderPartyList();
+    this.closeAllModals();
+    return true;
   }
 
   closeAllModals() {

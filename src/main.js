@@ -24,15 +24,23 @@ export function bootGame() {
     },
     onPermadeath: (summary) => {
       if (hud) hud.showPermadeathModal(summary);
+    },
+    onMmoStatusChanged: () => {
+      if (hud) hud.renderPartyList();
     }
   });
 
   hud = new HudController(game);
 
   // Flush initial welcome chat messages & Elder Vaelen lore callout
-  game.addChatMessage('SANCTUARY', 'Welcome to Realm of the Shattered Crest! A bullet-hell MMO Action RPG of classic top-down exploration and permadeath.', '#fde047');
-  game.addChatMessage('HIGH ELDER VAELEN', '"Hero! Walk up to me in the Sanctuary Hub and press [E] (or click 📜 Elder & Lore) to learn how the Holy Crest that held back Malakor, the Evil Bane was shattered into 5 Shards!"', '#38bdf8');
-  game.addChatMessage('SANCTUARY', 'Walk north past High Elder Vaelen and press [E] at any Portal to enter the Realm or the 5 Sanctum Dungeons.', '#4ade80');
+  game.addChatMessage('AETHELGARD-PRIME', 'Connected to shared MMO instance [Aethelgard-Prime]! Click 🌐 Login in the top bar or type /login <Name> to set your Hero Name & play together.', '#4ade80');
+  game.addChatMessage('HIGH ELDER VAELEN', '"Hero! Walk up to me in the Sanctuary Hub and press [E] (or click 📜 Lore) to learn how the Holy Crest that held back Malakor, the Evil Bane was shattered into 5 Shards!"', '#38bdf8');
+  game.addChatMessage('SANCTUARY', 'Walk north past High Elder Vaelen and press [E] at any Portal, or click any online Hero in MMO Realm Party to Teleport (TP) to them!', '#fde047');
+
+  // Prompt Hero Login on initial arrival if the player hasn't chosen a Hero Name yet
+  if (!game.account.loggedInName) {
+    hud.openModal('login');
+  }
 
   window.__ROTSC_GAME__ = game;
   window.__ROTSC_HUD__ = hud;

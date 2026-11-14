@@ -8,6 +8,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const { buildHtmlBundle } = require('../build.js');
+const mmoHandler = require('../api/mmo.js');
 
 const PORT = process.env.PORT || 4000;
 
@@ -67,9 +68,21 @@ function decodeWsFrame(buf) {
 }
 
 const server = http.createServer((req, res) => {
-  if (req.url === '/health') {
+  if (req.url && req.url.startsWith('/api/mmo')) {
+    mmoHandler(req, res);
+    return;
+  }
+
+  if (req.url === '/health' || req.url === '/health.json') {
+    const state = mmoHandler.getInstanceState();
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ status: 'ok', onlinePlayers: clients.size + 12 }));
+    res.end(
+      JSON.stringify({
+        status: 'ok',
+        instanceId: state.instanceId,
+        onlinePlayers: Object.keys(state.players).length
+      })
+    );
     return;
   }
 

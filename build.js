@@ -93,6 +93,7 @@ ${css}
       <!-- TOP-CENTER ACTION BAR (MODALS, DRAWER & AUDIO) -->
       <nav id="top-action-bar" aria-label="Sanctuary Modals and Audio">
         <button id="btn-toggle-drawer" class="hud-btn mobile-only-btn primary-gold" title="Open Hero Stats, Radar, Gear & Backpack">🎒 <span class="btn-label">Gear</span> <span id="mobile-bag-badge">0/8</span></button>
+        <button id="btn-open-login" class="hud-btn" style="border-color:rgba(74,222,128,0.55);" title="Hero Login & Shared MMO Instance Status (Aethelgard-Prime)">🌐 <span class="btn-label" id="top-login-label">Login</span> <span id="online-count-badge" style="color:#4ade80;font-weight:900;font-size:10.5px;">● 1</span></button>
         <button id="btn-open-elder" class="hud-btn primary-gold" title="Speak with High Elder Vaelen — Lore & Holy Crest Shards (Hotkey: L)">📜 <span class="btn-label">Lore</span></button>
         <button id="btn-open-classes" class="hud-btn" title="Switch or Inspect 5 Hero Classes">🛡️ <span class="btn-label">Classes</span></button>
         <button id="btn-open-vault" class="hud-btn" title="Open Persistent Account Vault & Potion Storage">📦 <span class="btn-label">Vault</span></button>
@@ -159,7 +160,7 @@ ${css}
       <aside id="bottom-left-chat" aria-label="MMO Realm Chat">
         <div id="chat-messages"></div>
         <div id="chat-input-row">
-          <input id="chat-input" type="text" placeholder="Tap to chat or type /elder, /glands, /boss, /max88, /whitebag..." />
+          <input id="chat-input" type="text" placeholder="Tap to chat with all players or type /who, /elder, /glands..." />
         </div>
       </aside>
     </section>
@@ -188,7 +189,7 @@ ${css}
       <div class="sidebar-section">
         <div class="section-header">
           <span>MMO Realm Party</span>
-          <span style="color:#4ade80;">● Online</span>
+          <span id="party-online-badge" style="color:#4ade80;">● 1 Online</span>
         </div>
         <div id="party-list"></div>
       </div>
@@ -252,6 +253,54 @@ ${css}
 
   <!-- HOVER ITEM TOOLTIP -->
   <div id="item-tooltip"></div>
+
+  <!-- MODAL -1: MULTIPLAYER HERO LOGIN & SHARED MMO INSTANCE (AETHELGARD-PRIME) -->
+  <div id="modal-login" class="modal-backdrop">
+    <div class="modal-card" style="max-width:520px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <h2 style="margin:0;font-size:18px;color:#4ade80;">🌐 MMO Hero Login — Shared Realm Instance</h2>
+          <div style="font-size:11.5px;color:#38bdf8;font-weight:700;margin-top:2px;">
+            1 Unified Global Instance: <strong>Aethelgard-Prime</strong> • Real-Time Co-Op, Shared Bosses, Portals &amp; TP
+          </div>
+        </div>
+        <button class="hud-btn modal-close-btn">✕ Close</button>
+      </div>
+
+      <div id="login-instance-banner" style="padding:8px 12px;background:rgba(34,197,94,0.12);border:1px solid rgba(74,222,128,0.45);border-radius:6px;font-size:11.5px;color:#e2e8f0;display:flex;justify-content:space-between;align-items:center;">
+        <span>🟢 Instance: <strong style="color:#4ade80;">Aethelgard-Prime</strong></span>
+        <span id="login-online-count" style="color:#fde047;font-weight:800;">1 Hero Online</span>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div>
+          <label for="login-username-input" style="display:block;font-size:11px;font-weight:800;color:#fde047;text-transform:uppercase;margin-bottom:4px;">Hero Name (Visible to All Players in the Realm)</label>
+          <input id="login-username-input" type="text" maxlength="18" placeholder="Enter your Hero Name (e.g. SirVaelen, Solaris, Nyx)..." style="width:100%;background:#090d16;border:1px solid #38bdf8;border-radius:6px;padding:9px 11px;color:#f8fafc;font-size:13px;font-weight:700;outline:none;" />
+        </div>
+        <div>
+          <label for="login-password-input" style="display:block;font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;margin-bottom:4px;">Account Passcode / PIN <span style="font-weight:400;color:#64748b;">(Optional — protects your Hero Name &amp; syncs Vault/Shards)</span></label>
+          <input id="login-password-input" type="password" maxlength="32" placeholder="Optional passcode..." style="width:100%;background:#090d16;border:1px solid #334155;border-radius:6px;padding:8px 11px;color:#f8fafc;font-size:12.5px;outline:none;" />
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:800;color:#38bdf8;text-transform:uppercase;margin-bottom:5px;">Select Starting Champion Class</div>
+          <div id="login-class-pills" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:6px;"></div>
+        </div>
+      </div>
+
+      <div id="login-status-msg" style="font-size:11.5px;font-weight:700;color:#4ade80;min-height:16px;"></div>
+
+      <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
+        <button id="btn-submit-login" type="button" class="hud-btn primary-gold" style="padding:9px 18px;font-size:12.5px;flex:1;justify-content:center;">
+          ⚔️ Login &amp; Join Shared MMO Instance
+        </button>
+      </div>
+
+      <div style="border-top:1px solid #1e293b;padding-top:8px;">
+        <div style="font-size:10.5px;font-weight:800;color:#94a3b8;text-transform:uppercase;margin-bottom:5px;">Heroes Active in Aethelgard-Prime Right Now</div>
+        <div id="login-online-roster" style="display:flex;flex-direction:column;gap:4px;max-height:110px;overflow-y:auto;"></div>
+      </div>
+    </div>
+  </div>
 
   <!-- MODAL 0: HIGH ELDER VAELEN — CHRONICLE OF THE SHATTERED HOLY CREST -->
   <div id="modal-elder" class="modal-backdrop">

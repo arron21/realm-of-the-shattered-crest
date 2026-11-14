@@ -357,6 +357,116 @@ hud.executeInspectorAction('primary', 'quick_belt', 0);
 assert.strictEqual(game.player.baseStats.def, defBeforeDrink + 1, 'Tapping Drink Potion in #quick-belt-inspector must consume the potion');
 console.log('✓ 12. Tap-to-View Stats & Tap-to-Equip / Drink Inspector Panel verified');
 
-console.log('\nALL 12 REALM OF THE SHATTERED CREST TEST SUITES PASSED!');
+// Suite 13: Multiplayer Login & 1 Unified Shared MMO Instance (Aethelgard-Prime)
+const mmoApi = require('./api/mmo.js');
+const loginRes1 = mmoApi.processMmoRequest('POST', {
+  action: 'login',
+  username: 'SirVaelen',
+  password: 'pin123',
+  playerId: 'hero_vaelen_1',
+  classId: 'paladin',
+  accountData: { sunshards: 300, accountFame: 500, crestShards: [true, true, false, false, false] }
+});
+assert.strictEqual(loginRes1.ok, true, 'Server /api/mmo login must succeed for Hero 1');
+assert.strictEqual(loginRes1.instanceId, 'aethelgard-prime', 'All players must join the unified aethelgard-prime MMO instance');
+
+// Wrong password check for protected Hero Name
+const wrongPassRes = mmoApi.processMmoRequest('POST', {
+  action: 'login',
+  username: 'SirVaelen',
+  password: 'wrong',
+  playerId: 'impersonator_99'
+});
+assert.strictEqual(wrongPassRes.ok, false, 'Protected Hero Name must reject wrong passcode');
+
+// Sync Hero 1 & Hero 2 into the same shared MMO instance
+mmoApi.processMmoRequest('POST', {
+  action: 'sync',
+  player: {
+    id: 'hero_vaelen_1',
+    name: 'SirVaelen',
+    classId: 'paladin',
+    className: 'Solar Templar',
+    x: 55,
+    y: 55,
+    mapId: 'realm',
+    zoneName: 'Shattered Realm',
+    maxedCount: 6,
+    stars: 18
+  },
+  events: [
+    { type: 'chat', sender: 'SirVaelen', text: 'Fighting Blight Gods in the Realm! TP to me!', color: '#4ade80' }
+  ]
+});
+
+const syncRes2 = mmoApi.processMmoRequest('POST', {
+  action: 'sync',
+  player: {
+    id: 'hero_solaris_2',
+    name: 'Solaris',
+    classId: 'ranger',
+    className: 'Sylvan Windrunner',
+    x: 22,
+    y: 22,
+    mapId: 'nexus',
+    zoneName: 'The Radiant Sanctuary Hub',
+    maxedCount: 8,
+    stars: 25
+  },
+  sinceSeq: 0,
+  sinceChatId: 0
+});
+assert.strictEqual(syncRes2.ok, true, 'Server /api/mmo sync must succeed for Hero 2');
+assert(syncRes2.onlineCount >= 2, 'Shared MMO instance must report both logged-in heroes online');
+assert(syncRes2.players.some((p) => p.name === 'SirVaelen'), 'Hero 2 sync response must include Hero 1 in the shared instance');
+assert(syncRes2.chat.some((c) => c.sender === 'SirVaelen'), 'Global MMO chat must replicate across players in the instance');
+
+// Client-side: Test remote player upsert, interpolation, party list rendering, and cross-map Teleport (TP)
+game.warpToMap('nexus');
+game.upsertRemotePlayer({
+  id: 'hero_vaelen_1',
+  name: 'SirVaelen',
+  classId: 'paladin',
+  className: 'Solar Templar',
+  x: 60,
+  y: 62,
+  mapId: 'realm',
+  zoneName: 'Shattered Realm',
+  maxedCount: 6,
+  stars: 18
+}, true);
+hud.renderPartyList();
+assert(
+  getMockEl('party-list').innerHTML.includes('SirVaelen') && getMockEl('party-list').innerHTML.includes('TP ➔'),
+  'MMO Realm Party list (#party-list) must display real online players with TP button'
+);
+
+// Teleport to SirVaelen (who is in 'realm' while local player is in 'nexus')
+const remoteAlly = game.remotePlayers.get('hero_vaelen_1');
+game.teleportToPlayer(remoteAlly);
+assert.strictEqual(game.currentMap.id, 'realm', 'Teleporting to an ally in another zone must warp the player to their map');
+assert(Math.hypot(game.player.x - 60, game.player.y - 62) < 2.0, 'Teleporting to an ally must place the player at their coordinates');
+
+// Test co-op Solar Templar Warhorn party buff replication
+game.player.hp = 100;
+const hpBeforeBuff = game.player.hp;
+game.handleNetworkPacket({
+  type: 'party_buff',
+  id: 'hero_vaelen_1',
+  senderName: 'SirVaelen',
+  mapId: 'realm',
+  x: game.player.x + 1.0,
+  y: game.player.y,
+  radius: 6.5,
+  heal: 110,
+  duration: 5.0,
+  evId: 'test_warhorn_1'
+});
+assert(game.player.hp > hpBeforeBuff, 'Remote ally Solar Templar Warhorn must heal nearby players in the shared instance');
+assert(game.player.buffs.damaging >= 4.5, 'Remote ally Solar Templar Warhorn must grant Damaging buff to nearby players');
+console.log('✓ 13. Multiplayer Login & 1 Shared MMO Instance (Aethelgard-Prime sync, chat, party buff & cross-map TP) verified');
+
+console.log('\nALL 13 REALM OF THE SHATTERED CREST TEST SUITES PASSED!');
+
 
 

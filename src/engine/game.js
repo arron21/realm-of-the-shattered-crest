@@ -11,21 +11,6 @@ import { sound } from '../audio/sound.js';
 
 const STORAGE_KEY = 'rotsc_account_save_v2';
 
-const BOT_NAMES = [
-  { name: 'VaelenGuard',   classId: 'knight',     maxed: 8, stars: 25 },
-  { name: 'SolarTemplar',  classId: 'paladin',    maxed: 8, stars: 22 },
-  { name: 'WhiteBagPls',   classId: 'ranger',     maxed: 6, stars: 16 },
-  { name: 'PPE_Vanguard',  classId: 'knight',     maxed: 4, stars: 12 },
-  { name: 'CinderPyro',    classId: 'pyromancer', maxed: 7, stars: 19 },
-  { name: 'NightStalker',  classId: 'assassin',   maxed: 8, stars: 24 },
-  { name: 'SylvanArrow',   classId: 'ranger',     maxed: 3, stars: 8  },
-  { name: 'BaneSlayer',    classId: 'paladin',    maxed: 6, stars: 15 },
-  { name: 'CalderaHunter', classId: 'pyromancer', maxed: 5, stars: 11 },
-  { name: 'BlueStarWiz',   classId: 'pyromancer', maxed: 1, stars: 3  },
-  { name: 'BulwarkParry',  classId: 'knight',     maxed: 8, stars: 21 },
-  { name: 'DuskShadow',    classId: 'assassin',   maxed: 6, stars: 17 }
-];
-
 export class GameEngine {
   constructor(canvas, uiCallbacks) {
     this.canvas = canvas;
@@ -36,10 +21,25 @@ export class GameEngine {
     this.animFrame = 0;
     this.running = false;
 
-    // Persistent Account State (Saved in localStorage)
+    // Persistent Account State (Saved in localStorage & Synced to Shared MMO Instance)
     this.account = this.loadAccount();
 
-    // Maps cache
+    // Shared MMO Instance State (Aethelgard-Prime)
+    this.mmo = {
+      instanceId: 'aethelgard-prime',
+      instanceName: 'Aethelgard-Prime (Shared MMO Instance)',
+      loggedIn: Boolean(this.account.loggedInName),
+      username: this.account.heroName || 'Crestbearer',
+      sessionToken: this.account.sessionToken || '',
+      onlineCount: 1,
+      seq: 0,
+      chatSeq: 0,
+      pendingEvents: [],
+      connected: false,
+      syncInFlight: false
+    };
+
+    // Maps cache (Deterministic seed 1337 shared across all players in Aethelgard-Prime)
     this.nexusMap = generateNexusMap();
     this.realmMap = generateRealmMap(1337);
     this.currentMap = this.nexusMap;
@@ -54,7 +54,7 @@ export class GameEngine {
     this.particles = [];
     this.floatingTexts = [];
     this.gravestones = [];
-    this.aiPlayers = [];
+    this.aiPlayers = []; // Kept empty (100% real multiplayer players in shared instance!)
     this.remotePlayers = new Map();
 
     // Realm Event Progress (Defeat 3 Blight Heralds to unseal the Citadel of Evil Bane!)
@@ -79,11 +79,11 @@ export class GameEngine {
     this.player = null;
     this.spawnNewHero(this.account.lastClassId || 'knight');
 
-    // Initialize AI MMO Bots & Realm Spawns
+    // Populate Realm Spawns
     this.initAiPlayers();
     this.populateMapEnemies();
 
-    // Multi-Tab BroadcastChannel + Optional WebSocket MMO Sync
+    // Unified Shared MMO Instance Sync (/api/mmo + WebSocket + BroadcastChannel)
     this.setupMultiplayerSync();
   }
 
@@ -92,6 +92,10 @@ export class GameEngine {
   // ==========================================================================
   loadAccount() {
     const fallback = {
+      playerId: 'hero_' + Math.random().toString(36).slice(2, 9),
+      heroName: 'Crestbearer',
+      loggedInName: '',
+      sessionToken: '',
       accountFame: 250,
       sunshards: 150,
       lastClassId: 'knight',
@@ -116,6 +120,8 @@ export class GameEngine {
       return {
         ...fallback,
         ...parsed,
+        playerId: parsed.playerId || fallback.playerId,
+        heroName: parsed.heroName || parsed.loggedInName || fallback.heroName,
         crestShards: Array.isArray(parsed.crestShards) && parsed.crestShards.length === 5
           ? parsed.crestShards
           : [...fallback.crestShards],
@@ -158,6 +164,12 @@ export class GameEngine {
         shardMeta.color,
         15
       );
+      this.queueMmoEvent({
+        type: 'chat',
+        sender: 'HOLY CREST',
+        text: `★ ${this.player.name} restored the ${shardMeta.name} (${count}/5 Shards)!`,
+        color: shardMeta.color
+      });
     }
     this.addChatMessage(
       'HIGH ELDER VAELEN',
@@ -203,9 +215,12 @@ export class GameEngine {
       ring:   cls.startingGear[3]
     };
 
+    const existingId = (this.player && this.player.id) || this.account.playerId || ('hero_' + Math.random().toString(36).slice(2, 8));
+    const heroName = (this.mmo && this.mmo.username) || this.account.heroName || 'Crestbearer';
+
     this.player = {
-      id: 'hero_' + Math.random().toString(36).slice(2, 8),
-      name: 'Crestbearer',
+      id: existingId,
+      name: heroName,
       classId: cls.id,
       className: cls.name,
       palette: { ...cls.palette },
@@ -257,7 +272,7 @@ export class GameEngine {
 
     this.recalcPlayerStats(true);
     this.warpToMap('nexus');
-    this.addChatMessage('SYSTEM', `Welcome to Realm of the Shattered Crest! Playing as ${cls.name}.`, '#fde047');
+    this.addChatMessage('SYSTEM', `Welcome to Realm of the Shattered Crest! Playing as ${cls.name} in Aethelgard-Prime.`, '#fde047');
     this.addChatMessage('HIGH ELDER VAELEN', 'Approach me in the center of the Sanctuary Hub and press [E] to learn how the Holy Crest was shattered across the realms!', '#38bdf8');
   }
 
@@ -465,10 +480,11 @@ export class GameEngine {
   spawnRealmEventBoss() {
     if (this.currentMap.id !== 'realm') return;
     const events = ['event_skull_lord', 'event_cube_overseer', 'event_molten_colossus'];
-    const pick = events[Math.max(0, 3 - this.realmEventsRemaining) % events.length];
+    const idx = Math.max(0, 3 - this.realmEventsRemaining) % events.length;
+    const pick = events[idx];
     const cx = this.currentMap.cx;
     const cy = this.currentMap.cy;
-    const ex = cx + (Math.random() > 0.5 ? 10 : -10);
+    const ex = cx + (idx % 2 === 0 ? 10 : -10);
     const ey = cy - 8;
     const boss = this.spawnEnemy(pick, ex, ey);
     this.activeQuestEnemy = boss;
@@ -478,8 +494,9 @@ export class GameEngine {
   spawnEnemy(enemyId, x, y, overrides = {}) {
     const tpl = ENEMIES[enemyId];
     if (!tpl) return null;
+    const mapPrefix = (this.currentMap && this.currentMap.id) || 'map';
     const enemy = {
-      uid: 'e_' + Math.random().toString(36).slice(2, 9),
+      uid: overrides.uid || `${mapPrefix}_${tpl.id}_${Math.round(x)}_${Math.round(y)}_${this.enemies.length}`,
       id: tpl.id,
       name: overrides.name || tpl.name,
       biome: tpl.biome,
@@ -507,7 +524,7 @@ export class GameEngine {
       patterns: tpl.patterns || [],
       drops: tpl.drops || [],
       portalDrop: tpl.portalDrop || null,
-      cooldown: Math.random() * 1.2,
+      cooldown: ((this.enemies.length % 7) + 1) * 0.16,
       spiralAngle: 0,
       facingAngle: Math.PI / 2,
       stunTimer: 0,
@@ -521,71 +538,35 @@ export class GameEngine {
   }
 
   // ==========================================================================
-  // AI MMO PLAYERS (Roam, Fight, Buff Party, Call Out Dungeons & White Bags!)
+  // MMO PARTY & PLAYER TELEPORTATION (100% Real Logged-In Players)
   // ==========================================================================
   initAiPlayers() {
-    this.allAiPlayers = BOT_NAMES.map((b, idx) => {
-      const cls = CLASSES[b.classId];
-      return {
-        id: `bot_${idx}`,
-        name: b.name,
-        classId: b.classId,
-        className: cls.name,
-        palette: { ...cls.palette },
-        maxedCount: b.maxed,
-        stars: b.stars,
-        x: 0,
-        y: 0,
-        aimAngle: 0,
-        slashTimer: 0,
-        slashDuration: 0.18,
-        slashRadiusPx: 42,
-        bladeColor: '#38bdf8',
-        fireCooldown: 0.5 + Math.random(),
-        chatCooldown: 8 + idx * 4,
-        zone: idx < 8 ? 'godlands' : 'lowlands'
-      };
-    });
-    this.repositionAiPlayersForMap();
+    this.allAiPlayers = [];
+    this.aiPlayers = [];
   }
 
   repositionAiPlayersForMap() {
-    const m = this.currentMap;
-    if (!m || m.id === 'nexus') {
-      // No fake characters in the starting Sanctuary Hub!
-      this.aiPlayers = [];
-      return;
-    }
-
-    this.aiPlayers = [...(this.allAiPlayers || [])];
-    this.aiPlayers.forEach((bot, idx) => {
-      if (m.id === 'realm') {
-        if (idx < 7) {
-          // Godlands train party!
-          bot.x = m.cx + Math.cos(idx) * 12;
-          bot.y = m.cy + Math.sin(idx) * 12;
-        } else {
-          // Lowlands & Beach adventurers
-          const a = idx * 0.9;
-          bot.x = m.cx + Math.cos(a) * 34;
-          bot.y = m.cy + Math.sin(a) * 34;
-        }
-      } else {
-        // Co-op party inside Dungeon with Player!
-        bot.x = m.spawnX + ((idx % 5) - 2) * 1.4;
-        bot.y = m.spawnY - (idx % 3) * 1.2;
-      }
-    });
+    this.aiPlayers = [];
   }
 
-  teleportToPlayer(botOrPlayer) {
-    if (!botOrPlayer || !this.player || this.player.dead) return;
-    this.player.x = botOrPlayer.x;
-    this.player.y = botOrPlayer.y;
+  teleportToPlayer(targetPlayer) {
+    if (!targetPlayer || !this.player || this.player.dead) return;
+    if (targetPlayer.mapId && targetPlayer.mapId !== this.currentMap.id) {
+      if (targetPlayer.mapId === 'nexus') {
+        this.warpToMap('nexus');
+      } else if (targetPlayer.mapId === 'realm') {
+        this.warpToMap('realm');
+      } else if (targetPlayer.mapId.startsWith('dungeon_')) {
+        const dungeonId = targetPlayer.mapId.replace('dungeon_', '');
+        this.warpToMap('dungeon', { dungeonId });
+      }
+    }
+    this.player.x = targetPlayer.x;
+    this.player.y = targetPlayer.y;
     this.player.invulnTimer = 1.5; // RotMG Teleport invulnerability!
     sound.playSfx('beam');
     this.spawnBurstParticles(this.player.x, this.player.y, '#38bdf8', 20);
-    this.spawnFloatingText(this.player.x, this.player.y - 0.8, `TP -> ${botOrPlayer.name}`, '#38bdf8', 14);
+    this.spawnFloatingText(this.player.x, this.player.y - 0.8, `TP -> ${targetPlayer.name}`, '#38bdf8', 14);
   }
 
   // ==========================================================================
@@ -690,6 +671,20 @@ export class GameEngine {
         });
       }
     }
+
+    // Broadcast attack & projectiles to the shared MMO instance!
+    this.queueMmoEvent({
+      type: 'attack',
+      id: p.id,
+      name: p.name,
+      mapId: this.currentMap.id,
+      x: p.x,
+      y: p.y,
+      aimAngle: angle,
+      isSpin,
+      shouldFireBeam,
+      weaponId: p.equipment.weapon || 'wep_sword_t1'
+    });
   }
 
   // ==========================================================================
@@ -848,6 +843,19 @@ export class GameEngine {
         }
         this.spawnBurstParticles(p.x, p.y, '#fde047', 28);
         this.spawnFloatingText(p.x, p.y - 0.9, `+${healAmt} HP [SOLAR ANTHEM!]`, '#4ade80', 14);
+        this.queueMmoEvent({
+          type: 'party_buff',
+          id: p.id,
+          name: p.name,
+          mapId: this.currentMap.id,
+          x: p.x,
+          y: p.y,
+          radius: relic.radius || 7.5,
+          healAmt,
+          dur,
+          armored: relic.tier !== 'T1',
+          purify: !!relic.purify
+        });
         break;
       }
 
@@ -994,13 +1002,13 @@ export class GameEngine {
   // ==========================================================================
   // DAMAGE, ROTMG DEFENSE FORMULA & LOOT BAG SPAWNING
   // ==========================================================================
-  damageEnemy(enemy, rawDmg, hitAngle = 0, ignoreArmor = false) {
+  damageEnemy(enemy, rawDmg, hitAngle = 0, ignoreArmor = false, fromNetwork = false) {
     if (!enemy || enemy.hp <= 0) return;
 
     let dmg = rawDmg;
 
     // Ironclad Dreadnought Directional Front Shield Check!
-    if (enemy.frontShield && !ignoreArmor && enemy.stunTimer <= 0 && enemy.armorBreakTimer <= 0) {
+    if (!fromNetwork && enemy.frontShield && !ignoreArmor && enemy.stunTimer <= 0 && enemy.armorBreakTimer <= 0) {
       const incomingAngle = this.normalizeAngle(hitAngle + Math.PI);
       const diff = Math.abs(this.normalizeAngle(incomingAngle - (enemy.facingAngle || 0)));
       if (diff < 1.05) {
@@ -1011,13 +1019,19 @@ export class GameEngine {
     }
 
     // RotMG Defense Formula: DEF reduces flat damage up to 85% of raw hit
-    const effectiveDef = ( ignoreArmor || enemy.armorBreakTimer > 0 ) ? 0 : enemy.def;
-    const finalDmg = Math.max(Math.round(dmg * 0.15), Math.round(dmg - effectiveDef));
+    const effectiveDef = (fromNetwork || ignoreArmor || enemy.armorBreakTimer > 0) ? 0 : enemy.def;
+    const finalDmg = fromNetwork ? Math.round(rawDmg) : Math.max(Math.round(dmg * 0.15), Math.round(dmg - effectiveDef));
 
     enemy.hp -= finalDmg;
     enemy.hitFlash = 0.12;
-    sound.playSfx('hit_enemy');
-    this.spawnFloatingText(enemy.x + (Math.random() - 0.5) * 0.5, enemy.y - 0.6, `-${finalDmg}`, ignoreArmor ? '#c084fc' : '#fde047', 12);
+    if (!fromNetwork) sound.playSfx('hit_enemy');
+    this.spawnFloatingText(
+      enemy.x + (Math.random() - 0.5) * 0.5,
+      enemy.y - 0.6,
+      `-${finalDmg}`,
+      fromNetwork ? '#93c5fd' : ignoreArmor ? '#c084fc' : '#fde047',
+      12
+    );
 
     if (enemy.isDummy && enemy.hp <= 50) {
       enemy.hp = enemy.maxHp;
@@ -1025,19 +1039,38 @@ export class GameEngine {
       return;
     }
 
+    if (!fromNetwork && this.player && !enemy.isDummy) {
+      this.queueMmoEvent({
+        type: 'enemy_dmg',
+        id: this.player.id,
+        name: this.player.name,
+        mapId: this.currentMap.id,
+        enemyUid: enemy.uid,
+        enemyId: enemy.id,
+        dmg: finalDmg,
+        hp: enemy.hp,
+        killed: enemy.hp <= 0,
+        x: enemy.x,
+        y: enemy.y
+      });
+    }
+
     if (enemy.hp <= 0) {
-      this.onEnemyKilled(enemy);
+      this.onEnemyKilled(enemy, fromNetwork);
     }
   }
 
-  onEnemyKilled(enemy) {
+  onEnemyKilled(enemy, fromNetwork = false) {
     const idx = this.enemies.indexOf(enemy);
     if (idx !== -1) this.enemies.splice(idx, 1);
 
     const p = this.player;
-    p.kills++;
-    if (enemy.isGod || enemy.isBoss) p.godKills++;
+    if (!fromNetwork) {
+      p.kills++;
+      if (enemy.isGod || enemy.isBoss) p.godKills++;
+    }
 
+    // Co-op MMO XP & Loot: all players in the instance share boss/enemy XP & roll personal loot bags!
     this.gainXp(enemy.xp || 30);
     this.spawnBurstParticles(enemy.x, enemy.y, enemy.color, enemy.isBoss ? 36 : 16);
 
@@ -1069,10 +1102,10 @@ export class GameEngine {
     }
 
     // Check Dungeon Portal Drop!
-    if (enemy.portalDrop && Math.random() < enemy.portalDrop.chance) {
+    if (!fromNetwork && enemy.portalDrop && Math.random() < enemy.portalDrop.chance) {
       const meta = DUNGEON_META[enemy.portalDrop.dungeonId];
       if (meta) {
-        this.currentMap.portals.push({
+        const portalObj = {
           id: 'p_drop_' + Math.random().toString(36).slice(2, 7),
           name: `${meta.name} (${'★'.repeat(meta.difficulty)})`,
           targetMap: 'dungeon',
@@ -1081,8 +1114,16 @@ export class GameEngine {
           y: enemy.y,
           color: meta.color,
           timer: 45
-        });
+        };
+        this.currentMap.portals.push(portalObj);
         this.addChatMessage('PORTAL', `${enemy.name} opened a portal to ${meta.name}! Walk over it and press [E] to enter!`, meta.color);
+        this.queueMmoEvent({
+          type: 'portal_open',
+          id: p.id,
+          senderName: p.name,
+          mapId: this.currentMap.id,
+          portal: portalObj
+        });
       }
     }
 
@@ -1092,7 +1133,7 @@ export class GameEngine {
       if (this.realmEventsRemaining === 0) {
         this.addChatMessage('MALAKOR THE EVIL BANE', '"IMPOSSIBLE! YOU HAVE SLAIN MY BLIGHT HERALDS! COME FACE ME IN THE CITADEL OF EVIL BANE!"', '#facc15');
         this.cameraShake = 0.8;
-        this.currentMap.portals.push({
+        const citadelPortal = {
           id: 'portal_mad_sanctum_event',
           name: '★ CITADEL OF EVIL BANE ★',
           targetMap: 'dungeon',
@@ -1100,7 +1141,19 @@ export class GameEngine {
           x: enemy.x,
           y: enemy.y - 1.2,
           color: '#facc15'
-        });
+        };
+        if (!this.currentMap.portals.some((pt) => pt.id === citadelPortal.id)) {
+          this.currentMap.portals.push(citadelPortal);
+        }
+        if (!fromNetwork) {
+          this.queueMmoEvent({
+            type: 'portal_open',
+            id: p.id,
+            senderName: p.name,
+            mapId: this.currentMap.id,
+            portal: citadelPortal
+          });
+        }
       } else {
         setTimeout(() => this.spawnRealmEventBoss(), 3000);
       }
@@ -1111,14 +1164,17 @@ export class GameEngine {
       p.dungeonsCompleted++;
       this.account.accountFame += 40;
       this.saveAccount();
-      this.currentMap.portals.push({
+      const victoryPortal = {
         id: 'portal_boss_victory',
         name: 'Victory Return to Sanctuary Hub',
         targetMap: 'nexus',
         x: enemy.x,
         y: enemy.y - 1.5,
         color: '#22c55e'
-      });
+      };
+      if (!this.currentMap.portals.some((pt) => pt.id === victoryPortal.id)) {
+        this.currentMap.portals.push(victoryPortal);
+      }
       if (enemy.isFinalBoss) {
         this.addChatMessage(
           'HIGH ELDER VAELEN',
@@ -1141,15 +1197,16 @@ export class GameEngine {
       }
     }
 
-    this.lootBags.push({
-      id: 'bag_' + Math.random().toString(36).slice(2, 9),
+    const newBag = {
+      id: options.id || ('bag_' + Math.random().toString(36).slice(2, 9)),
       x,
       y,
       bagType: highestBagType,
       isChest: Boolean(options.isChest),
       items: [...itemIds],
       timer: 90
-    });
+    };
+    this.lootBags.push(newBag);
 
     if (highestBagType === 6) {
       sound.playSfx('white_bag');
@@ -1161,6 +1218,7 @@ export class GameEngine {
       sound.playSfx('blue_bag');
       this.spawnFloatingText(x, y - 0.8, 'STAT POTION BAG!', '#60a5fa', 13);
     }
+    return newBag;
   }
 
   // ==========================================================================
@@ -1311,7 +1369,16 @@ export class GameEngine {
     const itemId = p.inventory[slotIndex];
     if (!itemId) return false;
     p.inventory[slotIndex] = null;
-    this.spawnLootBag(p.x + 0.35, p.y + 0.25, [itemId]);
+    const bag = this.spawnLootBag(p.x + 0.35, p.y + 0.25, [itemId]);
+    if (bag) {
+      this.queueMmoEvent({
+        type: 'public_bag',
+        id: p.id,
+        senderName: p.name,
+        mapId: this.currentMap.id,
+        bag: { id: bag.id, x: bag.x, y: bag.y, items: [...bag.items], bagType: bag.bagType }
+      });
+    }
     sound.playSfx('pot');
     if (this.ui && this.ui.onStatsChanged) this.ui.onStatsChanged();
     return true;
@@ -1644,8 +1711,10 @@ export class GameEngine {
     if (p.shielding) moveSpeed *= 0.68;
     if (p.dashTimer > 0) moveSpeed *= 2.15;
 
-    const nx = p.x + mx * moveSpeed * dt;
-    const ny = p.y + my * moveSpeed * dt;
+    p.vx = mx * moveSpeed;
+    p.vy = my * moveSpeed;
+    const nx = p.x + p.vx * dt;
+    const ny = p.y + p.vy * dt;
     if (this.isWalkable(nx, p.y)) p.x = nx;
     if (this.isWalkable(p.x, ny)) p.y = ny;
 
@@ -1723,86 +1792,40 @@ export class GameEngine {
   }
 
   // ==========================================================================
-  // AI MMO PLAYERS UPDATE
+  // REMOTE MMO PLAYERS INTERPOLATION & SYNC UPDATE
   // ==========================================================================
   updateAiPlayers(dt) {
-    for (const bot of this.aiPlayers) {
-      bot.slashTimer = Math.max(0, bot.slashTimer - dt);
-      bot.fireCooldown -= dt;
-      bot.chatCooldown -= dt;
+    this.updateRemotePlayers(dt);
+  }
 
-      if (this.currentMap.id === 'nexus') {
-        bot.aimAngle += dt * 0.8;
+  updateRemotePlayers(dt) {
+    const now = Date.now();
+    for (const [id, rp] of this.remotePlayers.entries()) {
+      if (now - (rp.lastLocalSeen || now) > 16000) {
+        this.remotePlayers.delete(id);
         continue;
       }
-
-      // Find nearest enemy to bot
-      let nearest = null;
-      let nearestDist = 11.0;
-      for (const e of this.enemies) {
-        const d = Math.hypot(e.x - bot.x, e.y - bot.y);
-        if (d < nearestDist) {
-          nearestDist = d;
-          nearest = e;
-        }
+      if (rp.slashTimer > 0) {
+        rp.slashTimer = Math.max(0, rp.slashTimer - dt);
       }
-
-      if (nearest) {
-        bot.aimAngle = Math.atan2(nearest.y - bot.y, nearest.x - bot.x);
-        const idealDist = 4.2;
-        const moveDir = nearestDist > idealDist ? 1 : nearestDist < 2.8 ? -1 : 0;
-        const strafeAngle = bot.aimAngle + Math.PI / 2;
-        const vx = Math.cos(bot.aimAngle) * moveDir * 3.5 + Math.cos(strafeAngle) * 2.0;
-        const vy = Math.sin(bot.aimAngle) * moveDir * 3.5 + Math.sin(strafeAngle) * 2.0;
-        if (this.isWalkable(bot.x + vx * dt, bot.y + vy * dt)) {
-          bot.x += vx * dt;
-          bot.y += vy * dt;
-        }
-
-        if (bot.fireCooldown <= 0) {
-          bot.fireCooldown = 0.45 + Math.random() * 0.25;
-          bot.slashTimer = 0.14;
-          this.projectiles.push({
-            x: bot.x,
-            y: bot.y,
-            vx: Math.cos(bot.aimAngle) * 11.5,
-            vy: Math.sin(bot.aimAngle) * 11.5,
-            baseAngle: bot.aimAngle,
-            age: 0,
-            maxDist: 6.5,
-            traveled: 0,
-            dmg: 45,
-            pierce: false,
-            color: '#67e8f9',
-            size: 5,
-            fromEnemy: false,
-            fromBot: true,
-            hitSet: new Set()
-          });
-        }
-
-        // Occasional MMO Chat Callout!
-        if (bot.chatCooldown <= 0 && (nearest.isGod || nearest.isBoss)) {
-          bot.chatCooldown = 28 + Math.random() * 25;
-          const phrases = [
-            `Fighting ${nearest.name}! Click my name to TP!`,
-            `Blighted Godlands train rolling! TP to ${bot.name}!`,
-            `Watch the radial shotgun on ${nearest.name}!`,
-            `Need Solar Templar Warhorn buff here!`
-          ];
-          this.addChatMessage(bot.name, phrases[Math.floor(Math.random() * phrases.length)], '#93c5fd', bot);
-        }
-      } else if (this.player && !this.player.dead) {
-        // Follow player loosely in dungeons
-        const dx = this.player.x - bot.x;
-        const dy = this.player.y - bot.y;
-        const d = Math.hypot(dx, dy);
-        if (d > 4.5 && d < 18) {
-          const nx = bot.x + (dx / d) * 4.2 * dt;
-          const ny = bot.y + (dy / d) * 4.2 * dt;
-          if (this.isWalkable(nx, ny)) {
-            bot.x = nx;
-            bot.y = ny;
+      if (typeof rp.targetX === 'number' && typeof rp.targetY === 'number') {
+        const dx = rp.targetX - rp.x;
+        const dy = rp.targetY - rp.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist > 10 || rp.justWarped) {
+          rp.x = rp.targetX;
+          rp.y = rp.targetY;
+          rp.justWarped = false;
+        } else if (dist > 0.01) {
+          const t = Math.min(1, dt * 11.5);
+          rp.x += dx * t;
+          rp.y += dy * t;
+        } else if (rp.vx || rp.vy) {
+          const nx = rp.x + (rp.vx || 0) * dt * 0.35;
+          const ny = rp.y + (rp.vy || 0) * dt * 0.35;
+          if (rp.mapId === this.currentMap.id && this.isWalkable(nx, ny)) {
+            rp.x = nx;
+            rp.y = ny;
           }
         }
       }
@@ -1977,7 +2000,7 @@ export class GameEngine {
           this.projectiles.splice(i, 1);
         }
       } else {
-        if (!pr.fromBot) {
+        if (!pr.fromBot && !pr.fromRemotePlayer) {
           this.hitPropsInRadius(pr.x, pr.y, 0.55);
         }
         let removeProj = false;
@@ -1986,11 +2009,16 @@ export class GameEngine {
           const hitRadius = (e.size / TILE_SIZE) + 0.35;
           if (Math.hypot(pr.x - e.x, pr.y - e.y) <= hitRadius) {
             pr.hitSet.add(e.uid);
-            const dmg = pr.fromBot ? e.maxHp * 0.015 : pr.dmg;
-            this.damageEnemy(e, dmg, pr.baseAngle, pr.pierceArmor);
-            if (pr.stunOnHit) {
-              e.stunTimer = Math.max(e.stunTimer, pr.stunOnHit);
-              sound.playSfx('pot');
+            if (pr.fromRemotePlayer) {
+              e.hitFlash = 0.1;
+              this.spawnBurstParticles(e.x, e.y, pr.color || '#38bdf8', 3);
+            } else {
+              const dmg = pr.fromBot ? e.maxHp * 0.015 : pr.dmg;
+              this.damageEnemy(e, dmg, pr.baseAngle, pr.pierceArmor);
+              if (pr.stunOnHit) {
+                e.stunTimer = Math.max(e.stunTimer, pr.stunOnHit);
+                sound.playSfx('pot');
+              }
             }
             if (!pr.pierce) {
               removeProj = true;
@@ -2601,62 +2629,546 @@ export class GameEngine {
     }
   }
 
+  serializeLocalPlayer() {
+    const p = this.player;
+    if (!p) return null;
+    return {
+      id: p.id,
+      name: p.name,
+      classId: p.classId,
+      className: p.className,
+      level: p.level || 20,
+      maxedCount: p.maxedCount || 0,
+      stars: this.getTotalClassStars(),
+      x: Math.round(p.x * 100) / 100,
+      y: Math.round(p.y * 100) / 100,
+      vx: Math.round((p.vx || 0) * 100) / 100,
+      vy: Math.round((p.vy || 0) * 100) / 100,
+      aimAngle: Math.round((p.aimAngle || 0) * 100) / 100,
+      hp: Math.round(p.hp),
+      maxHp: Math.round(p.stats ? p.stats.hp : 750),
+      mp: Math.round(p.mp),
+      maxMp: Math.round(p.stats ? p.stats.mp : 250),
+      shielding: Boolean(p.shielding),
+      slashTimer: p.slashTimer > 0 ? Number(p.slashTimer.toFixed(2)) : 0,
+      spinAttack: Boolean(p.spinAttack),
+      dead: Boolean(p.dead),
+      palette: p.palette,
+      equipment: p.equipment,
+      mapId: this.currentMap ? this.currentMap.id : 'nexus',
+      zoneName: this.currentMap ? this.currentMap.name : 'Sovereign Sanctuary',
+      crestShards: this.getRestoredShardsCount(),
+      ts: Date.now()
+    };
+  }
+
+  queueMmoEvent(ev) {
+    if (!ev || !this.player) return;
+    const pkt = {
+      ...ev,
+      id: ev.id || this.player.id,
+      senderName: ev.senderName || this.player.name,
+      evId: ev.evId || `${this.player.id}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      ts: Date.now()
+    };
+    if (!this.mmo.seenEventIds) this.mmo.seenEventIds = new Set();
+    this.mmo.seenEventIds.add(pkt.evId);
+
+    this.mmo.pendingEvents.push(pkt);
+    if (this.mmo.pendingEvents.length > 35) {
+      this.mmo.pendingEvents.shift();
+    }
+
+    // Immediate 0ms broadcast over BroadcastChannel & WebSocket when available
+    if (this.bc) {
+      try { this.bc.postMessage(pkt); } catch (e) {}
+    }
+    if (this.ws && this.ws.readyState === 1) {
+      try { this.ws.send(JSON.stringify(pkt)); } catch (e) {}
+    }
+  }
+
+  sendGlobalChat(text) {
+    const cleanText = String(text || '').trim().slice(0, 180);
+    if (!cleanText || !this.player) return false;
+    this.addChatMessage(this.player.name, cleanText, '#38bdf8', this.player);
+    this.queueMmoEvent({
+      type: 'chat',
+      id: this.player.id,
+      sender: this.player.name,
+      text: cleanText,
+      color: '#38bdf8',
+      mapId: this.currentMap ? this.currentMap.id : 'nexus'
+    });
+    return true;
+  }
+
+  async loginToMmo(username, password = '', classId = null) {
+    const cleanName = String(username || '').replace(/[^a-zA-Z0-9_\-\s]/g, '').trim().slice(0, 18);
+    if (!cleanName || cleanName.length < 2) {
+      return { ok: false, error: 'Hero Name must be at least 2 characters.' };
+    }
+
+    if (classId && CLASSES[classId] && (!this.player || this.player.classId !== classId)) {
+      this.selectClass(classId);
+    }
+
+    this.account.heroName = cleanName;
+    this.account.loggedInName = cleanName;
+    if (this.player) {
+      this.player.name = cleanName;
+    }
+    this.saveAccount();
+
+    let serverResp = null;
+    if (typeof fetch === 'function') {
+      try {
+        const res = await fetch('/api/mmo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'login',
+            username: cleanName,
+            password: String(password || ''),
+            playerId: this.account.playerId,
+            classId: this.player ? this.player.classId : 'knight',
+            accountData: {
+              vault: this.account.vault,
+              crestShards: this.account.crestShards,
+              sunshards: this.account.sunshards,
+              accountFame: this.account.accountFame,
+              classBestFame: this.account.classBestFame
+            }
+          })
+        });
+        if (res && res.ok) {
+          serverResp = await res.json();
+        }
+      } catch (e) {}
+    }
+
+    if (serverResp && serverResp.ok === false) {
+      return serverResp;
+    }
+
+    if (serverResp && serverResp.ok && serverResp.account) {
+      const sa = serverResp.account;
+      if (sa.playerId) {
+        this.account.playerId = sa.playerId;
+        if (this.player) this.player.id = sa.playerId;
+      }
+      if (Array.isArray(sa.crestShards) && sa.crestShards.length === 5) {
+        this.account.crestShards = this.account.crestShards.map((v, i) => Boolean(v || sa.crestShards[i]));
+      }
+      if (typeof sa.sunshards === 'number') {
+        this.account.sunshards = Math.max(this.account.sunshards, sa.sunshards);
+      }
+      if (typeof sa.accountFame === 'number') {
+        this.account.accountFame = Math.max(this.account.accountFame, sa.accountFame);
+      }
+      this.mmo.sessionToken = serverResp.sessionToken || '';
+      this.mmo.connected = true;
+      this.mmo.onlineCount = serverResp.onlineCount || 1;
+      if (typeof serverResp.lastSeq === 'number') {
+        this.mmo.lastSeq = serverResp.lastSeq;
+      }
+      if (Array.isArray(serverResp.players)) {
+        for (const sp of serverResp.players) {
+          if (sp && sp.id !== (this.player && this.player.id)) {
+            this.upsertRemotePlayer(sp, true);
+          }
+        }
+      }
+    }
+
+    this.mmo.loggedIn = true;
+    this.saveAccount();
+    this.addChatMessage(
+      'MMO INSTANCE',
+      `Logged in as ${cleanName} on shared instance [Aethelgard-Prime]! (${this.getOnlinePlayerCount()} Heroes Online)`,
+      '#4ade80'
+    );
+    if (this.ui && this.ui.onStatsChanged) this.ui.onStatsChanged();
+    if (this.ui && this.ui.onMmoStatusChanged) this.ui.onMmoStatusChanged();
+
+    // Immediately trigger a sync so other players see us right away
+    this.syncWithMmoServer();
+    return { ok: true, heroName: cleanName, onlineCount: this.getOnlinePlayerCount() };
+  }
+
+  getOnlinePlayerCount() {
+    return Math.max(1 + this.remotePlayers.size, this.mmo.onlineCount || 1);
+  }
+
+  upsertRemotePlayer(pkt, fromServer = false) {
+    if (!pkt || !pkt.id || (this.player && pkt.id === this.player.id)) return null;
+    const existing = this.remotePlayers.get(pkt.id);
+    const mapChanged = existing && existing.mapId !== pkt.mapId;
+    const cls = CLASSES[pkt.classId] || CLASSES.knight;
+
+    const rp = existing || {
+      id: pkt.id,
+      x: typeof pkt.x === 'number' ? pkt.x : 22,
+      y: typeof pkt.y === 'number' ? pkt.y : 22,
+      targetX: typeof pkt.x === 'number' ? pkt.x : 22,
+      targetY: typeof pkt.y === 'number' ? pkt.y : 22,
+      slashTimer: 0
+    };
+
+    rp.name = pkt.name || rp.name || 'Wanderer';
+    rp.classId = pkt.classId || rp.classId || 'knight';
+    rp.className = pkt.className || cls.name;
+    rp.level = pkt.level || 20;
+    rp.maxedCount = typeof pkt.maxedCount === 'number' ? pkt.maxedCount : (rp.maxedCount || 0);
+    rp.stars = typeof pkt.stars === 'number' ? pkt.stars : (rp.stars || 0);
+    rp.targetX = typeof pkt.x === 'number' ? pkt.x : rp.targetX;
+    rp.targetY = typeof pkt.y === 'number' ? pkt.y : rp.targetY;
+    if (!existing || mapChanged) {
+      rp.x = rp.targetX;
+      rp.y = rp.targetY;
+      rp.justWarped = true;
+    }
+    rp.vx = pkt.vx || 0;
+    rp.vy = pkt.vy || 0;
+    rp.aimAngle = typeof pkt.aimAngle === 'number' ? pkt.aimAngle : (rp.aimAngle || 0);
+    rp.hp = typeof pkt.hp === 'number' ? pkt.hp : (rp.hp || 750);
+    rp.maxHp = typeof pkt.maxHp === 'number' ? pkt.maxHp : (rp.maxHp || 750);
+    rp.mp = typeof pkt.mp === 'number' ? pkt.mp : (rp.mp || 250);
+    rp.maxMp = typeof pkt.maxMp === 'number' ? pkt.maxMp : (rp.maxMp || 250);
+    rp.shielding = Boolean(pkt.shielding);
+    if (pkt.slashTimer && pkt.slashTimer > rp.slashTimer) {
+      rp.slashTimer = pkt.slashTimer;
+    }
+    rp.spinAttack = Boolean(pkt.spinAttack);
+    rp.dead = Boolean(pkt.dead);
+    rp.palette = pkt.palette || rp.palette || cls.palette;
+    rp.equipment = pkt.equipment || rp.equipment || cls.startingEq;
+    rp.mapId = pkt.mapId || rp.mapId || 'nexus';
+    rp.zoneName = pkt.zoneName || rp.zoneName || 'Sovereign Sanctuary';
+    rp.crestShards = typeof pkt.crestShards === 'number' ? pkt.crestShards : (rp.crestShards || 0);
+    rp.lastLocalSeen = Date.now();
+    if (fromServer) rp.fromServer = true;
+
+    this.remotePlayers.set(rp.id, rp);
+    return rp;
+  }
+
+  async syncWithMmoServer() {
+    if (this.mmo.syncInFlight || !this.player || typeof fetch !== 'function') return;
+    this.mmo.syncInFlight = true;
+    const outboundEvents = this.mmo.pendingEvents.splice(0, 25);
+    try {
+      const res = await fetch('/api/mmo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'sync',
+          player: this.serializeLocalPlayer(),
+          events: outboundEvents,
+          sinceSeq: this.mmo.lastSeq,
+          sinceChatId: this.mmo.lastChatId
+        })
+      });
+      if (res && res.ok) {
+        const data = await res.json();
+        if (data && data.ok) {
+          this.mmo.connected = true;
+          this.mmo.lastSyncAt = Date.now();
+          this.mmo.onlineCount = data.onlineCount || (Array.isArray(data.players) ? data.players.length : 1);
+
+          // 1. Update live players in Aethelgard-Prime
+          if (Array.isArray(data.players)) {
+            const activeServerIds = new Set();
+            for (const sp of data.players) {
+              if (!sp || !sp.id) continue;
+              activeServerIds.add(sp.id);
+              if (sp.id !== this.player.id) {
+                this.upsertRemotePlayer(sp, true);
+              }
+            }
+            for (const [id, rp] of this.remotePlayers.entries()) {
+              if (rp.fromServer && !activeServerIds.has(id) && Date.now() - (rp.lastLocalSeen || 0) > 4500) {
+                this.remotePlayers.delete(id);
+              }
+            }
+          }
+
+          // 2. Process remote gameplay events (attacks, boss damage, warhorn buffs, portals, bags)
+          if (Array.isArray(data.events)) {
+            for (const ev of data.events) {
+              if (typeof ev.seq === 'number' && ev.seq > this.mmo.lastSeq) {
+                this.mmo.lastSeq = ev.seq;
+              }
+              this.handleNetworkPacket(ev, true);
+            }
+          }
+
+          // 3. Process global MMO chat messages
+          if (Array.isArray(data.chat)) {
+            for (const c of data.chat) {
+              if (typeof c.chatId === 'number' && c.chatId > this.mmo.lastChatId) {
+                this.mmo.lastChatId = c.chatId;
+              }
+              this.handleNetworkPacket({
+                type: 'chat',
+                id: c.senderId,
+                sender: c.sender,
+                text: c.text,
+                color: c.color,
+                evId: `chat_${c.chatId}`
+              }, true);
+            }
+          }
+
+          // 4. Reconcile active shared portals & public dropped bags on our current map
+          if (data.worldState && this.currentMap) {
+            if (Array.isArray(data.worldState.sharedPortals)) {
+              for (const sp of data.worldState.sharedPortals) {
+                if (sp.mapId === this.currentMap.id && sp.portal) {
+                  const exists = this.currentMap.portals.some((pt) => pt.id === sp.portal.id);
+                  if (!exists) {
+                    this.currentMap.portals.push({ ...sp.portal });
+                  }
+                }
+              }
+            }
+            if (Array.isArray(data.worldState.sharedBags)) {
+              for (const sb of data.worldState.sharedBags) {
+                if (sb.mapId === this.currentMap.id && sb.bag && Array.isArray(sb.bag.items)) {
+                  const exists = this.lootBags.some((b) => b.id === sb.bag.id);
+                  if (!exists) {
+                    this.spawnLootBag(sb.bag.x, sb.bag.y, sb.bag.items, { id: sb.bag.id });
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      // Offline or standalone file:// mode; BroadcastChannel still works seamlessly
+    } finally {
+      this.mmo.syncInFlight = false;
+    }
+  }
+
   setupMultiplayerSync() {
-    // 1. BroadcastChannel for zero-latency Multi-Tab Co-Op!
+    this.mmo.seenEventIds = new Set();
+
+    // 1. BroadcastChannel for 0ms Multi-Tab Shared Instance Co-Op
     try {
       if (typeof BroadcastChannel !== 'undefined') {
         this.bc = new BroadcastChannel('rotsc_mmo_channel');
         this.bc.onmessage = (ev) => {
-          this.handleNetworkPacket(ev.data);
+          this.handleNetworkPacket(ev.data, false);
         };
       }
     } catch (e) {}
 
-    // 2. WebSocket connection to Node.js MMO Server when running locally on port 4000
+    // 2. WebSocket connection when running on local Node server (port 4000)
     try {
-      if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+      if (typeof WebSocket !== 'undefined' && (location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
         const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
         const host = `${location.hostname}:${location.port || 4000}`;
         const ws = new WebSocket(`${proto}//${host}/ws`);
         ws.onmessage = (ev) => {
           try {
-            this.handleNetworkPacket(JSON.parse(ev.data));
+            this.handleNetworkPacket(JSON.parse(ev.data), false);
           } catch (err) {}
         };
         this.ws = ws;
       }
     } catch (e) {}
 
-    // Broadcast local player position & state every 120ms
+    // 3. Auto-reconnect saved hero session to /api/mmo if previously logged in
+    if (this.account.loggedInName) {
+      setTimeout(() => {
+        this.loginToMmo(this.account.loggedInName, '', this.player ? this.player.classId : 'knight');
+      }, 80);
+    } else {
+      // Even before choosing a custom name, join the shared instance so the player immediately sees everyone online!
+      setTimeout(() => {
+        this.syncWithMmoServer();
+      }, 80);
+    }
+
+    // 4. Fast 100ms BroadcastChannel/WebSocket local position stream + 200ms /api/mmo Global Instance Sync
     setInterval(() => {
-      if (!this.player || this.player.dead) return;
-      const pkt = {
+      if (!this.player) return;
+      const snapshot = {
         type: 'player_sync',
-        id: this.player.id,
-        name: this.player.name,
-        x: this.player.x,
-        y: this.player.y,
-        aimAngle: this.player.aimAngle,
-        palette: this.player.palette,
-        maxedCount: this.player.maxedCount,
-        mapId: this.currentMap.id,
-        ts: Date.now()
+        ...this.serializeLocalPlayer()
       };
       if (this.bc) {
-        try { this.bc.postMessage(pkt); } catch (e) {}
+        try { this.bc.postMessage(snapshot); } catch (e) {}
       }
       if (this.ws && this.ws.readyState === 1) {
-        try { this.ws.send(JSON.stringify(pkt)); } catch (e) {}
+        try { this.ws.send(JSON.stringify(snapshot)); } catch (e) {}
       }
-    }, 120);
+    }, 100);
+
+    setInterval(() => {
+      this.syncWithMmoServer();
+    }, 200);
   }
 
-  handleNetworkPacket(pkt) {
-    if (!pkt || pkt.id === (this.player && this.player.id)) return;
+  handleNetworkPacket(pkt, fromServerPoll = false) {
+    if (!pkt || !this.player) return;
+    const senderId = pkt.id || pkt.senderId;
+    if (senderId && senderId === this.player.id) return;
+
+    if (pkt.evId) {
+      if (!this.mmo.seenEventIds) this.mmo.seenEventIds = new Set();
+      if (this.mmo.seenEventIds.has(pkt.evId)) return;
+      this.mmo.seenEventIds.add(pkt.evId);
+      if (this.mmo.seenEventIds.size > 400) {
+        const first = this.mmo.seenEventIds.values().next().value;
+        this.mmo.seenEventIds.delete(first);
+      }
+    }
+
     if (pkt.type === 'player_sync') {
-      this.remotePlayers.set(pkt.id, pkt);
-    } else if (pkt.type === 'chat') {
-      this.addChatMessage(pkt.sender, pkt.text, pkt.color || '#38bdf8');
+      this.upsertRemotePlayer(pkt, fromServerPoll);
+      return;
+    }
+
+    if (pkt.type === 'chat') {
+      const rp = senderId ? this.remotePlayers.get(senderId) : null;
+      this.addChatMessage(pkt.sender || 'Hero', pkt.text, pkt.color || '#38bdf8', rp);
+      return;
+    }
+
+    if (pkt.type === 'crest_shard') {
+      this.addChatMessage(
+        'HOLY CREST',
+        `★ ${pkt.sender || 'A Hero'} attuned the ${pkt.shardName || 'Sacred Shard'} (${pkt.restoredCount || 1}/5)! ★`,
+        '#fde047'
+      );
+      return;
+    }
+
+    // Map-scoped co-op gameplay events
+    if (pkt.mapId && this.currentMap && pkt.mapId !== this.currentMap.id) {
+      return;
+    }
+
+    if (pkt.type === 'attack') {
+      const rp = senderId ? this.remotePlayers.get(senderId) : null;
+      if (rp) {
+        if (typeof pkt.x === 'number') rp.x = pkt.x;
+        if (typeof pkt.y === 'number') rp.y = pkt.y;
+        if (typeof pkt.aimAngle === 'number') rp.aimAngle = pkt.aimAngle;
+        rp.slashTimer = pkt.spin ? 0.28 : 0.16;
+        rp.spinAttack = Boolean(pkt.spin);
+      }
+      const wep = ITEMS[pkt.weaponId] || ITEMS.wep_sword_t1;
+      const baseAngle = pkt.aimAngle || 0;
+      const count = pkt.spin ? 12 : (wep.projCount || 1);
+      const spreadRad = pkt.spin ? Math.PI * 2 : ((wep.spreadDeg || 0) * Math.PI) / 180;
+      const speed = wep.projSpeed || 11.5;
+      const range = wep.range || 5.0;
+      for (let i = 0; i < count; i++) {
+        let angle = baseAngle;
+        if (pkt.spin) {
+          angle = (i / count) * Math.PI * 2;
+        } else if (count > 1) {
+          angle = baseAngle + (i - (count - 1) / 2) * (spreadRad / Math.max(1, count - 1));
+        }
+        this.projectiles.push({
+          x: (pkt.x || (rp && rp.x) || 0) + Math.cos(angle) * 0.35,
+          y: (pkt.y || (rp && rp.y) || 0) + Math.sin(angle) * 0.35,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          baseAngle: angle,
+          age: 0,
+          maxDist: range,
+          traveled: 0,
+          dmg: 0,
+          pierce: Boolean(wep.pierce),
+          color: wep.projColor || '#38bdf8',
+          size: wep.projSize || 5,
+          isCrescent: Boolean(wep.isMelee),
+          fromEnemy: false,
+          fromRemotePlayer: true,
+          hitSet: new Set()
+        });
+      }
+      return;
+    }
+
+    if (pkt.type === 'party_buff') {
+      const bx = typeof pkt.x === 'number' ? pkt.x : 0;
+      const by = typeof pkt.y === 'number' ? pkt.y : 0;
+      this.spawnBurstParticles(bx, by, '#fde047', 22);
+      if (!this.player.dead && Math.hypot(this.player.x - bx, this.player.y - by) <= (pkt.radius || 6.5)) {
+        const healAmt = pkt.heal || 90;
+        this.player.hp = Math.min(this.player.stats.hp, this.player.hp + healAmt);
+        this.player.buffs.damaging = Math.max(this.player.buffs.damaging, pkt.duration || 4.5);
+        this.player.buffs.speedy = Math.max(this.player.buffs.speedy, pkt.duration || 4.5);
+        sound.playSfx('seal');
+        this.spawnFloatingText(
+          this.player.x,
+          this.player.y - 0.85,
+          `+${healAmt} HP [${pkt.senderName || 'Ally'} WARHORN!]`,
+          '#fde047',
+          13
+        );
+      }
+      return;
+    }
+
+    if (pkt.type === 'enemy_dmg') {
+      let targetEnemy = this.enemies.find((e) => e.uid === pkt.enemyUid);
+      if (!targetEnemy && typeof pkt.x === 'number' && typeof pkt.y === 'number') {
+        let bestD = 3.0;
+        for (const e of this.enemies) {
+          const d = Math.hypot(e.x - pkt.x, e.y - pkt.y);
+          if (d < bestD) {
+            bestD = d;
+            targetEnemy = e;
+          }
+        }
+      }
+      if (targetEnemy) {
+        const dmg = pkt.dmg || 25;
+        if (typeof pkt.hpAfter === 'number') {
+          targetEnemy.hp = Math.min(targetEnemy.hp, pkt.hpAfter);
+        } else {
+          targetEnemy.hp -= dmg;
+        }
+        targetEnemy.hitFlash = 0.1;
+        this.spawnFloatingText(
+          targetEnemy.x + (Math.random() - 0.5) * 0.4,
+          targetEnemy.y - 0.6,
+          `-${dmg}`,
+          '#38bdf8',
+          11
+        );
+        if (pkt.killed || targetEnemy.hp <= 0) {
+          this.onEnemyKilled(targetEnemy, true);
+        }
+      }
+      return;
+    }
+
+    if (pkt.type === 'portal_open' && pkt.portal) {
+      const exists = this.currentMap.portals.some((pt) => pt.id === pkt.portal.id);
+      if (!exists) {
+        this.currentMap.portals.push({ ...pkt.portal });
+        this.addChatMessage(
+          'SHARED PORTAL',
+          `${pkt.senderName || 'An ally'} opened ${pkt.portal.name}! Press [E] on the portal to enter together!`,
+          pkt.portal.color || '#38bdf8'
+        );
+      }
+      return;
+    }
+
+    if (pkt.type === 'public_bag' && pkt.bag && Array.isArray(pkt.bag.items)) {
+      const exists = this.lootBags.some((b) => b.id === pkt.bag.id);
+      if (!exists) {
+        this.spawnLootBag(pkt.bag.x, pkt.bag.y, pkt.bag.items, { id: pkt.bag.id });
+      }
     }
   }
 }
