@@ -553,15 +553,71 @@ export class GameEngine {
   }
 
   // ==========================================================================
-  // MMO PARTY & PLAYER TELEPORTATION (100% Real Logged-In Players)
+  // MMO PARTY, 3-NPC DUNGEON COMPANIONS & PLAYER TELEPORTATION
   // ==========================================================================
   initAiPlayers() {
-    this.allAiPlayers = [];
+    const npcTemplates = [
+      { name: 'SirKaelen', classId: 'knight',  maxedCount: 6, stars: 18 },
+      { name: 'LyraWind',  classId: 'ranger',  maxedCount: 6, stars: 22 },
+      { name: 'IgnisPyre', classId: 'paladin', maxedCount: 7, stars: 28 }
+    ];
+    this.allAiPlayers = npcTemplates.map((tpl, idx) => {
+      const cls = CLASSES[tpl.classId] || CLASSES.knight;
+      return {
+        id: `npc_${idx}`,
+        isNpc: true,
+        name: tpl.name,
+        classId: cls.id,
+        className: cls.name,
+        palette: { ...cls.palette },
+        x: 20,
+        y: 20,
+        size: 12,
+        hp: cls.maxStats.hp,
+        maxHp: cls.maxStats.hp,
+        maxedCount: tpl.maxedCount,
+        stars: tpl.stars,
+        aimAngle: 0,
+        slashTimer: 0,
+        slashDuration: 0.16,
+        slashRadiusPx: 42,
+        fireCooldown: 0.8 + idx * 0.4,
+        chatCooldown: 20 + idx * 12
+      };
+    });
     this.aiPlayers = [];
+    this.repositionAiPlayersForMap();
   }
 
   repositionAiPlayersForMap() {
-    this.aiPlayers = [];
+    if (!this.allAiPlayers) return;
+    if (!this.currentMap || this.currentMap.id === 'nexus') {
+      // Zero fake NPCs in the starting Sanctuary Hub
+      this.aiPlayers = [];
+      return;
+    }
+
+    // Strictly limit to 3 NPCs in the Realm and 3 NPCs per Dungeon
+    this.aiPlayers = this.allAiPlayers.slice(0, 3);
+
+    if (this.currentMap.id === 'realm') {
+      const cx = this.currentMap.cx;
+      const cy = this.currentMap.cy;
+      this.aiPlayers.forEach((bot, i) => {
+        const a = (i / 3) * Math.PI * 2 + 0.5;
+        const r = i === 0 ? 11 : i === 1 ? 18 : 26;
+        bot.x = cx + Math.cos(a) * r;
+        bot.y = cy + Math.sin(a) * r;
+        bot.mapId = this.currentMap.id;
+      });
+    } else {
+      // Dungeon: strictly 3 NPCs spawned alongside the player at the entrance
+      this.aiPlayers.forEach((bot, i) => {
+        bot.x = this.currentMap.spawnX + (i - 1) * 1.4;
+        bot.y = this.currentMap.spawnY + 0.6;
+        bot.mapId = this.currentMap.id;
+      });
+    }
   }
 
   teleportToPlayer(targetPlayer) {
@@ -1807,10 +1863,83 @@ export class GameEngine {
   }
 
   // ==========================================================================
-  // REMOTE MMO PLAYERS INTERPOLATION & SYNC UPDATE
+  // REMOTE MMO PLAYERS INTERPOLATION & 3-NPC COMPANION UPDATE
   // ==========================================================================
   updateAiPlayers(dt) {
     this.updateRemotePlayers(dt);
+
+    const isDungeon = this.currentMap && this.currentMap.id.startsWith('dungeon_');
+    for (const bot of this.aiPlayers) {
+      bot.slashTimer = Math.max(0, (bot.slashTimer || 0) - dt);
+      bot.fireCooldown = (bot.fireCooldown || 0) - dt;
+      bot.chatCooldown = (bot.chatCooldown || 0) - dt;
+
+      if (this.currentMap.id === 'nexus') {
+        continue;
+      }
+
+      // Find nearest enemy to bot (in dungeons, only engage enemies that are near the player so NPCs never rush ahead alone!)
+      let nearest = null;
+      let nearestDist = isDungeon ? 7.5 : 10.0;
+      for (const e of this.enemies) {
+        if (isDungeon && this.player && Math.hypot(e.x - this.player.x, e.y - this.player.y) > 8.5) {
+          continue;
+        }
+        const d = Math.hypot(e.x - bot.x, e.y - bot.y);
+        if (d < nearestDist) {
+          nearestDist = d;
+          nearest = e;
+        }
+      }
+
+      if (nearest) {
+        bot.aimAngle = Math.atan2(nearest.y - bot.y, nearest.x - bot.x);
+        const idealDist = 4.5;
+        const moveDir = nearestDist > idealDist ? 1 : nearestDist < 3.0 ? -1 : 0;
+        const strafeAngle = bot.aimAngle + Math.PI / 2;
+        const vx = Math.cos(bot.aimAngle) * moveDir * 3.0 + Math.cos(strafeAngle) * 1.6;
+        const vy = Math.sin(bot.aimAngle) * moveDir * 3.0 + Math.sin(strafeAngle) * 1.6;
+        if (this.isWalkable(bot.x + vx * dt, bot.y + vy * dt)) {
+          bot.x += vx * dt;
+          bot.y += vy * dt;
+        }
+
+        if (bot.fireCooldown <= 0) {
+          bot.fireCooldown = 1.45 + Math.random() * 0.65;
+          bot.slashTimer = 0.14;
+          this.projectiles.push({
+            x: bot.x,
+            y: bot.y,
+            vx: Math.cos(bot.aimAngle) * 10.5,
+            vy: Math.sin(bot.aimAngle) * 10.5,
+            baseAngle: bot.aimAngle,
+            age: 0,
+            maxDist: 5.8,
+            traveled: 0,
+            dmg: 6,
+            pierce: false,
+            color: '#67e8f9',
+            size: 4,
+            fromEnemy: false,
+            fromBot: true,
+            hitSet: new Set()
+          });
+        }
+      } else if (this.player && !this.player.dead) {
+        // Stay near player in dungeons
+        const dx = this.player.x - bot.x;
+        const dy = this.player.y - bot.y;
+        const d = Math.hypot(dx, dy);
+        if (d > 3.8 && d < 18) {
+          const nx = bot.x + (dx / d) * 4.0 * dt;
+          const ny = bot.y + (dy / d) * 4.0 * dt;
+          if (this.isWalkable(nx, ny)) {
+            bot.x = nx;
+            bot.y = ny;
+          }
+        }
+      }
+    }
   }
 
   updateRemotePlayers(dt) {
@@ -2027,9 +2156,16 @@ export class GameEngine {
             if (pr.fromRemotePlayer) {
               e.hitFlash = 0.1;
               this.spawnBurstParticles(e.x, e.y, pr.color || '#38bdf8', 3);
+            } else if (pr.fromBot) {
+              // NPC companions deal light support chip damage and can NEVER reduce any enemy/boss below 25% HP or kill them!
+              const minHpFloor = Math.max(15, Math.ceil(e.maxHp * 0.25));
+              if (e.hp > minHpFloor) {
+                const chipDmg = Math.min(8, Math.max(2, Math.round(e.maxHp * 0.0025)));
+                e.hp = Math.max(minHpFloor, e.hp - chipDmg);
+                e.hitFlash = 0.08;
+              }
             } else {
-              const dmg = pr.fromBot ? e.maxHp * 0.015 : pr.dmg;
-              this.damageEnemy(e, dmg, pr.baseAngle, pr.pierceArmor);
+              this.damageEnemy(e, pr.dmg, pr.baseAngle, pr.pierceArmor);
               if (pr.stunOnHit) {
                 e.stunTimer = Math.max(e.stunTimer, pr.stunOnHit);
                 sound.playSfx('pot');

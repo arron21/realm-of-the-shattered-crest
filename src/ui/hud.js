@@ -136,7 +136,7 @@ export class HudController {
 
     canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
-    // Click on Minimap to Teleport to nearby MMO Player!
+    // Click on Minimap to Teleport to nearby MMO Player or Realm/Dungeon NPC Companion!
     this.minimapCanvas.addEventListener('click', (e) => {
       const rect = this.minimapCanvas.getBoundingClientRect();
       const mx = e.clientX - rect.left;
@@ -153,6 +153,15 @@ export class HudController {
         if (d < bestD) {
           bestD = d;
           closestPlayer = rp;
+        }
+      }
+      if (this.game.aiPlayers) {
+        for (const bot of this.game.aiPlayers) {
+          const d = Math.hypot(bot.x - worldX, bot.y - worldY);
+          if (d < bestD) {
+            bestD = d;
+            closestPlayer = bot;
+          }
         }
       }
       if (closestPlayer) {
@@ -1337,6 +1346,14 @@ export class HudController {
       ctx.fillRect(rp.x * scaleX - 2.5, rp.y * scaleY - 2.5, 5, 5);
     }
 
+    // Active NPC Companions on Map (0 in Nexus, 3 in Realm/Dungeons — Cyan dots)
+    if (this.game.aiPlayers) {
+      for (const bot of this.game.aiPlayers) {
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillRect(bot.x * scaleX - 2, bot.y * scaleY - 2, 4, 4);
+      }
+    }
+
     // Local Player (Bright White crosshair dot)
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
@@ -1365,6 +1382,7 @@ export class HudController {
     if (!listEl || !p) return;
 
     const remoteList = Array.from(this.game.remotePlayers.values());
+    const npcList = Array.isArray(this.game.aiPlayers) ? this.game.aiPlayers.slice(0, 3) : [];
     const mapLabel = (mapId) => {
       if (!mapId || mapId === 'nexus') return 'Sanctuary';
       if (mapId === 'realm') return 'Realm';
@@ -1376,20 +1394,28 @@ export class HudController {
       <span style="color:#fde047;font-weight:800;font-size:9.5px;">✎ ID</span>
     </div>`;
 
-    if (remoteList.length === 0) {
+    const remoteRows = remoteList.slice(0, 6).map((rp) => {
+      const sameMap = rp.mapId === this.game.currentMap.id;
+      const zoneTag = sameMap ? 'Here' : mapLabel(rp.mapId);
+      return `<div class="party-row" data-player-id="${rp.id}" title="Click to Teleport (TP) to ${rp.name} (${zoneTag})!">
+        <span><strong style="color:#4ade80;">★${rp.stars || 1}</strong> ${rp.name} <span style="color:#94a3b8;font-size:9.5px;">(${rp.maxedCount || 0}/8 • ${zoneTag})</span></span>
+        <span style="color:#38bdf8;font-weight:800;font-size:10px;">TP ➔</span>
+      </div>`;
+    }).join('');
+
+    const npcRows = npcList.map((bot) => {
+      return `<div class="party-row" data-npc-id="${bot.id}" title="Click to Teleport (TP) to ${bot.name} (NPC Scout)!">
+        <span><strong style="color:#38bdf8;">★${bot.stars || 12}</strong> ${bot.name} <span style="color:#94a3b8;font-size:9.5px;">(NPC • ${bot.className})</span></span>
+        <span style="color:#38bdf8;font-weight:800;font-size:10px;">TP ➔</span>
+      </div>`;
+    }).join('');
+
+    if (remoteList.length === 0 && npcList.length === 0) {
       listEl.innerHTML = selfRow + `<div style="font-size:10px;color:#94a3b8;padding:4px 2px 2px;line-height:1.35;">
         Shared Instance <strong style="color:#38bdf8;">Aethelgard-Prime</strong> active. Other players who log in appear here for instant co-op &amp; TP!
       </div>`;
     } else {
-      const remoteRows = remoteList.slice(0, 8).map((rp) => {
-        const sameMap = rp.mapId === this.game.currentMap.id;
-        const zoneTag = sameMap ? 'Here' : mapLabel(rp.mapId);
-        return `<div class="party-row" data-player-id="${rp.id}" title="Click to Teleport (TP) to ${rp.name} (${zoneTag})!">
-          <span><strong style="color:#4ade80;">★${rp.stars || 1}</strong> ${rp.name} <span style="color:#94a3b8;font-size:9.5px;">(${rp.maxedCount || 0}/8 • ${zoneTag})</span></span>
-          <span style="color:#38bdf8;font-weight:800;font-size:10px;">TP ➔</span>
-        </div>`;
-      }).join('');
-      listEl.innerHTML = selfRow + remoteRows;
+      listEl.innerHTML = selfRow + remoteRows + npcRows;
     }
 
     listEl.querySelectorAll('[data-self-login]').forEach((selfLoginRow) => {
@@ -1400,6 +1426,14 @@ export class HudController {
       row.addEventListener('click', () => {
         const pid = row.getAttribute('data-player-id');
         const target = this.game.remotePlayers.get(pid);
+        if (target) this.game.teleportToPlayer(target);
+      });
+    });
+
+    listEl.querySelectorAll('.party-row[data-npc-id]').forEach((row) => {
+      row.addEventListener('click', () => {
+        const nid = row.getAttribute('data-npc-id');
+        const target = (this.game.aiPlayers || []).find((b) => b.id === nid);
         if (target) this.game.teleportToPlayer(target);
       });
     });

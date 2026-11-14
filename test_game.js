@@ -477,7 +477,51 @@ assert(game.player.buffs.damaging >= 4.5, 'Remote ally Solar Templar Warhorn mus
   assert.strictEqual(serialized.name, 'AethelHero', 'serializeLocalPlayer() must serialize logged-in hero');
   assert.strictEqual(typeof serialized.stars, 'number', 'serializeLocalPlayer() must include numeric star rank');
   console.log('✓ 13. Multiplayer Login & 1 Shared MMO Instance (Aethelgard-Prime sync, chat, party buff & cross-map TP) verified');
-  console.log('\nALL 13 REALM OF THE SHATTERED CREST TEST SUITES PASSED!');
+
+  // Suite 14: Reduced NPC Count (0 in Sanctuary, strictly 3 in Realm & 3 per Dungeon) & Non-Lethal NPC Support Damage
+  game.warpToMap('nexus');
+  assert.strictEqual(game.aiPlayers.length, 0, 'Starting Sanctuary Hub (nexus) must have 0 fake NPCs');
+
+  game.warpToMap('realm');
+  assert.strictEqual(game.aiPlayers.length, 3, 'Overworld Realm must be limited to 3 NPC companions');
+
+  for (const did of ['pirate_cove', 'deku_temple', 'sprite_world', 'undead_lair', 'abyss_mountain', 'mad_sanctum']) {
+    game.warpToMap('dungeon', { dungeonId: did });
+    assert.strictEqual(game.aiPlayers.length, 3, `Dungeon ${did} must be strictly limited to 3 NPCs`);
+  }
+
+  // Verify that even 500 NPC projectile hits against a Dungeon Boss can NEVER kill the boss or complete the dungeon
+  game.warpToMap('dungeon', { dungeonId: 'pirate_cove' });
+  const dungeonBoss = game.enemies.find((e) => e.isBoss);
+  assert(dungeonBoss, 'Pirate Cove must have a Dungeon Boss');
+  const minAllowedBossHp = Math.max(15, Math.ceil(dungeonBoss.maxHp * 0.25));
+  for (let i = 0; i < 500; i++) {
+    game.projectiles.push({
+      x: dungeonBoss.x,
+      y: dungeonBoss.y,
+      vx: 0,
+      vy: 0,
+      radius: 0.5,
+      dmg: 25,
+      maxDist: 10,
+      traveled: 0,
+      fromEnemy: false,
+      fromBot: true,
+      hitSet: new Set()
+    });
+    game.updateProjectiles(0.016);
+  }
+  assert(
+    dungeonBoss.hp >= minAllowedBossHp,
+    `NPCs must NEVER reduce Dungeon Boss below 25% HP (got ${dungeonBoss.hp} / ${dungeonBoss.maxHp}, min floor ${minAllowedBossHp})`
+  );
+  assert(
+    game.enemies.includes(dungeonBoss),
+    'Dungeon Boss must remain alive so NPCs can never complete dungeons for the player'
+  );
+  console.log('✓ 14. World & Dungeon NPC cap (0 in Sanctuary, 3 in Realm, 3 per Dungeon) & 25% HP floor (NPCs cannot complete dungeons) verified');
+
+  console.log('\nALL 14 REALM OF THE SHATTERED CREST TEST SUITES PASSED!');
 })().catch((err) => {
   console.error(err);
   process.exit(1);
