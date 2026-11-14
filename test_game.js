@@ -180,13 +180,42 @@ for (const cid of ['knight', 'ranger', 'pyromancer', 'paladin', 'assassin']) {
 game.spawnNewHero('knight');
 console.log('✓ 5. All 5 Champion classes verified');
 
-// Test Melee Slash & Blade Beam + 360° Spin Attack
+// Test Melee Slash, Full-HP Blade Beam, Continuous Hold-Attack (No Spin Slash) & Automatic Nearest-Enemy Targeting
 const initialProjCount = game.projectiles.length;
-game.performPrimaryAttack(false);
+game.performPrimaryAttack();
 assert(game.projectiles.length > initialProjCount, 'Full-HP Vanguard should fire a Blade Beam on slash');
-game.performPrimaryAttack(true);
-assert(game.player.isSpinSlash === true, 'Spin attack flag should activate on charged spin');
-console.log('✓ 6. Blade Slash, Full-HP Beam & 360° Hurricane Spin verified');
+assert.strictEqual(game.player.isSpinSlash, false, 'Spin slash must be removed');
+
+// Spawn a nearby enemy and verify holding down the attack button keeps attacking continuously and auto-targets the nearest enemy
+const testFoe = {
+  uid: 'auto_target_foe_1',
+  id: 'octorok',
+  name: 'Test Blight Scout',
+  x: game.player.x + 3.0,
+  y: game.player.y - 3.0,
+  size: 16,
+  hp: 5000,
+  maxHp: 5000,
+  def: 0
+};
+game.enemies.push(testFoe);
+game.mouse.leftDown = true;
+const projsBeforeHold = game.projectiles.length;
+for (let step = 0; step < 25; step++) {
+  game.updatePlayer(0.1);
+}
+game.mouse.leftDown = false;
+assert(
+  game.projectiles.length >= projsBeforeHold + 4,
+  `Holding down the attack button must continuously fire attacks over time without stopping for spin charge (fired ${game.projectiles.length - projsBeforeHold})`
+);
+const expectedAim = Math.atan2(testFoe.y - game.player.y, testFoe.x - game.player.x);
+assert(
+  Math.abs(game.player.aimAngle - expectedAim) < 0.05,
+  'Avatar must automatically target the nearest enemy while attacking'
+);
+game.enemies.pop();
+console.log('✓ 6. Continuous Hold-Attack (Spin Slash removed) & Automatic Nearest-Enemy Targeting verified');
 
 // Test Bulwark Perfect Shield Parry reflecting an enemy bullet
 game.projectiles = [];

@@ -711,25 +711,31 @@ export class GameEngine {
   }
 
   // ==========================================================================
-  // PRIMARY WEAPON ATTACK, SPIN ATTACK & SHIELD PARRY
+  // PRIMARY WEAPON ATTACK (AUTO-TARGETS NEAREST ENEMY) & SHIELD PARRY
   // ==========================================================================
-  performPrimaryAttack(isSpin = false) {
+  performPrimaryAttack() {
     const p = this.player;
     if (!p || p.dead) return;
+
+    // Auto-target the nearest enemy whenever attacking!
+    const autoAngle = this.findAutoAimAngle();
+    if (autoAngle !== null) {
+      p.aimAngle = autoAngle;
+    }
 
     const wep = ITEMS[p.equipment.weapon] || ITEMS.wep_sword_t1;
     const angle = p.aimAngle;
 
-    // 1. Trigger Melee Arc Slash! (Every weapon has a close-range slash that cuts grass/urns/switches and cleaves adjacent foes!)
-    p.slashDuration = isSpin ? 0.30 : 0.16;
+    // 1. Trigger Melee Arc Slash! (Cuts grass/urns/switches and cleaves adjacent foes)
+    p.slashDuration = 0.16;
     p.slashTimer = p.slashDuration;
-    p.isSpinSlash = isSpin;
-    p.slashArcRad = isSpin ? Math.PI * 2 : ((wep.arcDeg || 115) * Math.PI) / 180;
-    const meleeTiles = isSpin ? 3.5 : (wep.subType === 'sword' ? 2.85 : 2.15);
+    p.isSpinSlash = false;
+    p.slashArcRad = ((wep.arcDeg || 115) * Math.PI) / 180;
+    const meleeTiles = wep.subType === 'sword' ? 2.85 : 2.15;
     p.slashRadiusPx = meleeTiles * TILE_SIZE;
-    p.bladeColor = isSpin ? '#facc15' : (wep.bladeColor || '#38bdf8');
+    p.bladeColor = wep.bladeColor || '#38bdf8';
 
-    sound.playSfx(isSpin ? 'spin_attack' : 'slash');
+    sound.playSfx('slash');
 
     // Calculate base weapon damage scaled by RotMG ATK formula: (0.5 + ATK / 50)
     const atkMult = (0.5 + p.stats.atk / 50) * (p.buffs.damaging > 0 ? 1.35 : 1.0);
@@ -743,39 +749,24 @@ export class GameEngine {
       if (dist <= meleeTiles + e.size / TILE_SIZE) {
         const angleToE = Math.atan2(dy, dx);
         const diff = Math.abs(this.normalizeAngle(angleToE - angle));
-        if (isSpin || diff <= p.slashArcRad * 0.6) {
-          const meleeMult = isSpin ? 2.2 : (wep.subType === 'sword' ? 1.35 : 0.95);
+        if (diff <= p.slashArcRad * 0.6) {
+          const meleeMult = wep.subType === 'sword' ? 1.35 : 0.95;
           this.damageEnemy(e, rawDmg * meleeMult, angleToE, false);
         }
       }
     }
 
     // Check Melee Arc against Interactive Props (Bushes, Urns, Crystal Switches!)
-    this.hitPropsInRadius(p.x, p.y, meleeTiles, angle, isSpin ? Math.PI * 2 : p.slashArcRad);
-
-    // If Hurricane Spin Attack: deflect nearby enemy projectiles!
-    if (isSpin) {
-      this.spawnBurstParticles(p.x, p.y, '#facc15', 26);
-      for (const proj of this.projectiles) {
-        if (proj.fromEnemy && Math.hypot(proj.x - p.x, proj.y - p.y) <= meleeTiles + 0.5) {
-          proj.fromEnemy = false;
-          proj.vx = -proj.vx * 1.3;
-          proj.vy = -proj.vy * 1.3;
-          proj.dmg *= 2.0;
-          proj.color = '#facc15';
-        }
-      }
-    }
+    this.hitPropsInRadius(p.x, p.y, meleeTiles, angle, p.slashArcRad);
 
     // 2. Spawn Ranged Projectiles (Sword Beams / Piercing Arrows / Twin Spellbolts / Daggers)
     const shouldFireBeam =
       wep.subType !== 'sword' ||
       wep.alwaysBeam ||
-      isSpin ||
       p.hp >= p.stats.hp * 0.85;
 
     if (shouldFireBeam) {
-      const shots = isSpin ? 8 : (wep.shots || 1);
+      const shots = wep.shots || 1;
       const spreadRad = ((wep.spreadDeg || 12) * Math.PI) / 180;
       const beamScale = wep.subType === 'sword' ? (wep.beamDmg || 0.75) : 1.0;
 
@@ -783,9 +774,7 @@ export class GameEngine {
 
       for (let i = 0; i < shots; i++) {
         let shotAngle = angle;
-        if (isSpin) {
-          shotAngle = (i / shots) * Math.PI * 2;
-        } else if (shots > 1) {
+        if (shots > 1) {
           shotAngle = angle + (i - (shots - 1) / 2) * spreadRad;
         }
 
@@ -822,7 +811,6 @@ export class GameEngine {
       x: p.x,
       y: p.y,
       aimAngle: angle,
-      isSpin,
       shouldFireBeam,
       weaponId: p.equipment.weapon || 'wep_sword_t1'
     });
@@ -1833,16 +1821,12 @@ export class GameEngine {
       }
     }
 
-    // Aim Angle: Mobile Right Aim Stick / Auto-Aim OR Desktop Mouse World Position
-    if (this.touch.aimActive) {
+    // Aim Angle: Automatically Target the Nearest Enemy (with fallback to aim stick, mouse, or movement vector)
+    const autoAngle = this.findAutoAimAngle();
+    if (autoAngle !== null) {
+      p.aimAngle = autoAngle;
+    } else if (this.touch.aimActive) {
       p.aimAngle = this.touch.aimAngle;
-    } else if (this.touch.active) {
-      const autoAngle = this.findAutoAimAngle();
-      if (autoAngle !== null) {
-        p.aimAngle = autoAngle;
-      } else if (mx !== 0 || my !== 0) {
-        p.aimAngle = Math.atan2(my, mx);
-      }
     } else if (this.mouse.hasMoved) {
       this.mouse.worldX = p.x + (this.mouse.x - this.canvas.width / 2) / TILE_SIZE;
       this.mouse.worldY = p.y + (this.mouse.y - this.canvas.height / 2) / TILE_SIZE;
@@ -1874,45 +1858,32 @@ export class GameEngine {
       p.hp = Math.max(1, p.hp - 35 * dt);
     }
 
-    // Sword Attack & Spin Attack Charge Logic
+    // Continuous Primary Attack while Holding Down Attack Button (L-Click, Mobile Attack Pad, Space, or Auto-Fire)
     const wep = ITEMS[p.equipment.weapon] || ITEMS.wep_sword_t1;
     const rateMult = wep.rateMult || 1.0;
     const attacksPerSec = (1.6 + 4.8 * (p.stats.dex / 75)) * rateMult;
     const cooldownDur = 1 / attacksPerSec;
 
     const isAttackingInput = this.mouse.leftDown || this.touch.attacking || this.keys['Space'] || this.autoFire;
-    const isHoldCharging = (this.mouse.leftDown || this.touch.attacking) && !this.autoFire;
+    p.chargeTime = 0;
+    p.isSpinSlash = false;
 
-    if (isAttackingInput) {
-      if (isHoldCharging) {
-        const prevCharge = p.chargeTime;
-        p.chargeTime += dt;
-        if (prevCharge < 0.55 && p.chargeTime >= 0.55) {
-          sound.playSfx('spin_ready');
-          this.spawnFloatingText(p.x, p.y - 0.8, 'SPIN READY! [Release]', '#facc15', 11);
-        }
-      }
-      if (p.attackCooldown <= 0 && p.chargeTime < 0.35) {
-        this.performPrimaryAttack(false);
-        p.attackCooldown = cooldownDur;
-      }
-    } else if (p.chargeTime > 0) {
-      if (p.chargeTime >= 0.55) {
-        this.performPrimaryAttack(true); // 360° Hurricane Spin!
-        p.attackCooldown = cooldownDur * 1.1;
-      }
-      p.chargeTime = 0;
+    if (isAttackingInput && p.attackCooldown <= 0) {
+      this.performPrimaryAttack();
+      p.attackCooldown = cooldownDur;
     }
   }
 
-  findAutoAimAngle() {
+  findAutoAimAngle(maxRange = 14.0) {
     const p = this.player;
     if (!p) return null;
     let bestE = null;
-    let bestDist = 8.5;
+    let bestDist = maxRange;
     for (const e of this.enemies) {
+      if (e.hp <= 0) continue;
+      const limit = e.isDummy ? Math.min(maxRange, 9.5) : maxRange;
       const d = Math.hypot(e.x - p.x, e.y - p.y);
-      if (d < bestDist) {
+      if (d <= limit && d < bestDist) {
         bestDist = d;
         bestE = e;
       }

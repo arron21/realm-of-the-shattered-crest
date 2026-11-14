@@ -761,14 +761,13 @@ export function drawHero(ctx, entity, screenX, screenY, time, isSelf = false) {
 
   if (entity.slashTimer > 0) {
     const progress = 1 - entity.slashTimer / entity.slashDuration;
-    const isSpin = entity.isSpinSlash;
-    const arcSpan = isSpin ? Math.PI * 2 : (entity.slashArcRad || 2.1);
-    const startA = isSpin ? 0 : angle - arcSpan / 2;
+    const arcSpan = entity.slashArcRad || 2.1;
+    const startA = angle - arcSpan / 2;
     const currentA = startA + arcSpan * progress;
     const radius = entity.slashRadiusPx || 44;
 
     ctx.strokeStyle = entity.bladeColor || '#67e8f9';
-    ctx.lineWidth = isSpin ? 8 : 6;
+    ctx.lineWidth = 6;
     ctx.beginPath();
     ctx.arc(0, 0, radius * 0.82, startA, currentA);
     ctx.stroke();

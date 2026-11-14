@@ -84,7 +84,7 @@ ${css}
         </div>
 
         <div class="hud-card desktop-controls-legend" style="padding:6px 10px;font-size:10.5px;color:#cbd5e1;line-height:1.45;">
-          <div><strong style="color:#fde047;">L-Click:</strong> Blade Slash + Beam <em>(Hold: 360° Spin!)</em></div>
+          <div><strong style="color:#fde047;">L-Click / Hold:</strong> Continuous Blade Slash + Beam <em>(Auto-Targets Nearest Foe)</em></div>
           <div><strong style="color:#38bdf8;">R-Click:</strong> Shield Block &amp; <strong>Perfect Parry</strong> | <strong style="color:#4ade80;">Shift:</strong> Roll</div>
           <div><strong style="color:#f472b6;">Q:</strong> Sacred Relic | <strong style="color:#22d3ee;">E / L:</strong> Elder &amp; Lore | <strong style="color:#60a5fa;">R:</strong> Sanctuary</div>
         </div>
