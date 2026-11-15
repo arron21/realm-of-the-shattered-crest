@@ -673,7 +673,69 @@ assert(game.player.buffs.damaging >= 4.5, 'Remote ally Solar Templar Warhorn mus
   assert.strictEqual(game.getTileAt(22, 13), 9, 'Caldera Boss Arena lava core must be spanned by a narrow golden bridge');
   console.log('✓ 16. Unique Reworked Dungeons 2-5 (Sylvan Twin-Cloister Lagoon, Astral Floating Constellation, Catacombs S-Curve Cathedral & Abyssal Magma Caldera) verified');
 
-  console.log('\nALL 16 REALM OF THE SHATTERED CREST TEST SUITES PASSED!');
+  // Suite 17: Item Details Comparison Against Currently Equipped Gear (Upgrade / Downgrade / Deltas)
+  game.warpToMap('nexus');
+  game.spawnNewHero('knight');
+  game.player.equipment.weapon = 'wep_sword_t1'; // Initiate Broadsword (45-70 Dmg, Avg 58)
+  game.player.equipment.armor = 'arm_heavy_t1';  // +7 DEF
+  game.player.inventory[0] = 'wep_sword_t4';     // Gilded Sunblade (155-210 Dmg, Avg 183)
+  game.player.inventory[1] = 'arm_heavy_t3';     // +16 DEF, +3 ATK
+  game.player.inventory[2] = 'wep_bow_t3';       // Ranger/Bard bow (Unusable by Knight)
+  hud.refreshAllStatsAndSlots();
+
+  // 1. Inspecting a stronger weapon (wep_sword_t4 vs equipped wep_sword_t1)
+  const cmpUp = hud.compareItemWithEquipped('wep_sword_t4', 'inventory');
+  assert.strictEqual(cmpUp.verdict, 'upgrade', 'Stronger weapon must be flagged as an upgrade');
+  assert(cmpUp.verdictLabel.includes('WORTH PICKING UP'), 'Upgrade verdict banner must say WORTH PICKING UP');
+  hud.selectItemSlot('inventory', 0);
+  const inspHtmlUp = getMockEl('item-inspector-panel').innerHTML;
+  assert(
+    inspHtmlUp.includes('cmp-verdict-banner upgrade') &&
+    inspHtmlUp.includes('Initiate Broadsword (T1)') &&
+    inspHtmlUp.includes('▲ +125 Dmg'),
+    'Inspector panel must compare candidate weapon against equipped Initiate Broadsword and show +125 Avg Dmg delta'
+  );
+
+  // 2. Inspecting a weaker weapon when T8 is equipped (wep_sword_t1 vs equipped wep_sword_t4)
+  game.player.equipment.weapon = 'wep_sword_t4';
+  game.player.inventory[0] = 'wep_sword_t1';
+  const cmpDown = hud.compareItemWithEquipped('wep_sword_t1', 'bag');
+  assert.strictEqual(cmpDown.verdict, 'downgrade', 'Weaker weapon must be flagged as a downgrade');
+  assert(cmpDown.verdictLabel.includes('WEAKER THAN EQUIPPED'), 'Downgrade verdict must warn WEAKER THAN EQUIPPED');
+  hud.selectItemSlot('inventory', 0);
+  const inspHtmlDown = getMockEl('item-inspector-panel').innerHTML;
+  assert(
+    inspHtmlDown.includes('cmp-verdict-banner downgrade') &&
+    inspHtmlDown.includes('Gilded Sunblade (T8)') &&
+    inspHtmlDown.includes('▼ -125 Dmg'),
+    'Inspector panel must show downgrade banner and negative -125 Dmg delta when viewing weaker weapon'
+  );
+
+  // 3. Inspecting armor with stat deltas (arm_heavy_t3 vs equipped arm_heavy_t1)
+  hud.selectItemSlot('inventory', 1);
+  const inspHtmlArmor = getMockEl('item-inspector-panel').innerHTML;
+  assert(
+    inspHtmlArmor.includes('cmp-delta-chip up') &&
+    inspHtmlArmor.includes('+14 DEF') &&
+    inspHtmlArmor.includes('+50 HP') &&
+    inspHtmlArmor.includes('+5 VIT'),
+    'Armor comparison must display green stat delta chips (+14 DEF, +50 HP, +5 VIT) vs equipped armor'
+  );
+
+  // 4. Inspecting an item unusable by current class
+  const cmpUnusable = hud.compareItemWithEquipped('wep_bow_t3', 'bag');
+  assert.strictEqual(cmpUnusable.verdict, 'unusable', 'Bow must be marked unusable when playing Royal Vanguard');
+
+  // 5. Desktop Hover Tooltip also renders the comparison box
+  hud.showItemTooltip('arm_heavy_t3', 200, 200, 'bag');
+  assert(
+    getMockEl('item-tooltip').innerHTML.includes('WORTH PICKING UP') &&
+    getMockEl('item-tooltip').innerHTML.includes('+14 DEF'),
+    'Hover tooltip (#item-tooltip) must also display equipped comparison and stat deltas'
+  );
+  console.log('✓ 17. Item Details Equipped Comparison (Worth Picking Up verdicts, weapon/relic deltas, stat chips & slot upgrade badges) verified');
+
+  console.log('\nALL 17 REALM OF THE SHATTERED CREST TEST SUITES PASSED!');
 })().catch((err) => {
   console.error(err);
   process.exit(1);

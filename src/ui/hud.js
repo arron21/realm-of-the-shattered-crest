@@ -719,6 +719,350 @@ export class HudController {
     return false;
   }
 
+  scoreItemPower(item) {
+    if (!item) return 0;
+    const weights = { hp: 0.4, mp: 0.35, atk: 4.0, def: 4.5, spd: 3.5, dex: 3.8, vit: 3.2, wis: 3.2 };
+    let score = 0;
+    if (item.stats) {
+      for (const [k, v] of Object.entries(item.stats)) {
+        score += (weights[k] || 3.0) * v;
+      }
+    }
+    if (item.minDmg) {
+      const avgShot = ((item.minDmg || 0) + (item.maxDmg || 0)) / 2;
+      const volleyDmg = avgShot * (item.shots || 1);
+      const effectiveDps = volleyDmg * (item.rateMult || 1);
+      score += effectiveDps * 1.15 + (item.range || 0) * 6 + (item.pierce ? 22 : 0) + (item.pierceArmor ? 45 : 0) + (item.alwaysBeam ? 25 : 0);
+    }
+    if (item.dmg) {
+      score += item.dmg * 0.45;
+    }
+    if (item.heal) {
+      score += item.heal * 0.9;
+    }
+    if (item.stunSec) {
+      score += item.stunSec * 35;
+    }
+    if (item.blastRadius) {
+      score += item.blastRadius * 18;
+    }
+    if (item.buffSec) {
+      score += item.buffSec * 14;
+    }
+    return score;
+  }
+
+  compareItemWithEquipped(itemId, group = 'inventory') {
+    const item = itemId ? ITEMS[itemId] : null;
+    const p = this.game.player;
+    if (!item || !p) return null;
+
+    if (group === 'equip') {
+      return {
+        item,
+        equippedItem: item,
+        canEquip: true,
+        verdict: 'same',
+        verdictLabel: `✓ CURRENTLY EQUIPPED (${item.slot.toUpperCase()})`,
+        metricDeltas: [],
+        statChips: []
+      };
+    }
+
+    // 1. Consumable Evaluation (Is this potion / shard / wisp worth picking up right now?)
+    if (item.slot === 'consumable') {
+      if (item.subType === 'stat_pot' && item.stat) {
+        const cls = CLASSES[p.classId];
+        const curBase = p.baseStats[item.stat];
+        const maxCap = cls.maxStats[item.stat];
+        const needed = Math.max(0, maxCap - curBase);
+        if (needed > 0) {
+          return {
+            item,
+            equippedItem: null,
+            canEquip: true,
+            verdict: 'upgrade',
+            verdictLabel: `▲ WORTH PICKING UP — +${item.amount} ${item.stat.toUpperCase()} (${curBase}/${maxCap}, Needs ${needed})`,
+            metricDeltas: [],
+            statChips: [`<span class="cmp-delta-chip up">▲ +${item.amount} ${item.stat.toUpperCase()} (${curBase} ➔ ${Math.min(maxCap, curBase + item.amount)}/${maxCap})</span>`]
+          };
+        }
+        return {
+          item,
+          equippedItem: null,
+          canEquip: true,
+          verdict: 'same',
+          verdictLabel: `= ${item.stat.toUpperCase()} ALREADY MAXED (${maxCap}/${maxCap}) — Store in Vault`,
+          metricDeltas: [],
+          statChips: [`<span class="cmp-delta-chip same">= ${item.stat.toUpperCase()} MAXED (${maxCap}/${maxCap})</span>`]
+        };
+      }
+      if (item.subType === 'stat_omni') {
+        const unmaxed = 8 - (p.maxedCount || 0);
+        return {
+          item,
+          equippedItem: null,
+          canEquip: true,
+          verdict: unmaxed > 0 ? 'upgrade' : 'same',
+          verdictLabel: unmaxed > 0
+            ? `▲ WORTH PICKING UP — UPGRADES ${unmaxed} UNMAXED STATS`
+            : '= ALL 8/8 STATS ALREADY MAXED — Store in Vault',
+          metricDeltas: [],
+          statChips: []
+        };
+      }
+      if (item.subType === 'crest_shard') {
+        const restored = Boolean(this.game.account && this.game.account.crestShards && this.game.account.crestShards[item.shardIndex]);
+        return {
+          item,
+          equippedItem: null,
+          canEquip: true,
+          verdict: !restored ? 'upgrade' : 'same',
+          verdictLabel: !restored
+            ? '▲ WORTH PICKING UP — NEW HOLY CREST SHARD!'
+            : '= SHARD ALREADY ATTUNED (+150 Sunshards / +40 Fame)',
+          metricDeltas: [],
+          statChips: []
+        };
+      }
+      return {
+        item,
+        equippedItem: null,
+        canEquip: true,
+        verdict: 'upgrade',
+        verdictLabel: `▲ WORTH PICKING UP — +${item.healHp || 250} HP & AUTO-REVIVE`,
+        metricDeltas: [],
+        statChips: []
+      };
+    }
+
+    // 2. Equipable Gear Comparison against p.equipment[item.slot]
+    const canEquip = canClassEquip(p.classId, item);
+    const curEqId = p.equipment[item.slot];
+    const curEq = curEqId ? ITEMS[curEqId] : null;
+    const metricDeltas = [];
+    const statChips = [];
+    let hasPositiveGain = false;
+
+    // Compare Weapon Damage, Volley Output, Fire Rate & Range
+    if (item.slot === 'weapon' || item.minDmg || (curEq && curEq.minDmg)) {
+      const avgA = (((item.minDmg || 0) + (item.maxDmg || 0)) / 2) * (item.shots || 1);
+      const avgB = curEq ? (((curEq.minDmg || 0) + (curEq.maxDmg || 0)) / 2) * (curEq.shots || 1) : 0;
+      const dmgDiff = Math.round(avgA - avgB);
+      const pct = avgB > 0 ? Math.round(((avgA - avgB) / avgB) * 100) : 100;
+      if (dmgDiff > 0) hasPositiveGain = true;
+      const diffColor = dmgDiff > 0 ? '#4ade80' : dmgDiff < 0 ? '#f87171' : '#94a3b8';
+      const arrow = dmgDiff > 0 ? '▲ +' : dmgDiff < 0 ? '▼ ' : '= ';
+      metricDeltas.push(
+        `<div>⚔️ Avg Volley Dmg: <strong style="color:#f8fafc;">${Math.round(avgA)}</strong> vs ${Math.round(avgB)} <span style="color:${diffColor};font-weight:800;">(${arrow}${dmgDiff} Dmg${avgB > 0 && dmgDiff !== 0 ? ` / ${pct > 0 ? '+' : ''}${pct}%` : ''})</span></div>`
+      );
+
+      const rateA = Math.round((item.rateMult || 1) * 100);
+      const rateB = Math.round(((curEq && curEq.rateMult) || 1) * 100);
+      if (rateA !== rateB) {
+        const rDiff = rateA - rateB;
+        if (rDiff > 0) hasPositiveGain = true;
+        const rColor = rDiff > 0 ? '#4ade80' : '#f87171';
+        metricDeltas.push(
+          `<div>⚡ Fire Rate: <strong style="color:#f8fafc;">${rateA}%</strong> vs ${rateB}% <span style="color:${rColor};font-weight:800;">(${rDiff > 0 ? '▲ +' : '▼ '}${rDiff}%)</span></div>`
+        );
+      }
+
+      if (item.range || (curEq && curEq.range)) {
+        const rngA = item.range || 0;
+        const rngB = (curEq && curEq.range) || 0;
+        const rngDiff = Number((rngA - rngB).toFixed(1));
+        if (rngDiff !== 0) {
+          if (rngDiff > 0) hasPositiveGain = true;
+          const rngColor = rngDiff > 0 ? '#4ade80' : '#f87171';
+          metricDeltas.push(
+            `<div>🎯 Range: <strong style="color:#f8fafc;">${rngA}</strong> vs ${rngB} <span style="color:${rngColor};font-weight:800;">(${rngDiff > 0 ? '▲ +' : '▼ '}${rngDiff})</span></div>`
+          );
+        }
+      }
+
+      if (item.pierceArmor && !(curEq && curEq.pierceArmor)) {
+        hasPositiveGain = true;
+        metricDeltas.push(`<div style="color:#4ade80;">✨ Gains: <strong>Ignores Enemy DEF (Armor-Piercing)</strong></div>`);
+      } else if (!item.pierceArmor && curEq && curEq.pierceArmor) {
+        metricDeltas.push(`<div style="color:#f87171;">✕ Loses: Armor-Piercing</div>`);
+      }
+      if (item.pierce && !(curEq && curEq.pierce)) {
+        hasPositiveGain = true;
+        metricDeltas.push(`<div style="color:#4ade80;">✨ Gains: <strong>Pierces Multiple Enemies</strong></div>`);
+      } else if (!item.pierce && curEq && curEq.pierce) {
+        metricDeltas.push(`<div style="color:#f87171;">✕ Loses: Multi-Target Pierce</div>`);
+      }
+    }
+
+    // Compare Sacred Relic Power, Heal, Stun & MP Cost
+    if (item.slot === 'relic') {
+      if (item.dmg || (curEq && curEq.dmg)) {
+        const dA = item.dmg || 0;
+        const dB = (curEq && curEq.dmg) || 0;
+        const dDiff = dA - dB;
+        if (dDiff > 0) hasPositiveGain = true;
+        const dColor = dDiff > 0 ? '#4ade80' : dDiff < 0 ? '#f87171' : '#94a3b8';
+        metricDeltas.push(
+          `<div>✨ Relic Dmg: <strong style="color:#f8fafc;">${dA}</strong> vs ${dB} <span style="color:${dColor};font-weight:800;">(${dDiff > 0 ? '▲ +' : dDiff < 0 ? '▼ ' : '= '}${dDiff})</span></div>`
+        );
+      }
+      if (item.heal || (curEq && curEq.heal)) {
+        const hA = item.heal || 0;
+        const hB = (curEq && curEq.heal) || 0;
+        const hDiff = hA - hB;
+        if (hDiff > 0) hasPositiveGain = true;
+        const hColor = hDiff > 0 ? '#4ade80' : hDiff < 0 ? '#f87171' : '#94a3b8';
+        metricDeltas.push(
+          `<div>💚 Party Heal: <strong style="color:#f8fafc;">+${hA}</strong> vs +${hB} HP <span style="color:${hColor};font-weight:800;">(${hDiff > 0 ? '▲ +' : hDiff < 0 ? '▼ ' : '= '}${hDiff} HP)</span></div>`
+        );
+      }
+      if (item.stunSec || (curEq && curEq.stunSec)) {
+        const sA = item.stunSec || 0;
+        const sB = (curEq && curEq.stunSec) || 0;
+        const sDiff = Number((sA - sB).toFixed(1));
+        if (sDiff !== 0) {
+          if (sDiff > 0) hasPositiveGain = true;
+          const sColor = sDiff > 0 ? '#4ade80' : '#f87171';
+          metricDeltas.push(
+            `<div>⚡ Stun Duration: <strong style="color:#f8fafc;">${sA}s</strong> vs ${sB}s <span style="color:${sColor};font-weight:800;">(${sDiff > 0 ? '▲ +' : '▼ '}${sDiff}s)</span></div>`
+          );
+        }
+      }
+      if (item.mpCost || (curEq && curEq.mpCost)) {
+        const mA = item.mpCost || 0;
+        const mB = (curEq && curEq.mpCost) || 0;
+        const mDiff = mA - mB;
+        if (mDiff !== 0) {
+          const mColor = mDiff < 0 ? '#4ade80' : '#fbbf24';
+          metricDeltas.push(
+            `<div>💧 Mana Cost: <strong style="color:#f8fafc;">${mA} MP</strong> vs ${mB} MP <span style="color:${mColor};font-weight:800;">(${mDiff > 0 ? '+' : ''}${mDiff} MP)</span></div>`
+          );
+        }
+      }
+    }
+
+    // Compare Passive Stat Bonuses (HP, MP, ATK, DEF, SPD, DEX, VIT, WIS)
+    for (const st of STAT_NAMES) {
+      const vA = (item.stats && item.stats[st]) || 0;
+      const vB = (curEq && curEq.stats && curEq.stats[st]) || 0;
+      if (vA === 0 && vB === 0) continue;
+      const diff = vA - vB;
+      if (diff > 0) {
+        hasPositiveGain = true;
+        statChips.push(`<span class="cmp-delta-chip up">▲ +${diff} ${st.toUpperCase()} (${vA} vs ${vB})</span>`);
+      } else if (diff < 0) {
+        statChips.push(`<span class="cmp-delta-chip down">▼ ${diff} ${st.toUpperCase()} (${vA} vs ${vB})</span>`);
+      } else {
+        statChips.push(`<span class="cmp-delta-chip same">= +${vA} ${st.toUpperCase()}</span>`);
+      }
+    }
+
+    // Compute Overall Verdict
+    if (!canEquip) {
+      return {
+        item,
+        equippedItem: curEq,
+        canEquip: false,
+        verdict: 'unusable',
+        verdictLabel: `✕ CANNOT EQUIP (${p.className}) — Vault for Another Class`,
+        metricDeltas,
+        statChips
+      };
+    }
+
+    if (!curEq) {
+      return {
+        item,
+        equippedItem: null,
+        canEquip: true,
+        verdict: 'upgrade',
+        verdictLabel: '▲ WORTH PICKING UP — EMPTY SLOT UPGRADE',
+        metricDeltas,
+        statChips
+      };
+    }
+
+    if (curEq.id === item.id) {
+      return {
+        item,
+        equippedItem: curEq,
+        canEquip: true,
+        verdict: 'same',
+        verdictLabel: '= IDENTICAL TO CURRENTLY EQUIPPED',
+        metricDeltas,
+        statChips
+      };
+    }
+
+    const scoreA = this.scoreItemPower(item);
+    const scoreB = this.scoreItemPower(curEq);
+    const netDiff = scoreA - scoreB;
+
+    let verdict = 'sidegrade';
+    let verdictLabel = '◆ SIDEGRADE — SIMILAR POWER TO EQUIPPED';
+    if (netDiff > 1.5) {
+      verdict = 'upgrade';
+      verdictLabel = '▲ WORTH PICKING UP — UPGRADE OVER EQUIPPED';
+    } else if (netDiff < -1.5) {
+      if (hasPositiveGain && (item.tier === 'UT' || curEq.tier === 'UT' || item.subType !== curEq.subType)) {
+        verdict = 'sidegrade';
+        verdictLabel = '◆ SITUATIONAL SIDEGRADE (Has Trade-Offs)';
+      } else {
+        verdict = 'downgrade';
+        verdictLabel = '▼ NOT AN UPGRADE — WEAKER THAN EQUIPPED';
+      }
+    }
+
+    return {
+      item,
+      equippedItem: curEq,
+      canEquip: true,
+      verdict,
+      verdictLabel,
+      metricDeltas,
+      statChips
+    };
+  }
+
+  buildComparisonHtml(itemId, group = 'inventory') {
+    const cmp = this.compareItemWithEquipped(itemId, group);
+    if (!cmp) return '';
+
+    let equippedRowHtml = '';
+    if (group !== 'equip' && cmp.item.slot !== 'consumable') {
+      if (cmp.equippedItem) {
+        const eqIcon = getItemIconDataUrl(cmp.equippedItem.id);
+        const eqSummary = cmp.equippedItem.minDmg
+          ? `${cmp.equippedItem.minDmg}–${cmp.equippedItem.maxDmg} Dmg`
+          : cmp.equippedItem.stats
+            ? Object.entries(cmp.equippedItem.stats).map(([k, v]) => `+${v} ${k.toUpperCase()}`).join(', ')
+            : cmp.equippedItem.tier;
+        equippedRowHtml = `
+          <div class="cmp-equipped-row">
+            <img src="${eqIcon}" alt="${cmp.equippedItem.name}" />
+            <span>vs Equipped: <strong style="color:#f8fafc;">${cmp.equippedItem.name} (${cmp.equippedItem.tier})</strong> [${eqSummary}]</span>
+          </div>
+        `;
+      } else {
+        equippedRowHtml = `
+          <div class="cmp-equipped-row">
+            <span>vs Equipped: <strong style="color:#fde047;">Empty ${cmp.item.slot.toUpperCase()} Slot</strong></span>
+          </div>
+        `;
+      }
+    }
+
+    return `
+      <div class="inspector-compare-box">
+        <div class="cmp-verdict-banner ${cmp.verdict}">${cmp.verdictLabel}</div>
+        ${equippedRowHtml}
+        ${cmp.metricDeltas.length > 0 ? `<div class="cmp-deltas-list">${cmp.metricDeltas.join('')}</div>` : ''}
+        ${cmp.statChips.length > 0 ? `<div class="cmp-stat-chips">${cmp.statChips.join('')}</div>` : ''}
+      </div>
+    `;
+  }
+
   renderSlotHtml(itemId, placeholder, group, indexOrKey) {
     const item = itemId ? ITEMS[itemId] : null;
     if (!item) {
@@ -729,7 +1073,10 @@ export class HudController {
     const iconUrl = getItemIconDataUrl(itemId);
     const isUt = item.tier === 'UT' || item.tier === 'SHARD';
     const isSel = this.isSlotSelected(group, indexOrKey);
+    const cmp = group !== 'equip' ? this.compareItemWithEquipped(itemId, group) : null;
+    const isUpgrade = cmp && cmp.verdict === 'upgrade';
     return `<div class="item-slot ${isUt ? 'ut-slot' : ''} ${isSel ? 'selected-slot' : ''}" data-group="${group}" data-index="${indexOrKey}" data-item-id="${itemId}">
+      ${isUpgrade ? '<span class="slot-upgrade-badge" title="Worth Picking Up — Upgrade!">▲</span>' : ''}
       <img src="${iconUrl}" alt="${item.name}" />
       <span class="slot-tier-badge ${isUt ? 'ut' : ''}">${item.tier}</span>
     </div>`;
@@ -743,7 +1090,7 @@ export class HudController {
       const idxOrKey = group === 'equip' ? rawIdx : parseInt(rawIdx, 10);
 
       el.addEventListener('mouseenter', (e) => {
-        if (itemId && !this.game.touch.active) this.showItemTooltip(itemId, e.clientX, e.clientY);
+        if (itemId && !this.game.touch.active) this.showItemTooltip(itemId, e.clientX, e.clientY, group);
       });
       el.addEventListener('mousemove', (e) => {
         if (itemId && !this.game.touch.active) this.moveTooltip(e.clientX, e.clientY);
@@ -887,19 +1234,7 @@ export class HudController {
       statLines.push(`<div style="color:#facc15;font-size:10px;font-weight:700;">★ Legacy Fame Bonus: +${item.fameBonus * 5} Fame</div>`);
     }
 
-    let compareHtml = '';
-    if (group !== 'equip' && item.slot !== 'consumable') {
-      const curEqId = p.equipment[item.slot];
-      const curEq = curEqId ? ITEMS[curEqId] : null;
-      if (curEq) {
-        const curStatSummary = curEq.minDmg
-          ? `${curEq.minDmg}–${curEq.maxDmg} Dmg`
-          : curEq.stats
-            ? Object.entries(curEq.stats).map(([k, v]) => `+${v} ${k.toUpperCase()}`).join(', ')
-            : curEq.tier;
-        compareHtml = `<div class="inspector-compare">Currently Equipped: <span style="color:#f8fafc;">${curEq.name} (${curEq.tier})</span> [${curStatSummary}]</div>`;
-      }
-    }
+    const compareHtml = this.buildComparisonHtml(itemId, group);
 
     let actionsHtml = '';
     if (group === 'inventory' || group === 'quick_belt') {
@@ -1238,7 +1573,7 @@ export class HudController {
   // ==========================================================================
   // ITEM HOVER TOOLTIP
   // ==========================================================================
-  showItemTooltip(itemId, cx, cy) {
+  showItemTooltip(itemId, cx, cy, group = 'inventory') {
     const item = ITEMS[itemId];
     if (!item || !this.tooltipEl) return;
 
@@ -1258,11 +1593,13 @@ export class HudController {
       statsHtml += `<div style="color:#4ade80;font-size:11px;margin-top:2px;">Equip Bonus: ${pairs}</div>`;
     }
 
+    const compareHtml = this.buildComparisonHtml(itemId, group);
+
     const actionText = item.subType === 'crest_shard'
       ? 'Attune to the Holy Crest'
       : item.slot === 'consumable'
         ? 'Drink / Consume'
-        : 'Equip';
+        : 'Inspect & Equip';
 
     this.tooltipEl.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
@@ -1270,8 +1607,9 @@ export class HudController {
         <span style="font-size:10px;font-weight:800;padding:1px 5px;border-radius:3px;background:rgba(255,255,255,0.1);color:${bagMeta.color};">${item.tier}</span>
       </div>
       ${statsHtml}
-      <div style="color:#94a3b8;font-size:11px;line-height:1.35;margin-top:5px;">${item.desc}</div>
-      <div style="color:#eab308;font-size:10px;margin-top:6px;font-weight:700;">Click to ${actionText}</div>
+      <div style="color:#94a3b8;font-size:11px;line-height:1.35;margin-top:5px;margin-bottom:6px;">${item.desc}</div>
+      ${compareHtml}
+      <div style="color:#eab308;font-size:10px;margin-top:4px;font-weight:700;">Tap / Click to ${actionText}</div>
     `;
     this.tooltipEl.style.display = 'block';
     this.moveTooltip(cx, cy);
@@ -1784,6 +2122,7 @@ export class HudController {
       const it = ITEMS[r.itemId];
       const icon = getItemIconDataUrl(r.itemId);
       const costLabel = r.costFame > 0 ? `${r.costSunshards} Sunshards + ${r.costFame} Fame` : `${r.costSunshards} Sunshards`;
+      const compareHtml = this.buildComparisonHtml(r.itemId, 'forge');
       return `<div class="class-select-card" data-craft-id="${r.itemId}" data-sunshards="${r.costSunshards}" data-fame="${r.costFame}">
         <div style="display:flex;align-items:center;gap:10px;">
           <img src="${icon}" style="width:36px;height:36px;image-rendering:pixelated;" />
@@ -1792,7 +2131,8 @@ export class HudController {
             <div style="font-size:10.5px;color:#4ade80;font-weight:700;">Cost: ${costLabel}</div>
           </div>
         </div>
-        <div style="font-size:10.5px;color:#94a3b8;margin-top:6px;">${it.desc}</div>
+        <div style="font-size:10.5px;color:#94a3b8;margin-top:6px;margin-bottom:6px;">${it.desc}</div>
+        ${compareHtml}
       </div>`;
     }).join('');
 
