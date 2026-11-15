@@ -205,7 +205,7 @@ export function generateNexusMap() {
       clockPos: '12:00',
       angleDeg: -90,
       id: 'portal_realm_beach',
-      name: '12:00 • Aethelgard Realm (Sunlit Shoals)',
+      name: 'Aethelgard Realm (Sunlit Shoals)',
       targetMap: 'realm',
       targetZone: 'beach',
       color: '#22c55e',
@@ -215,7 +215,7 @@ export function generateNexusMap() {
       clockPos: '1:30',
       angleDeg: -45,
       id: 'portal_cove_direct',
-      name: '1:30 • I. Sunken Corsair Grotto (Shard I)',
+      name: 'I. Sunken Corsair Grotto (Shard I)',
       targetMap: 'dungeon',
       dungeonId: 'pirate_cove',
       color: '#f59e0b'
@@ -224,7 +224,7 @@ export function generateNexusMap() {
       clockPos: '3:00',
       angleDeg: 0,
       id: 'portal_deku_direct',
-      name: '3:00 • II. Blighted Sylvan Temple (Shard II)',
+      name: 'II. Blighted Sylvan Temple (Shard II)',
       targetMap: 'dungeon',
       dungeonId: 'deku_temple',
       color: '#10b981'
@@ -233,7 +233,7 @@ export function generateNexusMap() {
       clockPos: '4:30',
       angleDeg: 45,
       id: 'portal_sprite_direct',
-      name: '4:30 • III. The Astral Conduit (Shard III)',
+      name: 'III. The Astral Conduit (Shard III)',
       targetMap: 'dungeon',
       dungeonId: 'sprite_world',
       color: '#38bdf8'
@@ -242,7 +242,7 @@ export function generateNexusMap() {
       clockPos: '6:00',
       angleDeg: 90,
       id: 'portal_udl_direct',
-      name: '6:00 • IV. Sunken Catacombs (Shard IV)',
+      name: 'IV. Sunken Catacombs (Shard IV)',
       targetMap: 'dungeon',
       dungeonId: 'undead_lair',
       color: '#c084fc'
@@ -251,7 +251,7 @@ export function generateNexusMap() {
       clockPos: '7:30',
       angleDeg: 135,
       id: 'portal_abyss_direct',
-      name: '7:30 • V. Caldera of the Abyss (Shard V)',
+      name: 'V. Caldera of the Abyss (Shard V)',
       targetMap: 'dungeon',
       dungeonId: 'abyss_mountain',
       color: '#ef4444'
@@ -260,7 +260,7 @@ export function generateNexusMap() {
       clockPos: '9:00',
       angleDeg: 180,
       id: 'portal_realm_godlands',
-      name: '9:00 • The Blightlands Rift (Lvl 20)',
+      name: 'The Blightlands Rift (Lvl 20)',
       targetMap: 'realm',
       targetZone: 'godlands',
       color: '#a855f7',
@@ -270,7 +270,7 @@ export function generateNexusMap() {
       clockPos: '10:30',
       angleDeg: -135,
       id: 'portal_sanctum_direct',
-      name: '10:30 • Sanctum of the Evil Bane (Raid)',
+      name: 'Sanctum of the Evil Bane (Raid)',
       targetMap: 'dungeon',
       dungeonId: 'mad_sanctum',
       color: '#facc15'
