@@ -616,7 +616,64 @@ assert(game.player.buffs.damaging >= 4.5, 'Remote ally Solar Templar Warhorn mus
   );
   console.log('✓ 15. Clock-Ring Sanctuary Teleporters, Master Kael Top DPS Recorder NPC & Soul Warden Morrigan Death Counter NPC verified');
 
-  console.log('\nALL 15 REALM OF THE SHATTERED CREST TEST SUITES PASSED!');
+  // Suite 16: Unique Reworked Dungeons 2-5 (deku_temple, sprite_world, undead_lair, abyss_mountain)
+  const dungeonIds2To5 = ['deku_temple', 'sprite_world', 'undead_lair', 'abyss_mountain'];
+  const seenLayouts = new Set();
+  const seenFingerprints = new Set();
+
+  for (const did of ['pirate_cove', ...dungeonIds2To5]) {
+    game.warpToMap('dungeon', { dungeonId: did });
+    const dmap = game.currentMap;
+    assert(dmap.layoutType, `Dungeon ${did} must define a layoutType`);
+    assert(!seenLayouts.has(dmap.layoutType), `Dungeon ${did} layoutType (${dmap.layoutType}) must be unique`);
+    seenLayouts.add(dmap.layoutType);
+
+    // Fingerprint the walkable geometry (independent of tile theme IDs) to prove the room shapes themselves are unique
+    const walkFingerprint = Array.from(dmap.tiles)
+      .map((t) => (t === 0 || t === 1 || t === 7 || t === 12 || t === 13 || t === 14 ? '0' : '1'))
+      .join('');
+    assert(!seenFingerprints.has(walkFingerprint), `Dungeon ${did} room geometry must be structurally unique`);
+    seenFingerprints.add(walkFingerprint);
+
+    // Verify player spawn, boss spawn, secret chest, and all 10 custom enemy spawns
+    assert.strictEqual(game.isWalkable(dmap.spawnX, dmap.spawnY), true, `Player spawn in ${did} must be walkable`);
+    assert.strictEqual(game.isWalkable(dmap.bossSpawnX, dmap.bossSpawnY), true, `Boss spawn in ${did} must be walkable`);
+    const secretChest = dmap.props.find((p) => p.id === 'd_secret_chest');
+    assert(secretChest, `Dungeon ${did} must contain a secret treasure chest`);
+    assert.strictEqual(dmap.enemySpawns.length, 10, `Dungeon ${did} must define 10 custom enemy spawns`);
+    for (const sp of dmap.enemySpawns) {
+      assert.strictEqual(game.isWalkable(sp.x, sp.y), true, `Enemy spawn (${sp.x},${sp.y}) in ${did} must be walkable`);
+    }
+    const boss = game.enemies.find((e) => e.isBoss);
+    assert(boss, `Dungeon ${did} must spawn its boss`);
+    assert.strictEqual(game.enemies.length, 11, `Dungeon ${did} must spawn 10 minions + 1 boss`);
+  }
+
+  // Verify specific architectural landmarks in Dungeons 2-5
+  game.warpToMap('dungeon', { dungeonId: 'deku_temple' });
+  assert.strictEqual(game.currentMap.layoutType, 'twin_cloister_lagoon');
+  assert.strictEqual(game.getTileAt(17, 34), 1, 'Sylvan Temple (Dungeon 2) must have a central sunken water lagoon');
+  assert.strictEqual(game.getTileAt(22, 37), 18, 'Sylvan Temple lagoon island must have a Healing Spring');
+  assert.strictEqual(game.getTileAt(5, 37), 15, 'Sylvan Temple must have a cracked west root wall leading to the secret reliquary');
+
+  game.warpToMap('dungeon', { dungeonId: 'sprite_world' });
+  assert.strictEqual(game.currentMap.layoutType, 'floating_star_constellation');
+  assert.strictEqual(game.getTileAt(2, 2), 0, 'Astral Conduit (Dungeon 3) must be suspended over open Cosmic Void');
+  assert.strictEqual(game.getTileAt(10, 34), 17, 'Astral Conduit NW bridge must feature a Blue Runic Astral Barrier');
+
+  game.warpToMap('dungeon', { dungeonId: 'undead_lair' });
+  assert.strictEqual(game.currentMap.layoutType, 's_curve_ossuary_cathedral');
+  assert.strictEqual(game.getTileAt(22, 40), 12, 'Sunken Catacombs (Dungeon 4) must block direct north travel with stone walls to enforce the S-curve');
+  assert.strictEqual(game.getTileAt(35, 38), 10, 'Sunken Catacombs NE Styx Canal must be crossed by a wooden bridge');
+
+  game.warpToMap('dungeon', { dungeonId: 'abyss_mountain' });
+  assert.strictEqual(game.currentMap.layoutType, 'volcanic_magma_caldera');
+  assert.strictEqual(game.getTileAt(17, 35), 7, 'Caldera of the Abyss (Dungeon 5) must feature a molten lava sea');
+  assert.strictEqual(game.getTileAt(20, 13), 7, 'Caldera Boss Arena must feature a bubbling central lava core');
+  assert.strictEqual(game.getTileAt(22, 13), 9, 'Caldera Boss Arena lava core must be spanned by a narrow golden bridge');
+  console.log('✓ 16. Unique Reworked Dungeons 2-5 (Sylvan Twin-Cloister Lagoon, Astral Floating Constellation, Catacombs S-Curve Cathedral & Abyssal Magma Caldera) verified');
+
+  console.log('\nALL 16 REALM OF THE SHATTERED CREST TEST SUITES PASSED!');
 })().catch((err) => {
   console.error(err);
   process.exit(1);

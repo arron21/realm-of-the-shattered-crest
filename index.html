@@ -3339,8 +3339,6 @@ function generateDungeonMap(dungeonId = 'deku_temple') {
     if (x >= 0 && x < width && y >= 0 && y < height) tiles[y * width + x] = t;
   };
 
-  tiles.fill(meta.wallTile);
-
   const carveRect = (x1, y1, x2, y2, tile = meta.floorTile) => {
     for (let y = y1; y <= y2; y++) {
       for (let x = x1; x <= x2; x++) {
@@ -3349,9 +3347,20 @@ function generateDungeonMap(dungeonId = 'deku_temple') {
     }
   };
 
-  // Room 1 (South Entrance Hall: y = 48..58, x = 16..28)
-  carveRect(16, 48, 28, 58);
-  setTile(22, 53, TILES.HEAL_SPRING);
+  const carveCircle = (cx, cy, radius, tile = meta.floorTile) => {
+    const rSq = radius * radius;
+    for (let y = Math.floor(cy - radius - 1); y <= Math.ceil(cy + radius + 1); y++) {
+      for (let x = Math.floor(cx - radius - 1); x <= Math.ceil(cx + radius + 1); x++) {
+        if ((x - cx) * (x - cx) + (y - cy) * (y - cy) <= rSq) {
+          setTile(x, y, tile);
+        }
+      }
+    }
+  };
+
+  tiles.fill(meta.wallTile);
+
+  // Common Sanctuary Return Portal in the South Entrance Hall
   portals.push({
     id: 'dungeon_exit_nexus',
     name: 'Return to Sanctuary',
@@ -3361,68 +3370,484 @@ function generateDungeonMap(dungeonId = 'deku_temple') {
     color: '#38bdf8'
   });
 
-  // Corridor 1 -> Room 2
-  carveRect(20, 42, 24, 48);
+  let layoutType = 'corsair_grotto';
+  let bossSpawnX = 22.0;
+  let bossSpawnY = 13.5;
+  let enemySpawns = [];
 
-  // Room 2 (Runic Puzzle & Combat Hall: y = 28..42, x = 12..32)
-  carveRect(12, 28, 32, 42);
+  if (dungeonId === 'deku_temple') {
+    // =========================================================================
+    // DUNGEON 2: BLIGHTED SYLVAN TEMPLE (Twin-Wing Cloisters & Sunken Lagoon)
+    // =========================================================================
+    layoutType = 'twin_cloister_lagoon';
+    bossSpawnX = 22.0;
+    bossSpawnY = 12.5;
 
-  for (let x = 12; x <= 32; x++) {
-    setTile(x, 34, meta.liquidTile);
-    setTile(x, 35, meta.liquidTile);
-  }
-  setTile(21, 34, TILES.WOOD_BRIDGE);
-  setTile(22, 34, TILES.WOOD_BRIDGE);
-  setTile(23, 34, TILES.WOOD_BRIDGE);
-  setTile(21, 35, TILES.WOOD_BRIDGE);
-  setTile(22, 35, TILES.WOOD_BRIDGE);
-  setTile(23, 35, TILES.WOOD_BRIDGE);
-  setTile(21, 33, TILES.BARRIER_RED);
-  setTile(22, 33, TILES.BARRIER_RED);
-  setTile(23, 33, TILES.BARRIER_RED);
+    // 1. South Root Atrium (x = 17..27, y = 49..58)
+    carveRect(17, 49, 27, 58, TILES.FOREST_FLOOR);
+    setTile(22, 53, TILES.HEAL_SPRING);
 
-  props.push({ id: 'd_switch_1', type: 'crystal_switch', x: 18.5, y: 37.5, state: 'red' });
-  props.push({ id: 'd_grapple_n1', type: 'grapple_post', x: 15.5, y: 31.5 });
-  props.push({ id: 'd_grapple_n2', type: 'grapple_post', x: 28.5, y: 31.5 });
-  props.push({ id: 'd_grapple_s1', type: 'grapple_post', x: 15.5, y: 37.5 });
-  props.push({ id: 'd_grapple_s2', type: 'grapple_post', x: 28.5, y: 37.5 });
+    // Split Corridors into West & East Overgrown Cloister Wings
+    carveRect(9, 46, 27, 49, TILES.FOREST_FLOOR);
+    carveRect(27, 46, 35, 49, TILES.FOREST_FLOOR);
 
-  // Secret Brimstone-Breachable Treasure Room off East Wall of Room 2
-  carveRect(34, 30, 39, 35, TILES.MARBLE_GOLD);
-  setTile(33, 32, TILES.WALL_CRACKED);
-  setTile(33, 33, TILES.WALL_CRACKED);
-  props.push({
-    id: 'd_secret_chest',
-    type: 'chest',
-    x: 36.5,
-    y: 32.5,
-    opened: false,
-    loot: ['pot_def', 'pot_atk', 'pot_wis', 'con_fairy']
-  });
+    // 2. West Overgrown Cloister Wing (x = 6..14, y = 26..48)
+    carveRect(6, 26, 14, 48, TILES.FOREST_FLOOR);
+    // Living tree pillars & overgrown brush in West Cloister
+    setTile(9, 32, TILES.WALL_TREE);
+    setTile(11, 42, TILES.WALL_TREE);
+    for (let y = 29; y <= 45; y += 4) {
+      props.push({ id: `d2_wbush_${y}`, type: 'bush', x: 7.5, y: y + 0.5, hp: 1 });
+    }
 
-  for (let x = 14; x <= 30; x += 4) {
-    props.push({ id: `d_bush_${x}`, type: 'bush', x: x + 0.5, y: 39.5, hp: 1 });
-    props.push({ id: `d_pot_${x}`,  type: 'pot',  x: x + 0.5, y: 29.5, hp: 1 });
-  }
+    // 3. East Overgrown Cloister Wing (x = 30..38, y = 26..48)
+    carveRect(30, 26, 38, 48, TILES.FOREST_FLOOR);
+    setTile(35, 32, TILES.WALL_TREE);
+    setTile(33, 42, TILES.WALL_TREE);
+    for (let y = 29; y <= 45; y += 4) {
+      props.push({ id: `d2_ebush_${y}`, type: 'bush', x: 36.5, y: y + 0.5, hp: 1 });
+    }
 
-  // Corridor 2 -> Boss Sanctum (y = 22..28, x = 20..24)
-  carveRect(20, 22, 24, 28, TILES.MARBLE_GOLD);
+    // 4. Central Sunken Marsh Lagoon (x = 15..29, y = 28..45)
+    carveRect(15, 28, 29, 45, TILES.WATER);
+    // Sacred Moss Sanctuary Island in center of Lagoon (x = 19..25, y = 34..40)
+    carveRect(19, 34, 25, 40, TILES.GRASS);
+    setTile(22, 37, TILES.HEAL_SPRING);
 
-  // Room 3: BOSS SANCTUM (y = 6..22, x = 10..34)
-  carveRect(10, 6, 34, 22, dungeonId === 'mad_sanctum' ? TILES.MARBLE_GOLD : meta.floorTile);
-  props.push({ id: 'boss_pillar_nw', type: 'grapple_post', x: 13.5, y: 9.5 });
-  props.push({ id: 'boss_pillar_ne', type: 'grapple_post', x: 30.5, y: 9.5 });
-  props.push({ id: 'boss_pillar_sw', type: 'grapple_post', x: 13.5, y: 19.5 });
-  props.push({ id: 'boss_pillar_se', type: 'grapple_post', x: 30.5, y: 19.5 });
+    // Wooden suspension bridges linking West Cloister <-> Lagoon Island <-> East Cloister & North Gate
+    carveRect(15, 36, 18, 38, TILES.WOOD_BRIDGE);
+    carveRect(26, 36, 29, 38, TILES.WOOD_BRIDGE);
+    carveRect(21, 28, 23, 33, TILES.WOOD_BRIDGE);
+    carveRect(21, 41, 23, 48, TILES.WOOD_BRIDGE);
 
-  for (let y = 10; y <= 18; y += 4) {
-    props.push({ id: `boss_pot_l_${y}`, type: 'pot', x: 11.5, y: y + 0.5, hp: 1 });
-    props.push({ id: `boss_pot_r_${y}`, type: 'pot', x: 32.5, y: y + 0.5, hp: 1 });
+    // Grapple posts across the lagoon and cloisters
+    props.push({ id: 'd2_grapple_w', type: 'grapple_post', x: 13.5, y: 37.5 });
+    props.push({ id: 'd2_grapple_c1', type: 'grapple_post', x: 20.5, y: 35.5 });
+    props.push({ id: 'd2_grapple_c2', type: 'grapple_post', x: 23.5, y: 35.5 });
+    props.push({ id: 'd2_grapple_e', type: 'grapple_post', x: 30.5, y: 37.5 });
+
+    // Dual Crystal Switches in West & East Cloisters
+    props.push({ id: 'd_switch_1', type: 'crystal_switch', x: 10.5, y: 37.5, state: 'red' });
+    props.push({ id: 'd_switch_2', type: 'crystal_switch', x: 33.5, y: 37.5, state: 'red' });
+
+    // Secret West Root Reliquary behind Cracked Bark Wall (x = 2..4, y = 35..40)
+    carveRect(2, 35, 4, 40, TILES.MARBLE_GOLD);
+    setTile(5, 37, TILES.WALL_CRACKED);
+    setTile(5, 38, TILES.WALL_CRACKED);
+    props.push({
+      id: 'd_secret_chest',
+      type: 'chest',
+      x: 3.5,
+      y: 37.5,
+      opened: false,
+      loot: ['pot_def', 'pot_atk', 'pot_wis', 'con_fairy']
+    });
+
+    // North Convergence Hall & Red Runic Root-Gate (x = 9..35, y = 25..27)
+    carveRect(9, 25, 35, 27, TILES.FOREST_FLOOR);
+    carveRect(20, 21, 24, 25, TILES.MARBLE_GOLD);
+    setTile(20, 24, TILES.BARRIER_RED);
+    setTile(21, 24, TILES.BARRIER_RED);
+    setTile(22, 24, TILES.BARRIER_RED);
+    setTile(23, 24, TILES.BARRIER_RED);
+    setTile(24, 24, TILES.BARRIER_RED);
+
+    // 5. Circular Webbed Canopy Grove Boss Arena (center (22, 13), radius 9.5)
+    carveCircle(22, 13, 9.5, TILES.FOREST_FLOOR);
+    // Radial web-strands of emerald grass & ancient living tree pillars
+    for (let r = 2; r <= 8; r++) {
+      setTile(22 + r, 13, TILES.GRASS);
+      setTile(22 - r, 13, TILES.GRASS);
+      setTile(22, 13 + r, TILES.GRASS);
+      setTile(22, 13 - r, TILES.GRASS);
+    }
+    setTile(17, 9, TILES.WALL_TREE);
+    setTile(27, 9, TILES.WALL_TREE);
+    setTile(17, 17, TILES.WALL_TREE);
+    setTile(27, 17, TILES.WALL_TREE);
+    props.push({ id: 'boss_pillar_nw', type: 'grapple_post', x: 15.5, y: 10.5 });
+    props.push({ id: 'boss_pillar_ne', type: 'grapple_post', x: 28.5, y: 10.5 });
+    props.push({ id: 'boss_pillar_sw', type: 'grapple_post', x: 15.5, y: 16.5 });
+    props.push({ id: 'boss_pillar_se', type: 'grapple_post', x: 28.5, y: 16.5 });
+    props.push({ id: 'boss_pot_w', type: 'pot', x: 14.5, y: 13.5, hp: 1 });
+    props.push({ id: 'boss_pot_e', type: 'pot', x: 29.5, y: 13.5, hp: 1 });
+
+    enemySpawns = [
+      { id: 'deku_scrub', x: 10.5, y: 45.5 },
+      { id: 'deku_scrub', x: 33.5, y: 45.5 },
+      { id: 'stalfos_scout', x: 10.5, y: 34.5 },
+      { id: 'stalfos_scout', x: 33.5, y: 34.5 },
+      { id: 'lizalfos_spear', x: 22.5, y: 38.5 },
+      { id: 'lizalfos_spear', x: 10.5, y: 28.5 },
+      { id: 'lizalfos_spear', x: 33.5, y: 28.5 },
+      { id: 'deku_scrub', x: 22.5, y: 26.5 },
+      { id: 'lizalfos_spear', x: 18.5, y: 16.5 },
+      { id: 'lizalfos_spear', x: 26.5, y: 16.5 }
+    ];
+  } else if (dungeonId === 'sprite_world') {
+    // =========================================================================
+    // DUNGEON 3: THE ASTRAL CONDUIT (7 Floating Star-Islands over Cosmic Void)
+    // =========================================================================
+    layoutType = 'floating_star_constellation';
+    bossSpawnX = 22.0;
+    bossSpawnY = 12.5;
+
+    // Entire realm is suspended over Open Cosmic Void
+    tiles.fill(TILES.VOID);
+
+    // Island 1: South Arrival Star-Platform (x = 17..27, y = 50..58)
+    carveRect(17, 50, 27, 58, TILES.MARBLE);
+    carveRect(19, 52, 25, 56, TILES.MARBLE_GOLD);
+    setTile(22, 53, TILES.HEAL_SPRING);
+
+    // Island 2: SW Starlight Node (x = 6..14, y = 39..47)
+    carveRect(6, 39, 14, 47, TILES.MARBLE);
+    carveRect(8, 41, 12, 45, TILES.MARBLE_GOLD);
+    props.push({ id: 'd3_sw_grapple', type: 'grapple_post', x: 10.5, y: 43.5 });
+    props.push({ id: 'd_switch_1', type: 'crystal_switch', x: 8.5, y: 41.5, state: 'red' });
+
+    // Island 3: SE Starlight Node (x = 30..38, y = 39..47)
+    carveRect(30, 39, 38, 47, TILES.MARBLE);
+    carveRect(32, 41, 36, 45, TILES.MARBLE_GOLD);
+    props.push({ id: 'd3_se_grapple', type: 'grapple_post', x: 34.5, y: 43.5 });
+    props.push({ id: 'd_switch_2', type: 'crystal_switch', x: 36.5, y: 41.5, state: 'red' });
+
+    // Sky-Bridges from South Arrival Platform to SW & SE Starlight Nodes
+    carveRect(14, 46, 17, 51, TILES.WOOD_BRIDGE);
+    carveRect(27, 46, 30, 51, TILES.WOOD_BRIDGE);
+
+    // Island 4: Central Nexus Conduit Island (x = 17..27, y = 31..40)
+    carveRect(17, 31, 27, 40, TILES.MARBLE);
+    carveRect(19, 33, 25, 38, TILES.MARBLE_GOLD);
+    setTile(22, 35, TILES.HEAL_SPRING);
+    props.push({ id: 'd3_c_grapple_w', type: 'grapple_post', x: 18.5, y: 35.5 });
+    props.push({ id: 'd3_c_grapple_e', type: 'grapple_post', x: 25.5, y: 35.5 });
+
+    // Bridges linking SW <-> Central <-> SE
+    carveRect(14, 39, 17, 41, TILES.WOOD_BRIDGE);
+    carveRect(27, 39, 30, 41, TILES.WOOD_BRIDGE);
+
+    // Island 5: NW Prism Relay Island (x = 7..15, y = 24..31)
+    carveRect(7, 24, 15, 31, TILES.MARBLE);
+    carveRect(9, 26, 13, 29, TILES.MARBLE_GOLD);
+    props.push({ id: 'd3_nw_grapple', type: 'grapple_post', x: 11.5, y: 27.5 });
+    // Bridge SW -> NW
+    carveRect(9, 31, 11, 39, TILES.WOOD_BRIDGE);
+    setTile(9, 34, TILES.BARRIER_BLUE);
+    setTile(10, 34, TILES.BARRIER_BLUE);
+    setTile(11, 34, TILES.BARRIER_BLUE);
+
+    // Island 6: NE Secret Star-Vault Island (x = 30..39, y = 24..31)
+    carveRect(30, 24, 39, 31, TILES.MARBLE_GOLD);
+    // Bridge SE -> NE gated by Cracked Astral Seal
+    carveRect(33, 31, 35, 39, TILES.WOOD_BRIDGE);
+    setTile(33, 33, TILES.WALL_CRACKED);
+    setTile(34, 33, TILES.WALL_CRACKED);
+    setTile(35, 33, TILES.WALL_CRACKED);
+    props.push({
+      id: 'd_secret_chest',
+      type: 'chest',
+      x: 34.5,
+      y: 27.5,
+      opened: false,
+      loot: ['pot_spd', 'pot_dex', 'pot_wis', 'con_fairy']
+    });
+
+    // Central & NW Astral Bridges into North Sovereign Star-Spire
+    carveRect(20, 21, 24, 31, TILES.MARBLE_GOLD);
+    setTile(20, 25, TILES.BARRIER_RED);
+    setTile(21, 25, TILES.BARRIER_RED);
+    setTile(22, 25, TILES.BARRIER_RED);
+    setTile(23, 25, TILES.BARRIER_RED);
+    setTile(24, 25, TILES.BARRIER_RED);
+    carveRect(12, 20, 18, 24, TILES.WOOD_BRIDGE);
+
+    // Island 7: North Sovereign Star-Spire Boss Arena (Diamond/Star geometry around (22, 13))
+    for (let y = 5; y <= 21; y++) {
+      for (let x = 10; x <= 34; x++) {
+        const dx = Math.abs(x - 22);
+        const dy = Math.abs(y - 13);
+        if (dx + dy <= 11 || (dx <= 8 && dy <= 6)) {
+          setTile(x, y, (dx + dy) % 3 === 0 ? TILES.MARBLE_GOLD : TILES.MARBLE);
+        }
+      }
+    }
+    props.push({ id: 'boss_pillar_nw', type: 'grapple_post', x: 16.5, y: 9.5 });
+    props.push({ id: 'boss_pillar_ne', type: 'grapple_post', x: 27.5, y: 9.5 });
+    props.push({ id: 'boss_pillar_sw', type: 'grapple_post', x: 16.5, y: 17.5 });
+    props.push({ id: 'boss_pillar_se', type: 'grapple_post', x: 27.5, y: 17.5 });
+    props.push({ id: 'boss_pot_1', type: 'pot', x: 22.0, y: 7.5, hp: 1 });
+    props.push({ id: 'boss_pot_2', type: 'pot', x: 14.5, y: 13.5, hp: 1 });
+    props.push({ id: 'boss_pot_3', type: 'pot', x: 29.5, y: 13.5, hp: 1 });
+
+    enemySpawns = [
+      { id: 'sprite_archmage', x: 10.5, y: 44.5 },
+      { id: 'beholder_eye', x: 34.5, y: 44.5 },
+      { id: 'sprite_archmage', x: 20.5, y: 37.5 },
+      { id: 'beholder_eye', x: 24.5, y: 37.5 },
+      { id: 'sprite_archmage', x: 22.5, y: 33.5 },
+      { id: 'beholder_eye', x: 11.5, y: 28.5 },
+      { id: 'sprite_archmage', x: 11.5, y: 25.5 },
+      { id: 'beholder_eye', x: 22.5, y: 27.5 },
+      { id: 'sprite_archmage', x: 18.5, y: 16.5 },
+      { id: 'beholder_eye', x: 25.5, y: 16.5 }
+    ];
+  } else if (dungeonId === 'undead_lair') {
+    // =========================================================================
+    // DUNGEON 4: SUNKEN CATACOMBS (Winding S-Curve Ossuary & Gothic Cathedral)
+    // =========================================================================
+    layoutType = 's_curve_ossuary_cathedral';
+    bossSpawnX = 22.0;
+    bossSpawnY = 12.5;
+
+    // 1. South Crypt Entrance (x = 17..27, y = 50..58)
+    carveRect(17, 50, 27, 58, TILES.DUNGEON_FLOOR);
+    setTile(22, 53, TILES.HEAL_SPRING);
+
+    // 2. Leg 1 — East Ossuary Gallery (winds EAST: x = 17..38, y = 43..49)
+    // Note: Direct north (x=17..27, y=35..42) remains solid WALL_STONE!
+    carveRect(17, 43, 38, 49, TILES.DUNGEON_FLOOR);
+    setTile(24, 46, TILES.WALL_STONE);
+    setTile(30, 46, TILES.WALL_STONE);
+    for (let x = 21; x <= 36; x += 5) {
+      props.push({ id: `d4_urn_e_${x}`, type: 'pot', x: x + 0.5, y: 44.5, hp: 1 });
+    }
+
+    // 3. NE Flooded Subterranean Styx Canal (x = 31..38, y = 34..42)
+    carveRect(31, 34, 38, 42, TILES.DUNGEON_FLOOR);
+    carveRect(31, 37, 38, 39, TILES.WATER);
+    carveRect(34, 37, 36, 39, TILES.WOOD_BRIDGE);
+    props.push({ id: 'd4_canal_s', type: 'grapple_post', x: 32.5, y: 41.5 });
+    props.push({ id: 'd4_canal_n', type: 'grapple_post', x: 32.5, y: 35.5 });
+
+    // 4. Leg 2 — Central Ritual & Torture Hall (winds WEST: x = 7..38, y = 27..34)
+    carveRect(7, 27, 38, 34, TILES.DUNGEON_FLOOR);
+    setTile(22, 30, TILES.HEAL_SPRING);
+    setTile(28, 30, TILES.WALL_STONE);
+    setTile(17, 30, TILES.WALL_STONE);
+    props.push({ id: 'd_switch_1', type: 'crystal_switch', x: 25.5, y: 30.5, state: 'red' });
+
+    // Red Runic Portcullis across West end of Central Hall (x = 13, y = 27..34)
+    for (let y = 27; y <= 34; y++) {
+      setTile(13, y, TILES.BARRIER_RED);
+    }
+
+    // 5. Secret Royal Mausoleum Vault (South off West end of Central Hall: x = 6..13, y = 36..42)
+    carveRect(6, 36, 13, 42, TILES.MARBLE_GOLD);
+    setTile(9, 35, TILES.WALL_CRACKED);
+    setTile(10, 35, TILES.WALL_CRACKED);
+    props.push({
+      id: 'd_secret_chest',
+      type: 'chest',
+      x: 9.5,
+      y: 39.5,
+      opened: false,
+      loot: ['pot_def', 'pot_vit', 'pot_wis', 'con_fairy']
+    });
+
+    // 6. Leg 3 — NW Bone Stairwell & Crypt Approach (winds NORTH then EAST: x = 7..12, y = 18..27 -> x = 12..23, y = 18..22)
+    carveRect(7, 18, 12, 27, TILES.DUNGEON_FLOOR);
+    carveRect(12, 18, 24, 22, TILES.MARBLE_GOLD);
+
+    // 7. North Gothic Cathedral Boss Sanctum (x = 11..35, y = 6..20, plus East Apse x = 36..39, y = 10..16)
+    carveRect(11, 6, 35, 20, TILES.DUNGEON_FLOOR);
+    carveRect(36, 10, 39, 16, TILES.MARBLE_GOLD);
+    carveRect(19, 7, 25, 11, TILES.MARBLE_GOLD);
+    // Double colonnade of 6 Gothic Nave Pillars
+    for (const px of [16, 22, 28]) {
+      setTile(px, 9, TILES.WALL_STONE);
+      setTile(px, 17, TILES.WALL_STONE);
+    }
+    props.push({ id: 'boss_pillar_nw', type: 'grapple_post', x: 14.5, y: 8.5 });
+    props.push({ id: 'boss_pillar_ne', type: 'grapple_post', x: 31.5, y: 8.5 });
+    props.push({ id: 'boss_pillar_sw', type: 'grapple_post', x: 14.5, y: 18.5 });
+    props.push({ id: 'boss_pillar_se', type: 'grapple_post', x: 31.5, y: 18.5 });
+    for (let y = 8; y <= 18; y += 5) {
+      props.push({ id: `boss_urn_l_${y}`, type: 'pot', x: 12.5, y: y + 0.5, hp: 1 });
+      props.push({ id: `boss_urn_r_${y}`, type: 'pot', x: 34.5, y: y + 0.5, hp: 1 });
+    }
+
+    enemySpawns = [
+      { id: 'stalfos_scout', x: 21.5, y: 47.5 },
+      { id: 'phantom_reaper', x: 27.5, y: 46.5 },
+      { id: 'darknut_knight', x: 34.5, y: 45.5 },
+      { id: 'stalfos_scout', x: 35.5, y: 35.5 },
+      { id: 'phantom_reaper', x: 31.5, y: 30.5 },
+      { id: 'darknut_knight', x: 24.5, y: 31.5 },
+      { id: 'phantom_reaper', x: 19.5, y: 29.5 },
+      { id: 'stalfos_scout', x: 9.5, y: 24.5 },
+      { id: 'darknut_knight', x: 18.5, y: 15.5 },
+      { id: 'phantom_reaper', x: 26.5, y: 15.5 }
+    ];
+  } else if (dungeonId === 'abyss_mountain') {
+    // =========================================================================
+    // DUNGEON 5: CALDERA OF THE ABYSS (Magma Sea, 3 Basalt Islands & Lava Core Ring)
+    // =========================================================================
+    layoutType = 'volcanic_magma_caldera';
+    bossSpawnX = 22.0;
+    bossSpawnY = 9.0;
+
+    // 1. South Basalt Landing (x = 17..27, y = 50..58)
+    carveRect(17, 50, 27, 58, TILES.GODLANDS_ASH);
+    setTile(22, 53, TILES.HEAL_SPRING);
+
+    // 2. Great Molten Magma Sea (x = 5..39, y = 24..49)
+    carveRect(5, 24, 39, 49, TILES.LAVA);
+
+    // West Magma Forge Island (x = 7..15, y = 35..45)
+    carveRect(7, 35, 15, 45, TILES.GODLANDS_ASH);
+    carveRect(9, 37, 13, 43, TILES.HIGHLAND_ROCK);
+    props.push({ id: 'd_switch_1', type: 'crystal_switch', x: 11.5, y: 40.5, state: 'red' });
+    props.push({ id: 'd5_w_grapple', type: 'grapple_post', x: 11.5, y: 36.5 });
+
+    // Center Caldera Spine Island (x = 19..25, y = 29..43)
+    carveRect(19, 29, 25, 43, TILES.GODLANDS_ASH);
+    setTile(22, 36, TILES.HEAL_SPRING);
+    props.push({ id: 'd5_c_grapple_s', type: 'grapple_post', x: 22.0, y: 41.5 });
+    props.push({ id: 'd5_c_grapple_n', type: 'grapple_post', x: 22.0, y: 30.5 });
+
+    // East Brimstone Island (x = 29..36, y = 35..45)
+    carveRect(29, 35, 36, 45, TILES.GODLANDS_ASH);
+    carveRect(31, 37, 34, 43, TILES.HIGHLAND_ROCK);
+    props.push({ id: 'd5_e_grapple', type: 'grapple_post', x: 32.5, y: 36.5 });
+    for (let y = 37; y <= 43; y += 3) {
+      props.push({ id: `d5_pot_${y}`, type: 'pot', x: 34.5, y: y + 0.5, hp: 1 });
+    }
+
+    // Charred Basalt Bridges linking South Landing -> West/East/Center Islands
+    carveRect(14, 45, 17, 50, TILES.WOOD_BRIDGE);
+    carveRect(27, 45, 30, 50, TILES.WOOD_BRIDGE);
+    carveRect(21, 43, 23, 50, TILES.WOOD_BRIDGE);
+    carveRect(15, 38, 19, 40, TILES.WOOD_BRIDGE);
+    carveRect(25, 38, 29, 40, TILES.WOOD_BRIDGE);
+
+    // 3. Secret Obsidian Hoard Chamber off East Brimstone Island (x = 38..41, y = 37..42)
+    carveRect(38, 37, 41, 42, TILES.MARBLE_GOLD);
+    setTile(37, 39, TILES.WALL_CRACKED);
+    setTile(37, 40, TILES.WALL_CRACKED);
+    props.push({
+      id: 'd_secret_chest',
+      type: 'chest',
+      x: 39.5,
+      y: 39.5,
+      opened: false,
+      loot: ['pot_atk', 'pot_def', 'pot_vit', 'con_fairy']
+    });
+
+    // 4. North Magma Causeway & Gate (x = 20..24, y = 22..29)
+    carveRect(20, 22, 24, 29, TILES.WOOD_BRIDGE);
+    for (let x = 20; x <= 24; x++) {
+      setTile(x, 25, TILES.BARRIER_RED);
+    }
+
+    // 5. North Obsidian Ring Caldera Boss Arena (center (22, 13), radius 10.5 with Central Lava Core)
+    carveCircle(22, 13, 10.5, TILES.GODLANDS_ASH);
+    // Central Bubbling Lava Core (x = 19..25, y = 11..15) spanned by narrow golden bridge (x = 22)
+    carveRect(19, 11, 25, 15, TILES.LAVA);
+    carveRect(22, 11, 22, 15, TILES.MARBLE_GOLD);
+    props.push({ id: 'boss_pillar_nw', type: 'grapple_post', x: 17.5, y: 9.5 });
+    props.push({ id: 'boss_pillar_ne', type: 'grapple_post', x: 26.5, y: 9.5 });
+    props.push({ id: 'boss_pillar_sw', type: 'grapple_post', x: 17.5, y: 17.5 });
+    props.push({ id: 'boss_pillar_se', type: 'grapple_post', x: 26.5, y: 17.5 });
+
+    enemySpawns = [
+      { id: 'darknut_knight', x: 11.5, y: 42.5 },
+      { id: 'wizzrobe_fire', x: 11.5, y: 37.5 },
+      { id: 'darknut_knight', x: 32.5, y: 42.5 },
+      { id: 'wizzrobe_fire', x: 32.5, y: 37.5 },
+      { id: 'magma_titan', x: 22.5, y: 40.5 },
+      { id: 'wizzrobe_fire', x: 20.5, y: 34.5 },
+      { id: 'magma_titan', x: 24.5, y: 34.5 },
+      { id: 'darknut_knight', x: 22.5, y: 31.5 },
+      { id: 'magma_titan', x: 15.5, y: 14.5 },
+      { id: 'magma_titan', x: 28.5, y: 14.5 }
+    ];
+  } else {
+    // =========================================================================
+    // DUNGEON 1 (pirate_cove) & RAID SANCTUM (mad_sanctum)
+    // =========================================================================
+    layoutType = dungeonId === 'mad_sanctum' ? 'citadel_throne_sanctum' : 'corsair_smuggler_grotto';
+
+    // Room 1 (South Entrance Hall: y = 48..58, x = 16..28)
+    carveRect(16, 48, 28, 58);
+    setTile(22, 53, TILES.HEAL_SPRING);
+
+    // Corridor 1 -> Room 2
+    carveRect(20, 42, 24, 48);
+
+    // Room 2 (Runic Puzzle & Combat Hall: y = 28..42, x = 12..32)
+    carveRect(12, 28, 32, 42);
+
+    for (let x = 12; x <= 32; x++) {
+      setTile(x, 34, meta.liquidTile);
+      setTile(x, 35, meta.liquidTile);
+    }
+    setTile(21, 34, TILES.WOOD_BRIDGE);
+    setTile(22, 34, TILES.WOOD_BRIDGE);
+    setTile(23, 34, TILES.WOOD_BRIDGE);
+    setTile(21, 35, TILES.WOOD_BRIDGE);
+    setTile(22, 35, TILES.WOOD_BRIDGE);
+    setTile(23, 35, TILES.WOOD_BRIDGE);
+    setTile(21, 33, TILES.BARRIER_RED);
+    setTile(22, 33, TILES.BARRIER_RED);
+    setTile(23, 33, TILES.BARRIER_RED);
+
+    props.push({ id: 'd_switch_1', type: 'crystal_switch', x: 18.5, y: 37.5, state: 'red' });
+    props.push({ id: 'd_grapple_n1', type: 'grapple_post', x: 15.5, y: 31.5 });
+    props.push({ id: 'd_grapple_n2', type: 'grapple_post', x: 28.5, y: 31.5 });
+    props.push({ id: 'd_grapple_s1', type: 'grapple_post', x: 15.5, y: 37.5 });
+    props.push({ id: 'd_grapple_s2', type: 'grapple_post', x: 28.5, y: 37.5 });
+
+    // Secret Brimstone-Breachable Treasure Room off East Wall of Room 2
+    carveRect(34, 30, 39, 35, TILES.MARBLE_GOLD);
+    setTile(33, 32, TILES.WALL_CRACKED);
+    setTile(33, 33, TILES.WALL_CRACKED);
+    props.push({
+      id: 'd_secret_chest',
+      type: 'chest',
+      x: 36.5,
+      y: 32.5,
+      opened: false,
+      loot: ['pot_def', 'pot_atk', 'pot_wis', 'con_fairy']
+    });
+
+    for (let x = 14; x <= 30; x += 4) {
+      props.push({ id: `d_bush_${x}`, type: 'bush', x: x + 0.5, y: 39.5, hp: 1 });
+      props.push({ id: `d_pot_${x}`,  type: 'pot',  x: x + 0.5, y: 29.5, hp: 1 });
+    }
+
+    // Corridor 2 -> Boss Sanctum (y = 22..28, x = 20..24)
+    carveRect(20, 22, 24, 28, TILES.MARBLE_GOLD);
+
+    // Room 3: BOSS SANCTUM (y = 6..22, x = 10..34)
+    carveRect(10, 6, 34, 22, dungeonId === 'mad_sanctum' ? TILES.MARBLE_GOLD : meta.floorTile);
+    props.push({ id: 'boss_pillar_nw', type: 'grapple_post', x: 13.5, y: 9.5 });
+    props.push({ id: 'boss_pillar_ne', type: 'grapple_post', x: 30.5, y: 9.5 });
+    props.push({ id: 'boss_pillar_sw', type: 'grapple_post', x: 13.5, y: 19.5 });
+    props.push({ id: 'boss_pillar_se', type: 'grapple_post', x: 30.5, y: 19.5 });
+
+    for (let y = 10; y <= 18; y += 4) {
+      props.push({ id: `boss_pot_l_${y}`, type: 'pot', x: 11.5, y: y + 0.5, hp: 1 });
+      props.push({ id: `boss_pot_r_${y}`, type: 'pot', x: 32.5, y: y + 0.5, hp: 1 });
+    }
+
+    const defaultCoords = [
+      [19, 50], [25, 50],
+      [16, 39], [22, 39], [28, 39],
+      [16, 30], [22, 30], [28, 30],
+      [18, 18], [26, 18]
+    ];
+    enemySpawns = defaultCoords.map(([x, y], idx) => ({
+      id: meta.minionIds[idx % meta.minionIds.length],
+      x: x + 0.5,
+      y: y + 0.5
+    }));
   }
 
   return {
     id: `dungeon_${dungeonId}`,
     dungeonId,
+    layoutType,
     name: meta.name,
     difficulty: meta.difficulty,
     width,
@@ -3430,10 +3855,11 @@ function generateDungeonMap(dungeonId = 'deku_temple') {
     tiles,
     props,
     portals,
+    enemySpawns,
     spawnX: 22.0,
     spawnY: 54.0,
-    bossSpawnX: 22.0,
-    bossSpawnY: 13.5,
+    bossSpawnX,
+    bossSpawnY,
     switchState: 'red'
   };
 }
@@ -5244,17 +5670,23 @@ class GameEngine {
 
     if (this.currentMap.id.startsWith('dungeon_')) {
       const meta = DUNGEON_META[this.currentMap.dungeonId] || DUNGEON_META.deku_temple;
-      // Minions in Room 1 & Room 2
-      const coords = [
-        [19, 50], [25, 50],
-        [16, 39], [22, 39], [28, 39],
-        [16, 30], [22, 30], [28, 30],
-        [18, 18], [26, 18]
-      ];
-      coords.forEach(([x, y], idx) => {
-        const mid = meta.minionIds[idx % meta.minionIds.length];
-        this.spawnEnemy(mid, x + 0.5, y + 0.5);
-      });
+      if (Array.isArray(this.currentMap.enemySpawns) && this.currentMap.enemySpawns.length > 0) {
+        this.currentMap.enemySpawns.forEach((sp, idx) => {
+          const mid = sp.id || meta.minionIds[idx % meta.minionIds.length];
+          this.spawnEnemy(mid, sp.x, sp.y);
+        });
+      } else {
+        const coords = [
+          [19, 50], [25, 50],
+          [16, 39], [22, 39], [28, 39],
+          [16, 30], [22, 30], [28, 30],
+          [18, 18], [26, 18]
+        ];
+        coords.forEach(([x, y], idx) => {
+          const mid = meta.minionIds[idx % meta.minionIds.length];
+          this.spawnEnemy(mid, x + 0.5, y + 0.5);
+        });
+      }
 
       // Spawn the Dungeon Boss in the North Sanctum!
       const boss = this.spawnEnemy(meta.bossId, this.currentMap.bossSpawnX, this.currentMap.bossSpawnY);

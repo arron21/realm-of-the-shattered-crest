@@ -544,17 +544,23 @@ export class GameEngine {
 
     if (this.currentMap.id.startsWith('dungeon_')) {
       const meta = DUNGEON_META[this.currentMap.dungeonId] || DUNGEON_META.deku_temple;
-      // Minions in Room 1 & Room 2
-      const coords = [
-        [19, 50], [25, 50],
-        [16, 39], [22, 39], [28, 39],
-        [16, 30], [22, 30], [28, 30],
-        [18, 18], [26, 18]
-      ];
-      coords.forEach(([x, y], idx) => {
-        const mid = meta.minionIds[idx % meta.minionIds.length];
-        this.spawnEnemy(mid, x + 0.5, y + 0.5);
-      });
+      if (Array.isArray(this.currentMap.enemySpawns) && this.currentMap.enemySpawns.length > 0) {
+        this.currentMap.enemySpawns.forEach((sp, idx) => {
+          const mid = sp.id || meta.minionIds[idx % meta.minionIds.length];
+          this.spawnEnemy(mid, sp.x, sp.y);
+        });
+      } else {
+        const coords = [
+          [19, 50], [25, 50],
+          [16, 39], [22, 39], [28, 39],
+          [16, 30], [22, 30], [28, 30],
+          [18, 18], [26, 18]
+        ];
+        coords.forEach(([x, y], idx) => {
+          const mid = meta.minionIds[idx % meta.minionIds.length];
+          this.spawnEnemy(mid, x + 0.5, y + 0.5);
+        });
+      }
 
       // Spawn the Dungeon Boss in the North Sanctum!
       const boss = this.spawnEnemy(meta.bossId, this.currentMap.bossSpawnX, this.currentMap.bossSpawnY);
