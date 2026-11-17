@@ -259,7 +259,7 @@ ${css}
     <div class="modal-card" style="max-width:520px;">
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <div>
-          <h2 style="margin:0;font-size:18px;color:#4ade80;">🌐 MMO Hero Login — Shared Realm Instance</h2>
+          <h2 id="login-modal-title" style="margin:0;font-size:18px;color:#4ade80;">🌐 MMO Hero Login — Shared Realm Instance</h2>
           <div style="font-size:11.5px;color:#38bdf8;font-weight:700;margin-top:2px;">
             1 Unified Global Instance: <strong>Aethelgard-Prime</strong> • Real-Time Co-Op, Shared Bosses, Portals &amp; TP
           </div>

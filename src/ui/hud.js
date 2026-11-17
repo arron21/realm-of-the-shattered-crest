@@ -1908,6 +1908,9 @@ export class HudController {
     const countEl = document.getElementById('login-online-count');
     const rosterEl = document.getElementById('login-online-roster');
     const statusEl = document.getElementById('login-status-msg');
+    const titleEl = document.getElementById('login-modal-title');
+    const submitBtn = document.getElementById('btn-submit-login');
+    const isLoggedIn = Boolean(this.game.account && this.game.account.loggedInName);
 
     if (nameInput && p) {
       nameInput.value = this.game.account.loggedInName || p.name || '';
@@ -1915,8 +1918,18 @@ export class HudController {
     if (passInput) {
       passInput.value = '';
     }
+    if (titleEl) {
+      titleEl.textContent = isLoggedIn
+        ? '🌐 Hero Profile — Shared Realm Instance'
+        : '🌐 MMO Hero Login — Shared Realm Instance';
+    }
+    if (submitBtn) {
+      submitBtn.textContent = isLoggedIn
+        ? '⚔️ Update Hero / Switch Class'
+        : '⚔️ Login & Join Shared MMO Instance';
+    }
     if (statusEl) {
-      statusEl.textContent = this.game.account.loggedInName
+      statusEl.textContent = isLoggedIn
         ? `✓ Logged in as ${this.game.account.loggedInName} on Aethelgard-Prime`
         : 'Enter your Hero Name to join all players in the Aethelgard-Prime MMO instance.';
       statusEl.style.color = '#4ade80';

@@ -495,6 +495,11 @@ assert(game.player.hp > hpBeforeBuff, 'Remote ally Solar Templar Warhorn must he
 assert(game.player.buffs.damaging >= 4.5, 'Remote ally Solar Templar Warhorn must grant Damaging buff to nearby players');
 // Test client loginToMmo + submitLoginForm with class switching & serializeLocalPlayer
 (async () => {
+  hud.populateLoginModal();
+  assert(
+    getMockEl('btn-submit-login').textContent.includes('Login'),
+    'When logged out, #btn-submit-login should display Login'
+  );
   getMockEl('login-username-input').value = 'AethelHero';
   getMockEl('login-password-input').value = 'secret';
   hud._selectedLoginClassId = 'paladin';
@@ -502,6 +507,17 @@ assert(game.player.buffs.damaging >= 4.5, 'Remote ally Solar Templar Warhorn mus
   assert.strictEqual(formOk, true, 'hud.submitLoginForm() must succeed when changing class and logging in');
   assert.strictEqual(game.player.name, 'AethelHero', 'Hero name must update to AethelHero after login');
   assert.strictEqual(game.player.classId, 'paladin', 'Hero class must switch to paladin on login');
+  assert.strictEqual(getMockEl('top-login-label').textContent, 'AethelHero', 'Top bar button must show hero name instead of Login once logged in');
+  hud.populateLoginModal();
+  assert(
+    !getMockEl('btn-submit-login').textContent.includes('Login') &&
+    getMockEl('btn-submit-login').textContent.includes('Update Hero'),
+    'When already logged in, #btn-submit-login must NOT say Login'
+  );
+  assert(
+    !getMockEl('login-modal-title').textContent.includes('Login'),
+    'When already logged in, #login-modal-title must NOT say Login'
+  );
   const serialized = game.serializeLocalPlayer();
   assert.strictEqual(serialized.name, 'AethelHero', 'serializeLocalPlayer() must serialize logged-in hero');
   assert.strictEqual(typeof serialized.stars, 'number', 'serializeLocalPlayer() must include numeric star rank');
